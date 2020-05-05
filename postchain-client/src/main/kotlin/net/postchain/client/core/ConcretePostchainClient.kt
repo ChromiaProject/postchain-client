@@ -1,4 +1,6 @@
-package net.postchain.client
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
+package net.postchain.client.core
 
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken

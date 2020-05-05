@@ -1,4 +1,6 @@
-package net.postchain.client
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
+package net.postchain.client.core
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
