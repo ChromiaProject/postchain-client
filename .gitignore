@@ -1,0 +1,14 @@
+.idea
+.project
+.settings/
+.classpath
+*.iml
+target
+.DS_Store
+*/*.pid
+*.pid
+*.log
+*.log.lck
+logs
+*.jar
+

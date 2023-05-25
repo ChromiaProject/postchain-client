@@ -2,19 +2,36 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>postchain</artifactId>
-        <groupId>net.postchain</groupId>
-        <version>3.11.0-SNAPSHOT</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>postchain-client</artifactId>
+    <groupId>net.postchain.client</groupId>
+    <version>${revision}</version>
+    <packaging>jar</packaging>
 
     <name>Postchain Client</name>
     <description>
         A kotlin client which can be used to post transactions and query data against Postchain’s REST API.
     </description>
+
+    <properties>
+        <revision>dev</revision>
+        <postchain.version>3.10.0</postchain.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.outputTimestamp>1679474201</project.build.outputTimestamp>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>net.postchain</groupId>
+                <artifactId>postchain</artifactId>
+                <version>${postchain.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Kotlin -->
@@ -114,7 +131,7 @@
             <artifactId>postchain-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${project.version}</version>
+            <version>${postchain.version}</version>
         </dependency>
     </dependencies>
 
@@ -128,4 +145,24 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>postchain</id>
+            <name>Postchain GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/32294340/packages/maven</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>gitlab-maven</id>
+            <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
+        </snapshotRepository>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
+        </repository>
+    </distributionManagement>
+
 </project>
