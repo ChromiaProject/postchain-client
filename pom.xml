@@ -17,6 +17,7 @@
 
     <properties>
         <revision>dev</revision>
+        <branchToReleaseFrom>dev</branchToReleaseFrom>
         <postchain.version>3.10.0</postchain.version>
         <kotlin.version>1.8.10</kotlin.version>
 
@@ -27,6 +28,8 @@
         <project.build.outputTimestamp>1679474201</project.build.outputTimestamp>
 
         <kotlin.code.style>obsolete</kotlin.code.style> <!-- Kotlin obsolete IntelliJ IDEA codestyle -->
+
+        <gitflow.maven.plugin.version>1.19.0</gitflow.maven.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -169,6 +172,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>${gitflow.maven.plugin.version}</version>
+                <configuration>
+                    <gitFlowConfig>
+                        <productionBranch>${branchToReleaseFrom}</productionBranch>
+                        <developmentBranch>${branchToReleaseFrom}</developmentBranch>
+                    </gitFlowConfig>
+                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>
