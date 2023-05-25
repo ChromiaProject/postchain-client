@@ -15,9 +15,9 @@ requires Gitlab access):
 ```
 ```xml
 <repository>
-    <id>postchain</id>
-    <name>Postchain GitLab Registry</name>
-    <url>https://gitlab.com/api/v4/projects/32294340/packages/maven</url>
+    <id>Postchain Client</id>
+    <name>Postchain Client GitLab Registry</name>
+    <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
 </repository>
 ```
 
