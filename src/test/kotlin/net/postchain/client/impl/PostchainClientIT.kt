@@ -34,7 +34,7 @@ import java.time.Instant
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 
-class PostchainClientTest : IntegrationTestSetup() {
+class PostchainClientIT : IntegrationTestSetup() {
 
     private val configFileName = "/net/postchain/client/impl/blockchain_config.xml"
     private val configFileName1 = "/net/postchain/client/impl/blockchain_config_1.xml"
