@@ -6,8 +6,6 @@ image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker:1.0.
   git config user.email build_user@chromaway.com
 
 .setup:
-  # tags:
-  #  - saas-linux-large-amd64
   before_script:
     - docker run
       --detach
@@ -99,7 +97,6 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -s .gitlab-settings.xml -U"
-  # CHR_DB_URL: jdbc:postgresql://docker/postchain
   POSTCHAIN_DB_URL: jdbc:postgresql://docker/postchain
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
