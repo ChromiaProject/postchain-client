@@ -24,7 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class PostchainClientJavaTest {
+public class PostchainClientJavaTest {
     private final String url = "http://localhost:7740";
     private final String brid = "EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8F";
     private int requestCounter = 0;

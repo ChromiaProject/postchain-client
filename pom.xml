@@ -17,7 +17,7 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.10.0</postchain.version>
+        <postchain.version>3.10.1</postchain.version>
         <kotlin.version>1.8.10</kotlin.version>
 
         <maven.compiler.source>11</maven.compiler.source>

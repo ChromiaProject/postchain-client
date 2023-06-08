@@ -62,7 +62,8 @@ class PostchainClientImpl(
             config.blockchainRid,
             signers.map { it.pubKey.data },
             signers.map { it.sigMaker(cryptoSystem) },
-            cryptoSystem
+            cryptoSystem,
+            config.maxTxSize
     )
 
     @Throws(IOException::class)

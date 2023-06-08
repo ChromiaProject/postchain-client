@@ -9,17 +9,23 @@ import net.postchain.gtv.Gtv
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxBuilder
 
+/**
+ * @param maxTxSize maximal allowed transaction size, or -1 for no limit
+ */
 class TransactionBuilder(
         private val client: PostchainClient,
         blockchainRid: BlockchainRid,
         signers: List<ByteArray>,
         private val defaultSigners: List<SigMaker> = listOf(),
         cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
+        maxTxSize: Int = -1
 ) : Postable {
-    private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem)
+    private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, maxTxSize)
 
     /**
      * Adds an operation to this transaction
+     *
+     * @throws IllegalStateException if the operation does not fit
      */
     fun addOperation(name: String, vararg args: Gtv) = apply {
         gtxBuilder.addOperation(name, *args)
