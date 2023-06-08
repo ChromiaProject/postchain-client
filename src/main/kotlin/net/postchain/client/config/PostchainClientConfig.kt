@@ -23,6 +23,7 @@ val STATUS_POLL_INTERVAL: Duration = Duration.ofMillis(500)
 const val MAX_RESPONSE_SIZE = 64 * 1024 * 1024 // 64 MiB
 val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(60)
 val RESPONSE_TIMEOUT: Duration = Duration.ofSeconds(60)
+const val MAX_TX_SIZE = -1 // no limit
 
 data class PostchainClientConfig @JvmOverloads constructor(
         val blockchainRid: BlockchainRid,
@@ -38,7 +39,8 @@ data class PostchainClientConfig @JvmOverloads constructor(
         val connectTimeout: Duration = CONNECT_TIMEOUT,
         /** Will not be used if `httpClient` parameter is specified when creating `ConcretePostchainClient`. */
         val responseTimeout: Duration = RESPONSE_TIMEOUT,
-        val requestStrategy: RequestStrategyFactory = AbortOnErrorRequestStrategyFactory()
+        val requestStrategy: RequestStrategyFactory = AbortOnErrorRequestStrategyFactory(),
+        val maxTxSize: Int = MAX_TX_SIZE
 ) : Config {
     companion object {
         @JvmStatic
@@ -65,6 +67,7 @@ data class PostchainClientConfig @JvmOverloads constructor(
                     responseTimeout = config.getEnvOrLongProperty("POSTCHAIN_CLIENT_RESPONSE_TIMEOUT", "response.timeout", RESPONSE_TIMEOUT.toMillis()).let { Duration.ofMillis(it) },
                     requestStrategy = config.getEnvOrStringProperty("POSTCHAIN_CLIENT_REQUEST_STRATEGY", "request.strategy", RequestStrategies.ABORT_ON_ERROR.name)
                             .let { RequestStrategies.valueOf(it).factory },
+                    maxTxSize = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_MAX_TX_SIZE", "max.tx.size", MAX_TX_SIZE), 
             )
         }
     }
