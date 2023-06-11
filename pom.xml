@@ -24,7 +24,7 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>1679474201</project.build.outputTimestamp>
+        <project.build.outputTimestamp>10</project.build.outputTimestamp>
 
         <kotlin.code.style>obsolete</kotlin.code.style> <!-- Kotlin obsolete IntelliJ IDEA codestyle -->
     </properties>
