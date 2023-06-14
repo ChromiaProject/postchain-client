@@ -1,9 +1,8 @@
 image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker:1.0.0
-
-.git_template: &git_setup |
-  git remote set-url --push origin "https://oauth2:${BUILD_USER_GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-  git config user.name "build-user core-dev"
-  git config user.email build_user@chromaway.com
+include:
+  - project: "chromaway/core-infra/gitlab-automation"
+    ref: 1.1.0
+    file: templates/release.yml
 
 .setup:
   before_script:
@@ -34,16 +33,6 @@ image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker:1.0.
         - "**/target/rell-reports/rell-tests.xml"
     expire_in: 1 week
 
-.release:
-  stage: release
-  when: manual
-  before_script:
-    - set -eu
-    - *git_setup
-    - git checkout $CI_COMMIT_REF_NAME
-    - CURRENT_VERSION=$(git describe --tags --abbrev=0)
-    - IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-
 stages:
   - build
   - deploy
@@ -71,23 +60,6 @@ build:
     - mvn
       $MAVEN_CLI_OPTS
       verify
-
-release-minor:
-  extends: .release
-  script:
-    - git tag $MAJOR.$((MINOR + 1)).0
-    - git push --tags
-  only:
-    - dev
-
-release-patch:
-  extends: .release
-  script:
-    - git tag $MAJOR.$MINOR.$((PATCH + 1))
-    - git push --tags
-  only:
-    - dev
-    - /^support\/.*$/
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
