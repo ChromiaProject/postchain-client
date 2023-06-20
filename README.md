@@ -23,7 +23,7 @@ requires Gitlab access):
 
 ## Usage
 
-To generate a client one could go about it like this:
+### Initializing the Client
 
 ```kotlin
 import net.postchain.client.config.PostchainClientConfig
@@ -47,20 +47,39 @@ fun main() {
     val psClient: PostchainClient = PostchainClientProviderImpl().createClient(
             PostchainClientConfig(bcRid, endpointPool, listOf(keyPair0))
     )
-
-    // Build the TX
-    val txBuilder = psClient.transactionBuilder()
-    txBuilder.addOperation("nop") // Operation "nop" with on arguments
-    txBuilder.sign(sigMaker0) // Sign it
-
-    val result = txBuilder.post()
-    when (result.status) {
-        TransactionStatus.WAITING -> println("TX has been put into the TX queue of the Postchain server")
-        TransactionStatus.REJECTED -> println("TX most likely wrong number of args")
-        TransactionStatus.CONFIRMED -> println("TX has been included in a block")
-        TransactionStatus.UNKNOWN -> println("Investigate")
-    }
 }
 ```
+
+### Queries
+```kotlin
+psClient.query("hello_world", GtvFactory.gtv(mapOf()))
+```
+
+### Transactions
+Create a basic transaction, sign it, and send it.
+```kotlin
+val txBuilder = psClient.transactionBuilder()
+txBuilder.addOperation("nop") // Operation "nop" without arguments
+txBuilder.sign(sigMaker0) // Sign it
+
+val result = txBuilder.post()
+when (result.status) {
+    TransactionStatus.WAITING -> println("TX has been put into the TX queue of the Postchain server")
+    TransactionStatus.REJECTED -> println("TX most likely wrong number of args")
+    TransactionStatus.CONFIRMED -> println("TX has been included in a block")
+    TransactionStatus.UNKNOWN -> println("Investigate")
+}  
+```
+Build a transaction containing operation with arguments, sign it, and send it.
+```kotlin
+val txBuilder = psClient.transactionBuilder()
+txBuilder.addOperation("set_name", GtvFactory.gtv(name))
+//addNop makes tx unique so one can send same operation more than one time
+txBuilder.addNop()
+txBuilder.sign(sigMaker0) // Sign it
+val result = txBuilder.post()
+```
+
+
 
 ... see PostchainClientTest in the devtools Maven module for more examples.
