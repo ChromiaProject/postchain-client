@@ -13,7 +13,7 @@ internal class StrategyTest {
     }
 
     @Test
-    fun `Status CONNECTION_REFUSED is not server failure`() {
-        assertFalse(isServerFailure(Status.CONNECTION_REFUSED))
+    fun `Status CONNECTION_REFUSED is server failure`() {
+        assertTrue(isServerFailure(Status.CONNECTION_REFUSED))
     }
 }

@@ -15,6 +15,7 @@ import org.http4k.core.Response
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import javax.net.ssl.SSLException
 
 class QueryMajorityRequestStrategy(
         private val config: PostchainClientConfig,
@@ -47,23 +48,27 @@ class QueryMajorityRequestStrategy(
 
         config.endpointPool.forEach { endpoint ->
             val request = createRequest(endpoint)
-            asyncHttpClient(request) { response ->
-                outcomes.add(if (isSuccess(response.status)) {
-                    try {
-                        Success(success(response, endpoint) ?: nullValue)
-                    } catch (e: Exception) {
-                        Error(e)
-                    }
-                } else {
-                    if (isServerFailure(response.status)) {
-                        endpoint.setUnreachable(unreachableDuration(response.status))
-                    }
-                    try {
-                        Failure(failure(response, endpoint) ?: nullValue)
-                    } catch (e: Exception) {
-                        Error(e)
-                    }
-                })
+            try {
+                asyncHttpClient(request) { response ->
+                    outcomes.add(if (isSuccess(response.status)) {
+                        try {
+                            Success(success(response, endpoint) ?: nullValue)
+                        } catch (e: Exception) {
+                            Error(e)
+                        }
+                    } else {
+                        if (isServerFailure(response.status)) {
+                            endpoint.setUnreachable(unreachableDuration(response.status))
+                        }
+                        try {
+                            Failure(failure(response, endpoint) ?: nullValue)
+                        } catch (e: Exception) {
+                            Error(e)
+                        }
+                    })
+                }
+            } catch (e: SSLException) {
+                outcomes.add(Error(e))
             }
         }
 

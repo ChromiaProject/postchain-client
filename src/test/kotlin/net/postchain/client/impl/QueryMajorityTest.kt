@@ -25,6 +25,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import javax.net.ssl.SSLException
 
 internal class QueryMajorityTest {
     private val urls = listOf("http://localhost:1", "http://localhost:2", "http://localhost:3", "http://localhost:4")
@@ -216,6 +217,22 @@ internal class QueryMajorityTest {
                     }
                 }))).checkTxStatus(TxRid("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29"))
         assertThat(txStatus.status).isEqualTo(TransactionStatus.CONFIRMED)
+        assertThat(requestCounter).isEqualTo(4)
+    }
+
+    @Test
+    fun `SSLExceptions should be handled`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(
+                    BlockchainRid.buildFromHex(bcRid),
+                    DeterministicEndpointPool(urls),
+                    requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
+                        override fun invoke(request: Request, fn: (Response) -> Unit) {
+                            requestCounter++
+                            throw SSLException("Bad SSL")
+                        }
+                    }))).blockAtHeight(1L)
+        }.isInstanceOf(SSLException::class)
         assertThat(requestCounter).isEqualTo(4)
     }
 
