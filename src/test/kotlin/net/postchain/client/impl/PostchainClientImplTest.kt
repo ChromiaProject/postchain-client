@@ -39,6 +39,7 @@ import java.io.EOFException
 import java.io.IOException
 import java.time.Duration
 import java.util.concurrent.CompletionException
+import javax.net.ssl.SSLException
 
 internal class PostchainClientImplTest {
     private var url = "http://localhost:7740"
@@ -356,6 +357,16 @@ internal class PostchainClientImplTest {
 
         val singleEndpointPool = EndpointPool.singleUrl("http://localhost:7740/")
         assertThat(singleEndpointPool.first().url).isEqualTo("http://localhost:7740")
+    }
+
+    @Test
+    fun `SSLException should skip to next endpoint and finally fail with server failure`() {
+        val endpointPool = EndpointPool.default(listOf("http://localhost:7740/", "http://localhost:7741/"))
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), endpointPool), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) = throw SSLException("Bad SSL")
+            }).query("foo", gtv(mapOf()))
+        }.isInstanceOf(ClientError::class)
     }
 
     private fun assertQueryUrlEndsWith(config: PostchainClientConfig, suffix: String) {

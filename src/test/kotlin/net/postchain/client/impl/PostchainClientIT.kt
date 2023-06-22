@@ -23,6 +23,7 @@ import net.postchain.gtx.GtxQuery
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -32,7 +33,6 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import java.time.Instant
 import java.util.*
-import org.junit.jupiter.api.Assertions.assertEquals
 
 class PostchainClientIT : IntegrationTestSetup() {
 

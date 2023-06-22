@@ -18,13 +18,13 @@ fun isServerFailure(status: Status) =
         (status == Status.UNKNOWN_HOST && status.description == Status.UNKNOWN_HOST.description) // workaround for https://github.com/http4k/http4k/issues/845
                 || status == Status.INTERNAL_SERVER_ERROR
                 || status == Status.SERVICE_UNAVAILABLE
+                || status == Status.CONNECTION_REFUSED
 
 fun unreachableDuration(status: Status): Duration =
-        if (status == Status.UNKNOWN_HOST && status.description == Status.UNKNOWN_HOST.description) // workaround for https://github.com/http4k/http4k/issues/845
-            5.minutes
-        else if (status == Status.INTERNAL_SERVER_ERROR)
-            10.seconds
-        else if (status == Status.SERVICE_UNAVAILABLE)
-            2.seconds
-        else
-            ZERO
+        when (status) {
+            Status.UNKNOWN_HOST -> if (status.description == Status.UNKNOWN_HOST.description) 5.minutes else ZERO
+            Status.CONNECTION_REFUSED -> 5.minutes
+            Status.INTERNAL_SERVER_ERROR -> 10.seconds
+            Status.SERVICE_UNAVAILABLE -> 2.seconds
+            else -> ZERO
+        }
