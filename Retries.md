@@ -13,16 +13,17 @@ The postchain client classify responses into these categories:
 * HTTP 400 Bad Request
 * HTTP 404 Not Found
 * HTTP 409 Conflict
+* HTTP 413 Request Entity Too Large
 
 ### Server failure
 
 * Inability to resolve hostname in DNS
+* Connection refused
 * HTTP 500 Internal Server Error
 * HTTP 503 Service Unavailable
 
 ### Transient server failure
 
-* Connection refused
 * Timeout
 * All other responses
 
