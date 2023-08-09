@@ -32,7 +32,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import java.time.Instant
-import java.util.*
+import java.util.Random
 
 class PostchainClientIT : IntegrationTestSetup() {
 
