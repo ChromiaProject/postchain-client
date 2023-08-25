@@ -10,6 +10,6 @@ interface EndpointPool : Iterable<Endpoint> {
         @JvmStatic
         fun default(urls: List<String>) = RandomizedEndpointPool(urls.map(::sanitizeUrl))
 
-        private fun sanitizeUrl(url: String) = url.trimEnd('/')
+        private fun sanitizeUrl(url: String) = url.trim().trimEnd('/')
     }
 }
