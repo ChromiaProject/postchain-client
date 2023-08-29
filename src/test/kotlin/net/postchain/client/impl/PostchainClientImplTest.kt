@@ -331,13 +331,23 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `Confirmation proof not found`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"error":"Can't find tx with hash 42"}""")
+            }).confirmationProof(TxRid("42"))
+        }.isInstanceOf(ClientError::class)
+    }
+
+    @Test
     fun `JSON transaction data can be parsed`() {
         val txString = "A58209213082091DA582091530820911A12204208F77E7DC903AE184A1569E60F8097CAFFB105F741D"
         val transaction: ByteArray = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request) =
                     Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"tx":"$txString"}""")
         }).getTransaction(TxRid("42"))
-        assertThat(transaction.toHex()).isEqualTo(txString)
+        assertThat(transaction).isContentEqualTo(txString.hexStringToByteArray())
     }
 
     @Test
@@ -348,6 +358,16 @@ internal class PostchainClientImplTest {
                     Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(tx.inputStream())
         }).getTransaction(TxRid("42"))
         assertThat(transaction).isContentEqualTo(tx)
+    }
+
+    @Test
+    fun `transaction not found`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"error":"Can't find tx with hash 42"}""")
+            }).getTransaction(TxRid("42"))
+        }.isInstanceOf(ClientError::class)
     }
 
     @Test
