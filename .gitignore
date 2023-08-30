@@ -12,3 +12,4 @@ target
 logs
 *.jar
 
+.flattened-pom.xml
