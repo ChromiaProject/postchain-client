@@ -28,12 +28,16 @@ include:
     when: on_failure
     paths:
       - "**/*.log"
-      - $JACOCO_REPORT_DIR/*
     reports:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
         - "**/target/failsafe-reports/TEST-*.xml"
         - "**/target/rell-reports/rell-tests.xml"
+    expire_in: 1 week
+  artifacts:
+    when: always
+    paths:
+      - $JACOCO_REPORT_DIR/*
     expire_in: 1 week
 
 stages:
