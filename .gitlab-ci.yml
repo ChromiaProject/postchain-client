@@ -1,8 +1,10 @@
 image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker:1.1.3
 include:
   - project: "chromaway/core-infra/gitlab-automation"
-    ref: 1.1.0
-    file: templates/release.yml
+    ref: 1.1.4
+    file: 
+      - templates/release.yml
+      - templates/report-code-coverage.yml
 
 .setup:
   before_script:
@@ -32,9 +34,15 @@ include:
         - "**/target/failsafe-reports/TEST-*.xml"
         - "**/target/rell-reports/rell-tests.xml"
     expire_in: 1 week
+  artifacts:
+    when: always
+    paths:
+      - $JACOCO_REPORT_DIR/*
+    expire_in: 1 week
 
 stages:
   - build
+  - code-coverage
   - deploy
   - release
 
@@ -50,7 +58,9 @@ deploy:
       deploy
 
 build:
-  extends: .setup
+  extends:
+    - .setup
+    - .visualise-test-coverage
   stage: build
   interruptible: true
   except:
@@ -59,7 +69,15 @@ build:
   script:
     - mvn
       $MAVEN_CLI_OPTS
-      verify
+      verify -Pcoverage
+
+test-coverage-report:
+  stage: code-coverage
+  except:
+    refs:
+      - tags
+  dependencies:
+    - build
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -74,6 +92,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
   DOCKER_CLI_EXPERIMENTAL: enabled
+  JACOCO_REPORT_DIR: target/site/jacoco
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
