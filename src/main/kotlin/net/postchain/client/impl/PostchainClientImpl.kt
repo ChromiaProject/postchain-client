@@ -137,8 +137,11 @@ class PostchainClientImpl(
                 try {
                     lastKnownTxResult = checkTxStatus(txRid)
                     if (lastKnownTxResult.status == CONFIRMED || lastKnownTxResult.status == REJECTED) return@poll
+                } catch (e: ClientError) {
+                    logger.warn { "Unable to poll for new block: ${e.errorMessage}" }
+                    lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
                 } catch (e: Exception) {
-                    logger.warn(e) { "Unable to poll for new block" }
+                    logger.warn(e) { "Unable to poll for new block: $e" }
                     lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
                 }
                 sleep(pollInterval.toMillis())
