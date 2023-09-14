@@ -54,6 +54,7 @@ deploy:
   script:
     - mvn
       $MAVEN_CLI_OPTS
+      --activate-profiles ci      
       -Drevision=$CI_COMMIT_TAG
       deploy
 
@@ -69,7 +70,8 @@ build:
   script:
     - mvn
       $MAVEN_CLI_OPTS
-      verify -Pcoverage
+      --activate-profiles ci,coverage
+      verify
 
 test-coverage-report:
   stage: code-coverage
