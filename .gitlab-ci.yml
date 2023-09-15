@@ -56,7 +56,7 @@ deploy:
       $MAVEN_CLI_OPTS
       --activate-profiles ci      
       -Drevision=$CI_COMMIT_TAG
-      deploy
+      source:jar deploy
 
 build:
   extends:
