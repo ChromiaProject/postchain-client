@@ -12,6 +12,7 @@ import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
 import net.postchain.client.core.BlockDetail
+import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
 import net.postchain.client.impl.PostchainClientImpl.CurrentBlockHeight
@@ -34,6 +35,7 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.io.EOFException
 import java.io.IOException
@@ -368,6 +370,111 @@ internal class PostchainClientImplTest {
                         Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"error":"Can't find tx with hash 42"}""")
             }).getTransaction(TxRid("42"))
         }.isInstanceOf(ClientError::class)
+    }
+
+    @Test
+    fun `Transaction count can be parsed`() {
+        val transactionsCount = 42L
+        val count: Long = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"transactionsCount":$transactionsCount}""")
+        }).getTransactionsCount()
+        assertThat(count).isEqualTo(transactionsCount)
+    }
+
+    @Nested
+    inner class getTransactionInfo {
+        @Test
+        fun `Transaction info can be parsed`() {
+            val body = """{
+            "blockRID": "4242424242",
+            "blockHeight": 54,
+            "blockHeader": "ABBAABBAABBAABBAABBA",
+            "witness": "AABBAABB",
+            "timestamp": 42,
+            "txRID": "123412341234",
+            "txHash": "432143214321",
+            "txData": "DABA1234DABA1234"
+            }""".trimIndent()
+            val info = Gson().fromJson(body, TransactionInfo.Json::class.java)
+            val result = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(Gson().toJson(info))
+            }).getTransactionInfo(TxRid("42"))
+            assertThat(result.blockRID.toHex()).isEqualTo("4242424242")
+            assertThat(result.blockHeight).isEqualTo(54)
+            assertThat(result.blockHeader.toHex()).isEqualTo("ABBAABBAABBAABBAABBA")
+            assertThat(result.witness.toHex()).isEqualTo("AABBAABB")
+            assertThat(result.timestamp).isEqualTo(42)
+            assertThat(result.txRID.toHex()).isEqualTo("123412341234")
+            assertThat(result.txHash.toHex()).isEqualTo("432143214321")
+            assertThat(result.txData.toHex()).isEqualTo("DABA1234DABA1234")
+        }
+
+        @Test
+        fun `Failed to find blockchain should throw ClientError`() {
+            assertFailure {
+                PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                    override fun invoke(request: Request) = Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""
+                        {
+                        "error": "Can't find blockchain with blockchainRID: <hex-string>"
+                        }
+                    """.trimIndent())
+                }).getTransactionInfo(TxRid("42"))
+            }.isInstanceOf(ClientError::class)
+        }
+    }
+
+    @Nested
+    inner class getTransactionsInfo {
+        @Test
+        fun `Transactions info can be parsed`() {
+            val infos = listOf(
+                    TransactionInfo.Json("4242424242", 54, "ABBAABBAABBAABBAABBA", "AABBAABB", 42, "123412341234", "432143214321", "DABA1234DABA1234"),
+                    TransactionInfo.Json("4141414141", 54, "ABBAABBAABBAABBAABBA", "AABBAABB", 42, "123412341234", "432143214321", "DABA1234DABA1234")
+            )
+            val response = Gson().toJson(infos)
+            val result = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.query("limit")).isNull()
+                    assertThat(request.query("before-time")).isNull()
+                    assertThat(request.query("signer")).isNull()
+                    return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(response)
+                }
+            }).getTransactionsInfo()
+            assertThat(result[0].blockRID.toHex()).isEqualTo("4242424242")
+            assertThat(result[1].blockRID.toHex()).isEqualTo("4141414141")
+        }
+
+        @Test
+        fun `Transactions info with query params should be valid request`() {
+            val infos = listOf(
+                    TransactionInfo.Json("4242424242", 54, "ABBAABBAABBAABBAABBA", "AABBAABB", 42, "123412341234", "432143214321", "DABA1234DABA1234"),
+                    TransactionInfo.Json("4141414141", 54, "ABBAABBAABBAABBAABBA", "AABBAABB", 42, "123412341234", "432143214321", "DABA1234DABA1234")
+            )
+            val response = Gson().toJson(infos)
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.query("limit")).isEqualTo("123")
+                    assertThat(request.query("before-time")).isEqualTo("132")
+                    assertThat(request.query("signer")).isEqualTo("ABBA")
+                    return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(response)
+                }
+            }).getTransactionsInfo(123, 132, "ABBA")
+        }
+
+        @Test
+        fun `Failed to find blockchain should throw ClientError`() {
+            assertFailure {
+                PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                    override fun invoke(request: Request) = Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""
+                        {
+                        "error": "Can't find blockchain with blockchainRID: <hex-string>"
+                        }
+                    """.trimIndent())
+                }).getTransactionsInfo()
+            }.isInstanceOf(ClientError::class)
+        }
     }
 
     @Test

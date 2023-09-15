@@ -4,10 +4,12 @@ package net.postchain.client.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
+import com.google.gson.reflect.TypeToken
 import mu.KLogging
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxRid
 import net.postchain.client.defaultHttpHandler
@@ -34,6 +36,7 @@ import org.http4k.core.*
 import java.io.EOFException
 import java.io.IOException
 import java.lang.Thread.sleep
+import java.lang.reflect.Type
 import java.time.Duration
 
 object Header {
@@ -199,6 +202,56 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("getTransaction", response, endpoint)
     },
             true)
+
+    @Throws(IOException::class)
+    override fun getTransactionInfo(txRid: TxRid): TransactionInfo = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/transactions/$blockchainRIDOrID/${txRid.rid}")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        TransactionInfo.fromJson(
+                parseJson("getTransactionInfo", response, endpoint, TransactionInfo.Json::class.java)
+        )
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getTransactionInfo", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
+    override fun getTransactionsInfo(limit: Long, beforeTime: Long, signer: String?): List<TransactionInfo> =
+            requestStrategy.request({ endpoint ->
+                var request = Request(Method.GET, "${endpoint.url}/transactions/$blockchainRIDOrID")
+                        .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+                request = if (limit > -1) request.query("limit", limit.toString()) else request
+                request = if (beforeTime > -1) request.query("before-time", beforeTime.toString()) else request
+                request = if (signer != null) request.query("signer", signer) else request
+                request
+            }, { response, endpoint ->
+                val listType: Type = object : TypeToken<ArrayList<TransactionInfo.Json>>() {}.type
+                val infos: List<TransactionInfo.Json> = parseJsonArray("getTransactionsInfo", response, endpoint, listType)
+                infos.map { TransactionInfo.fromJson(it) }
+            }, { response, endpoint ->
+                buildExceptionFromErrorResponse("getTransactionsInfo", response, endpoint)
+            },
+                    true)
+
+    @Throws(IOException::class)
+    override fun getTransactionsCount(): Long = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/transactions/$blockchainRIDOrID/count")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        parseJson("getTransactionsCount", response, endpoint, TransactionsCount::class.java).transactionsCount
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getTransactionInfo", response, endpoint)
+    },
+            true)
+
+    private fun <T> parseJsonArray(context: String, response: Response, endpoint: Endpoint, listType: Type): List<T> = try {
+        gson.fromJson(responseStream(response).bufferedReader(), listType)
+    } catch (e: JsonParseException) {
+        val rootCause = ExceptionUtils.getRootCause(e)
+        if (rootCause is IOException) throw rootCause
+        else throw ClientError(context, response.status, "JSON parsing failed", endpoint)
+    }
 
     private fun <T> parseJson(context: String, response: Response, endpoint: Endpoint, cls: Class<T>): T =
             parseJson(responseStream(response), cls)

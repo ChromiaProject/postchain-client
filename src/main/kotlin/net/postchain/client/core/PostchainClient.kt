@@ -54,4 +54,24 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * Get raw transaction data
      */
     fun getTransaction(txRid: TxRid): ByteArray
+
+    /**
+     * Get information about a transaction
+     */
+    fun getTransactionInfo(txRid: TxRid): TransactionInfo
+
+    /**
+     * Get information about all transactions
+     *
+     * @param limit optional limit
+     * @param beforeTime optional before time
+     * @param signer optional signer
+     * @return list of transaction infos
+     */
+    fun getTransactionsInfo(limit: Long = -1, beforeTime: Long = -1, signer: String? = null): List<TransactionInfo>
+
+    /**
+     * Get number of transactions
+     */
+    fun getTransactionsCount(): Long
 }
