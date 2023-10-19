@@ -187,16 +187,17 @@ class PostchainClientImpl(
         Request(Method.GET, "${endpoint.url}/tx/$blockchainRIDOrID/${txRid.rid}")
                 .header(Header.Accept, ContentType.OCTET_STREAM.value)
     }, { response, endpoint ->
-        when (val responseType = response.header(Header.ContentType)) {
-            ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readAllBytes() }
+        val contentType = response.header(Header.ContentType) ?: ""
+        when {
+            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readAllBytes() }
 
-            ContentType.APPLICATION_JSON.value -> {
+            contentType.startsWith(ContentType.APPLICATION_JSON.value) -> {
                 val txResponse = parseJson("getTransaction", response, endpoint, Transaction::class.java)
                 txResponse.tx.hexStringToByteArray()
             }
 
             else -> throw ClientError("getTransaction", response.status,
-                    "Unexpected response type: $responseType", endpoint)
+                    "Unexpected response type: $contentType", endpoint)
         }
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("getTransaction", response, endpoint)
@@ -268,11 +269,12 @@ class PostchainClientImpl(
 
     private fun parseErrorResponse(response: Response): String {
         val responseStream = responseStream(response)
-        return when (response.header(Header.ContentType)) {
-            ContentType.APPLICATION_JSON.value -> parseJson(responseStream, ErrorResponse::class.java)?.error
+        val contentType = response.header(Header.ContentType) ?: ""
+        return when {
+            contentType.startsWith(ContentType.APPLICATION_JSON.value) -> parseJson(responseStream, ErrorResponse::class.java)?.error
                     ?: response.status.description
 
-            ContentType.OCTET_STREAM.value ->
+            contentType == ContentType.OCTET_STREAM.value ->
                 decodeGtv(responseStream)?.asString() ?: response.status.description
 
             else -> {
