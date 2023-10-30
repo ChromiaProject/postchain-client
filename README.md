@@ -9,7 +9,7 @@ requires Gitlab access):
 
 ```xml
 <dependency>
-    <groupId>net.postchain</groupId>
+    <groupId>net.postchain.client</groupId>
     <artifactId>postchain-client</artifactId>
 </dependency>
 ```
