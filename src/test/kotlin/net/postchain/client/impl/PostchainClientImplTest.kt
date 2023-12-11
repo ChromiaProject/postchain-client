@@ -100,8 +100,8 @@ internal class PostchainClientImplTest {
     fun `Post transaction should properly encode transaction`() {
         val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
-                assertThat(request.bodyString()).isEqualTo(
-                        """{"tx":"A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000"}""")
+                assertThat(request.body.stream.readAllBytes().toHex())
+                        .isEqualTo("A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000")
                 return Response(Status.OK).body(Body.EMPTY)
             }
         })
@@ -113,23 +113,9 @@ internal class PostchainClientImplTest {
     fun `Post transaction should parse JSON error response`() {
         val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
-                assertThat(request.bodyString()).isEqualTo(
-                        """{"tx":"A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000"}""")
-                return Response(Status.CONFLICT).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(Gson().toJson(ErrorResponse("Message!")))
-            }
-        })
-        val txResult = client.transactionBuilder().finish().build().post()
-        assertThat(txResult.status).isEqualTo(TransactionStatus.REJECTED)
-        assertThat(txResult.rejectReason).isEqualTo("Message!")
-    }
-
-    @Test
-    fun `Post transaction should parse JSON error response with charset`() {
-        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
-            override fun invoke(request: Request): Response {
-                assertThat(request.bodyString()).isEqualTo(
-                        """{"tx":"A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000"}""")
-                return Response(Status.CONFLICT).header(Header.ContentType, "application/json; charset=utf-8").body(Gson().toJson(ErrorResponse("Message!")))
+                assertThat(request.body.stream.readAllBytes().toHex())
+                        .isEqualTo("A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000")
+                return Response(Status.CONFLICT).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("Message!")).inputStream())
             }
         })
         val txResult = client.transactionBuilder().finish().build().post()
@@ -141,8 +127,8 @@ internal class PostchainClientImplTest {
     fun `Post transaction should handle HTML response which can come from proxy`() {
         val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
-                assertThat(request.bodyString()).isEqualTo(
-                        """{"tx":"A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000"}""")
+                assertThat(request.body.stream.readAllBytes().toHex())
+                        .isEqualTo("A5363034A52E302CA1220420EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8FA5023000A5023000A5023000")
                 return Response(Status.REQUEST_ENTITY_TOO_LARGE).header(Header.ContentType, "text/html").body("<html><body><h1>413 Request Entity Too Large</h1></body></html>")
             }
         })
