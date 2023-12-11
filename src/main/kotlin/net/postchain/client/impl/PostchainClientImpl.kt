@@ -38,6 +38,7 @@ import java.io.IOException
 import java.lang.Thread.sleep
 import java.lang.reflect.Type
 import java.time.Duration
+import java.util.zip.GZIPInputStream
 
 object Header {
     const val ContentType = "Content-Type"
@@ -75,7 +76,7 @@ class PostchainClientImpl(
         Request(Method.POST, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                 .header(Header.ContentType, ContentType.OCTET_STREAM.value)
                 .header(Header.Accept, ContentType.OCTET_STREAM.value)
-                .body(gtxQuery.encode().inputStream())
+                .body(MemoryBody(gtxQuery.encode()))
     }, { response, endpoint ->
         decodeGtv("query", response, endpoint)
     }, { response, endpoint ->
@@ -111,9 +112,9 @@ class PostchainClientImpl(
         val txRid = TxRid(tx.calculateTxRid(calculator).toHex())
         return requestStrategy.request({ endpoint ->
             Request(Method.POST, "${endpoint.url}/tx/$blockchainRIDHex")
-                    .header(Header.ContentType, ContentType.APPLICATION_JSON.value)
-                    .header(Header.Accept, ContentType.APPLICATION_JSON.value)
-                    .body(gson.toJson(Tx(tx.encodeHex())))
+                    .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                    .body(MemoryBody(tx.encode()))
         }, { response, _ ->
             TransactionResult(txRid, WAITING, response.status.code, response.status.description)
         }, { response, _ ->
@@ -303,8 +304,11 @@ class PostchainClientImpl(
         else null
     }
 
-    private fun responseStream(response: Response) =
-            BoundedInputStream(response.body.stream, config.maxResponseSize.toLong())
+    private fun responseStream(response: Response) = if (response.header("content-encoding") == "gzip") {
+        BoundedInputStream(GZIPInputStream(response.body.stream), config.maxResponseSize.toLong())
+    } else {
+        BoundedInputStream(response.body.stream, config.maxResponseSize.toLong())
+    }
 
     @Throws(IOException::class)
     override fun close() {
@@ -312,7 +316,6 @@ class PostchainClientImpl(
     }
 
     /* JSON structures */
-    data class Tx(val tx: String)
     data class TxStatus(val status: String?, val rejectReason: String?)
     data class CurrentBlockHeight(val blockHeight: Long)
     data class ErrorResponse(val error: String)
