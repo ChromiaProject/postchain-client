@@ -7,6 +7,7 @@ import net.postchain.common.BlockchainRid
 import net.postchain.common.PropertiesFileLoader
 import net.postchain.common.config.Config
 import net.postchain.common.config.cryptoSystem
+import net.postchain.common.config.getEnvOrBooleanProperty
 import net.postchain.common.config.getEnvOrIntProperty
 import net.postchain.common.config.getEnvOrListProperty
 import net.postchain.common.config.getEnvOrLongProperty
@@ -40,7 +41,9 @@ data class PostchainClientConfig @JvmOverloads constructor(
         /** Will not be used if `httpClient` parameter is specified when creating `ConcretePostchainClient`. */
         val responseTimeout: Duration = RESPONSE_TIMEOUT,
         val requestStrategy: RequestStrategyFactory = AbortOnErrorRequestStrategyFactory(),
-        val maxTxSize: Int = MAX_TX_SIZE
+        val maxTxSize: Int = MAX_TX_SIZE,
+        /** Will only be applied to synchronous client if enabled */
+        val compressRequestBodies: Boolean = false
 ) : Config {
     companion object {
         @JvmStatic
@@ -68,6 +71,7 @@ data class PostchainClientConfig @JvmOverloads constructor(
                     requestStrategy = config.getEnvOrStringProperty("POSTCHAIN_CLIENT_REQUEST_STRATEGY", "request.strategy", RequestStrategies.ABORT_ON_ERROR.name)
                             .let { RequestStrategies.valueOf(it).factory },
                     maxTxSize = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_MAX_TX_SIZE", "max.tx.size", MAX_TX_SIZE), 
+                    compressRequestBodies = config.getEnvOrBooleanProperty("POSTCHAIN_CLIENT_COMPRESS_REQUEST_BODIES", "compress.requests", false),
             )
         }
     }
