@@ -35,6 +35,7 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.io.EOFException
@@ -259,6 +260,18 @@ internal class PostchainClientImplTest {
                     Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
         }).query("test_query", gtv("arg"))
         assertThat(queryResponse.asString()).isEqualTo("query_response")
+    }
+
+    @Test @Disabled
+    fun `query benchmark`() {
+        val before = System.currentTimeMillis()
+        val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(
+                BlockchainRid.buildFromHex("60B8F4D280CB41F6B5172624AE0D695F75343CE8A600351A0327CD56A5069CEF"),
+                EndpointPool.singleUrl("http://localhost:7740"))
+        )
+                .query("rell.get_app_structure", gtv(mapOf()))
+        println("time: ${System.currentTimeMillis() - before}ms")
+        println("size: ${encodeGtv(queryResponse).size}")
     }
 
     @Test
