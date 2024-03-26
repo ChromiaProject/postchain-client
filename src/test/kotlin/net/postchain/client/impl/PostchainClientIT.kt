@@ -136,7 +136,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         await().untilCallTo {
             client.query("gtx_test_get_value", gtv)
         } matches { resp ->
-            resp?.asString() == rndStr
+            resp?.asArray()?.first()?.asString() == rndStr
         }
     }
 
@@ -245,7 +245,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         }
 
         if (shouldWork) {
-            assertEquals(rndStr, client.query("gtx_test_get_value", gtv).asString())
+            assertEquals(rndStr, client.query("gtx_test_get_value", gtv).asArray().first().asString())
         } else {
             assertThrows<NodesDisagree> {
                 client.query("gtx_test_get_value", gtv)
