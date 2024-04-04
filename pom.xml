@@ -23,8 +23,8 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.15.7</postchain.version>
-        <kotlin.version>1.8.21</kotlin.version>
+        <postchain.version>3.15.11</postchain.version>
+        <kotlin.version>1.9.23</kotlin.version>
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
