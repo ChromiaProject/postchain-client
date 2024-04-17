@@ -16,6 +16,7 @@ import net.postchain.client.defaultHttpHandler
 import net.postchain.client.exception.ClientError
 import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
+import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
@@ -246,6 +247,25 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("getTransactionInfo", response, endpoint)
     },
             true)
+
+    @Throws(IOException::class)
+    override fun getBlockchainRID(chainIID: Long): BlockchainRid = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/brid/iid_$chainIID")
+                .header(Header.Accept, ContentType.TEXT_PLAIN.value)
+    }, { response, endpoint ->
+        parsePlainValue("getBrid", response, endpoint) { BlockchainRid(it.hexStringToByteArray()) }
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getBrid", response, endpoint)
+    },
+            true)
+
+    private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
+        try {
+            return converter(responseStream(response).bufferedReader().readText())
+        } catch (e: Exception) {
+            throw ClientError(context, response.status, "Parsing response failed", endpoint)
+        }
+    }
 
     private fun <T> parseJsonArray(context: String, response: Response, endpoint: Endpoint, listType: Type): List<T> = try {
         gson.fromJson(responseStream(response).bufferedReader(), listType)

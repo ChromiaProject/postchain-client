@@ -2,6 +2,7 @@ package net.postchain.client.core
 
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.transaction.TransactionBuilder
+import net.postchain.common.BlockchainRid
 import net.postchain.crypto.KeyPair
 import net.postchain.gtx.Gtx
 import java.io.Closeable
@@ -74,4 +75,10 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * Get number of transactions
      */
     fun getTransactionsCount(): Long
+
+    /**
+     * Get blockchain RID by chain IID. Please note that chain IID is the internal ID of a chain and might vary between
+     * nodes and is not recommended to use in production.
+     */
+    fun getBlockchainRID(chainIID: Long): BlockchainRid
 }

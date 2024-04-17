@@ -390,10 +390,30 @@ internal class PostchainClientImplTest {
     fun `Transaction count can be parsed`() {
         val transactionsCount = 42L
         val count: Long = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
-            override fun invoke(request: Request) =
-                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"transactionsCount":$transactionsCount}""")
+                override fun invoke(request: Request) =
+                        Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"transactionsCount":$transactionsCount}""")
         }).getTransactionsCount()
         assertThat(count).isEqualTo(transactionsCount)
+    }
+
+    @Test
+    fun `Blockchain RID not found`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("{\"error\":\"Can\\u0027t find blockchain with blockchainRID: 9E6CB107E0DF8D9872336B845FF7919775158EA3715E58F3BDE880C883EC6F0A\"}")
+            }).getBlockchainRID(0)
+        }.isInstanceOf(ClientError::class)
+    }
+
+    @Test
+    fun `Blockchain RID can be parsed`() {
+        val bcRid = "9E6CB107E0DF8D9872336B845FF7919775158EA3715E58F3BDE880C883EC6F00"
+        val blockchainRid: BlockchainRid = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.TEXT_PLAIN.value).body(bcRid)
+        }).getBlockchainRID(0)
+        assertThat(blockchainRid.toHex()).isEqualTo(bcRid)
     }
 
     @Nested
