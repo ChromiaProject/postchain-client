@@ -19,6 +19,7 @@ fun isServerFailure(status: Status) =
                 || status == Status.INTERNAL_SERVER_ERROR
                 || status == Status.SERVICE_UNAVAILABLE
                 || status == Status.CONNECTION_REFUSED
+                || status == Status.BAD_GATEWAY
 
 fun unreachableDuration(status: Status): Duration =
         when (status) {

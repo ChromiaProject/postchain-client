@@ -16,4 +16,9 @@ internal class StrategyTest {
     fun `Status CONNECTION_REFUSED is server failure`() {
         assertTrue(isServerFailure(Status.CONNECTION_REFUSED))
     }
+
+    @Test
+    fun `Status BAD GATEWAY is server failure`() {
+        assertTrue(isServerFailure(Status.BAD_GATEWAY))
+    }
 }
