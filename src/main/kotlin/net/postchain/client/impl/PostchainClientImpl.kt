@@ -27,6 +27,7 @@ import net.postchain.common.tx.TransactionStatus.WAITING
 import net.postchain.crypto.KeyPair
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvDecoder
+import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.mapper.GtvObjectMapper
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.Gtx
@@ -258,6 +259,14 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("getBrid", response, endpoint)
     },
             true)
+
+    @Throws(IOException::class)
+    override fun validateConfiguration(configuration: Gtv) = requestStrategy.request({ endpoint ->
+        Request(Method.POST, "${endpoint.url}/config/$blockchainRIDHex")
+                .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                .body(MemoryBody(GtvEncoder.encodeGtv(configuration)))
+    }, { _,_ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
 
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
         try {

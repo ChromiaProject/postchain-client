@@ -2,10 +2,13 @@
 
 package net.postchain.client.impl
 
+import assertk.assertThat
+import assertk.assertions.contains
 import net.postchain.api.rest.controller.Model
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TxRid
+import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.transaction.TransactionBuilder
@@ -20,6 +23,7 @@ import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.GtxQuery
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
@@ -33,6 +37,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
+import java.io.File
 import java.time.Instant
 import java.util.Random
 
@@ -70,6 +75,10 @@ class PostchainClientIT : IntegrationTestSetup() {
                         EndpointPool.singleUrl("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}"),
                         listOf(KeyPair(pubKey0, privKey0))
                 ))
+    }
+
+    private fun loadConfig(fileName: String): Gtv {
+        return GtvMLParser.parseGtvML(File(this::class.java.getResource(fileName)!!.toURI()).readText())
     }
 
     @Test
@@ -175,6 +184,19 @@ class PostchainClientIT : IntegrationTestSetup() {
         val info = client.getTransactionsInfo()
         assertEquals(1, info[0].blockHeight)
         assertEquals(result.txRid.rid, info[0].txRID.toHex())
+    }
+
+    @Test
+    fun testValidateBlockchainConfigFails() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+
+        client.validateConfiguration(loadConfig(configFileName1))
+        val err = assertThrows<ClientError> {
+            client.validateConfiguration(loadConfig("blockchain_config_invalid.xml"))
+        }
+        assertThat(err.errorMessage).contains("Invalid configuration: net.postchain.gtx.NonExistent")
     }
 
     @Test
