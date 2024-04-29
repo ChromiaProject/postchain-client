@@ -3,7 +3,9 @@ package net.postchain.client.core
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
+import net.postchain.client.exception.ClientError
 import net.postchain.crypto.KeyPair
+import net.postchain.gtv.Gtv
 import net.postchain.gtx.Gtx
 import java.io.Closeable
 import java.time.Duration
@@ -81,4 +83,11 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * nodes and is not recommended to use in production.
      */
     fun getBlockchainRID(chainIID: Long): BlockchainRid
+
+    /**
+     * Validates that the supplied blockchain configuration is compatible with the running blockchain configuration.
+     * @param configuration blockchain configuration to verify
+     * @throws ClientError
+     */
+    fun validateConfiguration(configuration: Gtv)
 }

@@ -3,11 +3,15 @@ package net.postchain.client.impl
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import assertk.isContentEqualTo
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import net.postchain.api.rest.ErrorBody
+import net.postchain.api.rest.json.JsonFactory.auto
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
@@ -37,6 +41,8 @@ import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import java.io.EOFException
 import java.io.IOException
 import java.time.Duration
@@ -414,6 +420,26 @@ internal class PostchainClientImplTest {
                     Response(Status.OK).header(Header.ContentType, ContentType.TEXT_PLAIN.value).body(bcRid)
         }).getBlockchainRID(0)
         assertThat(blockchainRid.toHex()).isEqualTo(bcRid)
+    }
+
+    @Test
+    fun `Validation of blockchain configuration succeeds`() {
+        assertDoesNotThrow {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(Body.EMPTY)
+            }).validateConfiguration(gtv(mapOf()))
+        }
+    }
+
+    @Test
+    fun `Validation of blockchain configuration fails`() {
+        assertThrows<ClientError> {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("{\"error\":\"Something wrong in config\"}")
+            }).validateConfiguration(gtv(mapOf()))
+        }
     }
 
     @Nested
