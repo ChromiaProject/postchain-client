@@ -90,4 +90,9 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * @throws ClientError
      */
     fun validateConfiguration(configuration: Gtv)
+
+    /**
+     * Get node API version.
+     */
+    fun getVersion(): Version
 }

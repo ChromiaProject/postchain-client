@@ -12,6 +12,7 @@ import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxRid
+import net.postchain.client.core.Version
 import net.postchain.client.defaultHttpHandler
 import net.postchain.client.exception.ClientError
 import net.postchain.client.request.Endpoint
@@ -30,6 +31,7 @@ import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.mapper.GtvObjectMapper
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.BoundedInputStream
@@ -45,6 +47,7 @@ import java.util.zip.GZIPInputStream
 object Header {
     const val ContentType = "Content-Type"
     const val Accept = "Accept"
+    const val XPostchainSignature = "X-Postchain-Signature"
 }
 
 class PostchainClientImpl(
@@ -261,12 +264,36 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
-    override fun validateConfiguration(configuration: Gtv) = requestStrategy.request({ endpoint ->
-        Request(Method.POST, "${endpoint.url}/config/$blockchainRIDHex")
-                .header(Header.ContentType, ContentType.OCTET_STREAM.value)
-                .header(Header.Accept, ContentType.OCTET_STREAM.value)
-                .body(MemoryBody(GtvEncoder.encodeGtv(configuration)))
-    }, { _,_ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
+    override fun validateConfiguration(configuration: Gtv) {
+
+        val configHash = configuration.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
+        val signatures = config.signers
+                .map { it.sigMaker(cryptoSystem) }
+                .map { it.signDigest(configHash) }
+                .joinToString(",") { "${it.subjectID.toHex()}:${it.data.toHex()}" }
+
+        return requestStrategy.request({ endpoint ->
+            Request(Method.POST, "${endpoint.url}/config/$blockchainRIDHex")
+                    .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                    .header(Header.XPostchainSignature, signatures)
+                    .body(MemoryBody(GtvEncoder.encodeGtv(configuration)))
+        }, { _,_ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
+    }
+
+    @Throws(IOException::class)
+    override fun getVersion(): Version = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/version")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        parseJson("getVersion", response, endpoint, Version::class.java)
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getVersion", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
+
 
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
         try {
