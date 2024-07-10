@@ -13,6 +13,7 @@ import net.postchain.client.exception.NodesDisagree
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
+import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PrivKey
@@ -273,6 +274,14 @@ class PostchainClientIT : IntegrationTestSetup() {
                 client.query("gtx_test_get_value", gtv)
             }
         }
+    }
+
+    @Test
+    fun testGetVerifiedAnchoredBlockHeights() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        assertEquals(HighestBlockHeightAnchoringCheck(null, null, null), client.getHighestBlockHeightAnchoringCheck())
     }
 
     class MockModel(delegate: Model) : Model by delegate {
