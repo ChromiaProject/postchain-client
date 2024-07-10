@@ -4,6 +4,7 @@ import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
 import net.postchain.client.exception.ClientError
+import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair
 import net.postchain.gtv.Gtv
 import net.postchain.gtx.Gtx
@@ -95,4 +96,9 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * Get node API version.
      */
     fun getVersion(): Version
+
+    /**
+     * Check if the highest block of a blockchain matches the block anchored in CAC, SAC and EVM.
+     */
+    fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
 }

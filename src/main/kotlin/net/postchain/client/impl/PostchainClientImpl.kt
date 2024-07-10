@@ -19,6 +19,7 @@ import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.common.tx.TransactionStatus.CONFIRMED
@@ -289,6 +290,17 @@ class PostchainClientImpl(
         parseJson("getVersion", response, endpoint, Version::class.java)
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("getVersion", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
+    override fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/highest_block_height_anchoring_check/$blockchainRIDOrID")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        parseJson("getHighestBlockHeightAnchoringCheck", response, endpoint, HighestBlockHeightAnchoringCheck::class.java)
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getHighestBlockHeightAnchoringCheck", response, endpoint)
     },
             true)
 
