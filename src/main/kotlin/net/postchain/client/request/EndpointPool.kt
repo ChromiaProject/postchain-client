@@ -5,11 +5,9 @@ interface EndpointPool : Iterable<Endpoint> {
 
     companion object {
         @JvmStatic
-        fun singleUrl(url: String) = SingleEndpointPool(sanitizeUrl(url))
+        fun singleUrl(url: String) = SingleEndpointPool(url)
 
         @JvmStatic
-        fun default(urls: List<String>) = RandomizedEndpointPool(urls.map(::sanitizeUrl))
-
-        private fun sanitizeUrl(url: String) = url.trim().trimEnd('/')
+        fun default(urls: List<String>) = RandomizedEndpointPool(urls)
     }
 }
