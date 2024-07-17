@@ -4,7 +4,14 @@ import java.time.Clock
 import java.time.Instant
 import kotlin.time.Duration
 
-class Endpoint(val url: String, private val clock: Clock = Clock.systemUTC()) {
+class Endpoint(url: String, private val clock: Clock = Clock.systemUTC()) {
+
+    val url: String = sanitizeUrl(url)
+
+    companion object {
+        fun sanitizeUrl(url: String) = url.trim().trimEnd('/')
+    }
+
     @Volatile
     private var whenReachable: Instant = Instant.EPOCH
 
