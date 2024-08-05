@@ -15,6 +15,7 @@ import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
 import net.postchain.client.defaultHttpHandler
 import net.postchain.client.exception.ClientError
+import net.postchain.client.exception.NotFoundError
 import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
@@ -333,7 +334,10 @@ class PostchainClientImpl(
 
     private fun buildExceptionFromErrorResponse(context: String, response: Response, endpoint: Endpoint): Nothing {
         val errorMessage = parseErrorResponse(response)
-        throw ClientError(context, response.status, errorMessage, endpoint)
+        throw when (response.status) {
+            Status.NOT_FOUND -> NotFoundError(context, errorMessage, endpoint)
+            else -> ClientError(context, response.status, errorMessage, endpoint)
+        }
     }
 
     private fun parseErrorResponse(response: Response): String {

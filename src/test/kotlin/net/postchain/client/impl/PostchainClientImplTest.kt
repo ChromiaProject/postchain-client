@@ -3,15 +3,11 @@ package net.postchain.client.impl
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
-import assertk.assertions.isTrue
 import assertk.isContentEqualTo
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import net.postchain.api.rest.ErrorBody
-import net.postchain.api.rest.json.JsonFactory.auto
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
@@ -19,6 +15,7 @@ import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
+import net.postchain.client.exception.NotFoundError
 import net.postchain.client.impl.PostchainClientImpl.CurrentBlockHeight
 import net.postchain.client.impl.PostchainClientImpl.ErrorResponse
 import net.postchain.client.impl.PostchainClientImpl.TxStatus
@@ -409,7 +406,7 @@ internal class PostchainClientImplTest {
                 override fun invoke(request: Request) =
                         Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("{\"error\":\"Can\\u0027t find blockchain with blockchainRID: 9E6CB107E0DF8D9872336B845FF7919775158EA3715E58F3BDE880C883EC6F0A\"}")
             }).getBlockchainRID(0)
-        }.isInstanceOf(ClientError::class)
+        }.isInstanceOf(NotFoundError::class)
     }
 
     @Test
