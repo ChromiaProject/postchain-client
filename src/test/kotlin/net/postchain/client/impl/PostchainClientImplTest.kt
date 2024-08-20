@@ -304,6 +304,17 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `current block height from the specific container can be parsed`() {
+        val currentBlockHeight: Long = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(Gson().toJson(
+                            CurrentBlockHeight(request.query("container")?.toLong() ?: 0L))
+                    )
+        }).currentBlockHeight("123")
+        assertThat(currentBlockHeight).isEqualTo(123)
+    }
+
+    @Test
     fun `too big block height response will be rejected`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url), maxResponseSize = 1024), httpClient = object : HttpHandler {
@@ -393,8 +404,8 @@ internal class PostchainClientImplTest {
     fun `Transaction count can be parsed`() {
         val transactionsCount = 42L
         val count: Long = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
-                override fun invoke(request: Request) =
-                        Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"transactionsCount":$transactionsCount}""")
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"transactionsCount":$transactionsCount}""")
         }).getTransactionsCount()
         assertThat(count).isEqualTo(transactionsCount)
     }
