@@ -92,9 +92,12 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
-    override fun currentBlockHeight(): Long = requestStrategy.request({ endpoint ->
+    override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->
         Request(Method.GET, "${endpoint.url}/blockchain/$blockchainRIDOrID/height")
                 .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+                .let {
+                    if (container != null) it.query("container", container) else it
+                }
     }, { response, endpoint ->
         parseJson("currentBlockHeight", response, endpoint, CurrentBlockHeight::class.java).blockHeight
     }, { response, endpoint ->
@@ -280,7 +283,7 @@ class PostchainClientImpl(
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
                     .header(Header.XPostchainSignature, signatures)
                     .body(MemoryBody(GtvEncoder.encodeGtv(configuration)))
-        }, { _,_ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
+        }, { _, _ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
     }
 
     @Throws(IOException::class)
