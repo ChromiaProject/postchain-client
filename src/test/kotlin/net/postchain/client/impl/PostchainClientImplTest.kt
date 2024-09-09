@@ -12,6 +12,7 @@ import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
 import net.postchain.client.core.BlockDetail
+import net.postchain.client.core.BlockRid
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
@@ -220,24 +221,26 @@ internal class PostchainClientImplTest {
         assertQueryUrlEndsWith(config, brid)
     }
 
+    val mockBlockDetail = gtv(mapOf(
+            "rid" to gtv("34ED10678AAE0414562340E8754A7CCD174B435B52C7F0A4E69470537AEE47E6".hexStringToByteArray()),
+            "prevBlockRID" to gtv("5AF85874B9CCAC197AA739585449668BE15650C534E08705F6D60A6993FE906D".hexStringToByteArray()),
+            "header" to gtv("023F9C7FBAFD92E53D7890A61B50B33EC0375FA424D60BD328AA2454408430C383".hexStringToByteArray()),
+            "height" to gtv(1),
+            "transactions" to gtv(listOf(gtv(mapOf(
+                    "rid" to gtv("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29".hexStringToByteArray()),
+                    "hash" to gtv("F537E4B8224F4BC84DB37AD3E4F898A3A9127D2E86C25213508F7236016E58B9".hexStringToByteArray()),
+                    "data" to GtvNull
+            )))),
+            "witness" to gtv("03D8844CFC0CE7BECD33CDF49A9881364695C944E266E06356CDA11C2305EAB83A".hexStringToByteArray()),
+            "timestamp" to gtv(0)
+    ))
+
     @Test
     fun `blockAtHeight found`() {
         val someBlock: BlockDetail? = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.header(Header.Accept)).isEqualTo(ContentType.OCTET_STREAM.value)
-                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(mapOf(
-                        "rid" to gtv("34ED10678AAE0414562340E8754A7CCD174B435B52C7F0A4E69470537AEE47E6".hexStringToByteArray()),
-                        "prevBlockRID" to gtv("5AF85874B9CCAC197AA739585449668BE15650C534E08705F6D60A6993FE906D".hexStringToByteArray()),
-                        "header" to gtv("023F9C7FBAFD92E53D7890A61B50B33EC0375FA424D60BD328AA2454408430C383".hexStringToByteArray()),
-                        "height" to gtv(1),
-                        "transactions" to gtv(listOf(gtv(mapOf(
-                                "rid" to gtv("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29".hexStringToByteArray()),
-                                "hash" to gtv("F537E4B8224F4BC84DB37AD3E4F898A3A9127D2E86C25213508F7236016E58B9".hexStringToByteArray()),
-                                "data" to GtvNull
-                        )))),
-                        "witness" to gtv("03D8844CFC0CE7BECD33CDF49A9881364695C944E266E06356CDA11C2305EAB83A".hexStringToByteArray()),
-                        "timestamp" to gtv(0)
-                ))).inputStream())
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(mockBlockDetail).inputStream())
             }
         }).blockAtHeight(1L)
         assertThat(someBlock!!.height).isEqualTo(1L)
@@ -252,6 +255,29 @@ internal class PostchainClientImplTest {
             override fun invoke(request: Request) =
                     Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(GtvNull).inputStream())
         }).blockAtHeight(Long.MAX_VALUE)
+        assertThat(noBlock).isNull()
+    }
+
+    @Test
+    fun `blockByRid found`() {
+        val someBlock: BlockDetail? = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.header(Header.Accept)).isEqualTo(ContentType.OCTET_STREAM.value)
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(mockBlockDetail).inputStream())
+            }
+        }).blockByRid(BlockRid("34ED10678AAE0414562340E8754A7CCD174B435B52C7F0A4E69470537AEE47E6"))
+        assertThat(someBlock!!.height).isEqualTo(1L)
+        assertThat(someBlock.rid.data).isContentEqualTo("34ED10678AAE0414562340E8754A7CCD174B435B52C7F0A4E69470537AEE47E6".hexStringToByteArray())
+        assertThat(someBlock.transactions[0].rid.data).isContentEqualTo("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29".hexStringToByteArray())
+        assertThat(someBlock.transactions[0].data).isNull()
+    }
+
+    @Test
+    fun `blockByRid missing`() {
+        val noBlock: BlockDetail? = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(GtvNull).inputStream())
+        }).blockByRid(BlockRid(""))
         assertThat(noBlock).isNull()
     }
 
