@@ -101,4 +101,9 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * Check if the highest block of a blockchain matches the block anchored in CAC, SAC and EVM.
      */
     fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
+
+    /**
+     * Query block by RID.
+     */
+    fun blockByRid(blockRid: BlockRid): BlockDetail?
 }
