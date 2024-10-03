@@ -6,6 +6,7 @@ import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair
+import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
 import net.postchain.gtx.Gtx
 import java.io.Closeable
@@ -23,6 +24,8 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      * Creates a [TransactionBuilder] with a given list of signers
      */
     fun transactionBuilder(signers: List<KeyPair>): TransactionBuilder
+
+    fun multiSigTransactionBuilder(signers: List<KeyPair>, multiSigSigners: List<PubKey>): TransactionBuilder
 
     /**
      * Post a [Gtx] transaction.
