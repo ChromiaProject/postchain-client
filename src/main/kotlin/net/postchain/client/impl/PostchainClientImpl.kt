@@ -280,6 +280,19 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
+    override fun getConfiguration(height: Long?): Gtv = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/config/$blockchainRIDHex").let {
+            if (height != null) it.query("height", height.toString()) else it
+        }
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+    }, { response, endpoint ->
+        decodeGtv("getConfiguration", response, endpoint)
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getConfiguration", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
     override fun validateConfiguration(configuration: Gtv) {
 
         val configHash = configuration.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
@@ -320,16 +333,16 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
-    override fun blockByRid(blockRid: BlockRid): BlockDetail?  = requestStrategy.request({ endpoint ->
-            Request(Method.GET, "${endpoint.url}/blocks/$blockchainRIDOrID/${blockRid.rid}")
-                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
-        }, { response, endpoint ->
-            val gtv = decodeGtv("blockByRid", response, endpoint)
-            if (gtv.isNull()) null else GtvObjectMapper.fromGtv(gtv, BlockDetail::class)
-        }, { response, endpoint ->
-            buildExceptionFromErrorResponse("blockByRid", response, endpoint)
-        },
-                true)
+    override fun blockByRid(blockRid: BlockRid): BlockDetail? = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/blocks/$blockchainRIDOrID/${blockRid.rid}")
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+    }, { response, endpoint ->
+        val gtv = decodeGtv("blockByRid", response, endpoint)
+        if (gtv.isNull()) null else GtvObjectMapper.fromGtv(gtv, BlockDetail::class)
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("blockByRid", response, endpoint)
+    },
+            true)
 
 
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
