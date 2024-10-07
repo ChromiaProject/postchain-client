@@ -457,6 +457,32 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `current configuration height can be fetched`() {
+        val expectedConfig = gtv(mapOf("foo" to gtv("bar"), "baz" to gtv(17)))
+        val config: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(brid)}")
+                assertThat(request.uri.query).isEqualTo("")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(expectedConfig).inputStream())
+            }
+        }).getConfiguration()
+        assertThat(config).isEqualTo(expectedConfig)
+    }
+
+    @Test
+    fun `custom configuration height can be fetched`() {
+        val expectedConfig = gtv(mapOf("foo" to gtv("bar"), "baz" to gtv(17)))
+        val config: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(brid)}")
+                assertThat(request.uri.query).isEqualTo("height=17")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(expectedConfig).inputStream())
+            }
+        }).getConfiguration(height = 17)
+        assertThat(config).isEqualTo(expectedConfig)
+    }
+
+    @Test
     fun `Validation of blockchain configuration succeeds`() {
         assertDoesNotThrow {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {

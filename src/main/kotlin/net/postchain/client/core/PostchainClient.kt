@@ -86,6 +86,13 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
     fun getBlockchainRID(chainIID: Long): BlockchainRid
 
     /**
+     * Fetch blockchain configuration.
+     *
+     * @param height  block height to fetch configuration for, or null for current/latest configuration
+     */
+    fun getConfiguration(height: Long? = null): Gtv
+
+    /**
      * Validates that the supplied blockchain configuration is compatible with the running blockchain configuration.
      * @param configuration blockchain configuration to verify
      * @throws ClientError
