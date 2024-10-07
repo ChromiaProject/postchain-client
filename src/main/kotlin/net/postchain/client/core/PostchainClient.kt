@@ -25,7 +25,8 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      */
     fun transactionBuilder(signers: List<KeyPair>): TransactionBuilder
 
-    fun multiSigTransactionBuilder(signers: List<KeyPair>, multiSigSigners: List<PubKey>): TransactionBuilder
+    fun transactionBuilder(initialSigners: List<KeyPair>, allSigners: List<PubKey>): TransactionBuilder
+
 
     /**
      * Post a [Gtx] transaction.

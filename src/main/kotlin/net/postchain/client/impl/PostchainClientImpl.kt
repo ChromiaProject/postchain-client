@@ -79,11 +79,11 @@ class PostchainClientImpl(
             config.maxTxSize
     )
 
-    override fun multiSigTransactionBuilder(signers: List<KeyPair>, multiSigSigners: List<PubKey>) = TransactionBuilder(
+    override fun transactionBuilder(initialSigners: List<KeyPair>, allSigners: List<PubKey>) = TransactionBuilder(
             this,
             config.blockchainRid,
-            multiSigSigners.map { it.data },
-            signers.map { it.sigMaker(cryptoSystem) },
+            allSigners.map { it.data },
+            initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize
     )
