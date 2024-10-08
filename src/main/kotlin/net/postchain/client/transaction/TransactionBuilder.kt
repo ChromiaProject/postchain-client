@@ -18,8 +18,9 @@ class TransactionBuilder(
         blockchainRid: BlockchainRid,
         private val signers: List<ByteArray>,
         private val defaultSigners: List<SigMaker> = listOf(),
-        cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
-        maxTxSize: Int = -1,
+        private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
+        private val maxTxSize: Int = -1,
+        private val defaultSignersPubkey: List<ByteArray> = listOf(),
 ) : Postable {
     private val EMPTY_SIGNATURE: ByteArray = ByteArray(64)
 
@@ -54,37 +55,53 @@ class TransactionBuilder(
      */
     fun sign() = sign(*defaultSigners.toTypedArray())
 
-    fun getPartialSignTransaction(): ByteArray {
-        return partialFinish().apply {
+    /**
+     * Builds a multi-sig transaction, sign it with initial signers and prepare the transaction to be signed by the remaining required signers.
+     */
+    fun build(): ByteArray {
+        return uncheckedSignBuilder().apply {
             defaultSigners.forEach { sign(it) }
-            signers.forEach{sign(Signature(it, EMPTY_SIGNATURE))}
+            subtractFrom(signers, defaultSignersPubkey).forEach { sign(Signature(it, EMPTY_SIGNATURE)) }
         }.buildGtx().encode()
     }
 
+    /**
+     * Rebuilds a transaction from gtx and sign it with provided signers.
+     */
     fun signTransaction(gtxByteArray: ByteArray): ByteArray {
         val gtx = Gtx.decode(gtxByteArray)
-        gtx.gtxBody.operations.forEach { addOperation(it.opName, *it.args) }
-        val signatureBuilder = partialFinish()
-        val newSignaturesCount = defaultSigners.count()
-        var count =0;
-        gtx.signatures.filter { it.equals(EMPTY_SIGNATURE) || count++ >= newSignaturesCount }.forEachIndexed { index, it -> signatureBuilder.sign(Signature(gtx.gtxBody.signers[index], it)) }
-        defaultSigners.forEach {signatureBuilder.sign(it)}
-        return signatureBuilder.buildGtx().encode()
+        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize)
+        gtx.gtxBody.operations.forEach { gtxBuilder.addOperation(it.opName, *it.args) }
+
+        val signBuilder = gtxBuilder.uncheckedSignBuilder()
+        val signerToSignature = gtx.gtxBody.signers.zip(gtx.signatures).toMap()
+
+        subtractFrom(gtx.gtxBody.signers, defaultSignersPubkey).forEach { signer -> signBuilder.sign(Signature(signer, signerToSignature[signer]!!)) }
+        defaultSigners.forEach { signer -> signBuilder.sign(signer) }
+        return signBuilder.buildGtx().encode()
     }
 
-    fun post(gtxByteArray: ByteArray) {
-        val signatureBuilder = buildTransactionFromGtx(gtxByteArray)
-        signatureBuilder.build().post()
-    }
-
-    private fun buildTransactionFromGtx(gtxByteArray: ByteArray): SignatureBuilder {
+    /**
+     * Rebuilds a transaction from gtx, verify the signatures and post the transaction.
+     */
+    fun sendTransaction(gtxByteArray: ByteArray) {
         val gtx = Gtx.decode(gtxByteArray)
-        gtx.gtxBody.operations.forEach { addOperation(it.opName, *it.args) }
-        val signatureBuilder = finish()
-        gtx.signatures.forEachIndexed { index, it -> signatureBuilder.sign(Signature(gtx.gtxBody.signers[index], it)) }
-        return signatureBuilder
+        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize)
+        gtx.gtxBody.operations.forEach { gtxBuilder.addOperation(it.opName, *it.args) }
+
+        val signBuilder = gtxBuilder.finish()
+        val signerToSignature = gtx.gtxBody.signers.zip(gtx.signatures).toMap()
+
+        gtx.gtxBody.signers.forEach { signer -> signBuilder.sign(Signature(signer, signerToSignature[signer]!!)) }
+        PostableTransaction(signBuilder.buildGtx()).post()
     }
 
+    private fun subtractFrom(list: List<ByteArray>, elementsToRemove: List<ByteArray>) =
+            ArrayList(list.filter { element -> elementsToRemove.none { elementToRemove -> element.contentEquals(elementToRemove) } })
+
+    private fun uncheckedSignBuilder(): SignatureBuilder {
+        return SignatureBuilder(gtxBuilder.uncheckedSignBuilder())
+    }
     /**
      * Sign this transaction and prepare it to be posted
      */
@@ -99,10 +116,6 @@ class TransactionBuilder(
      */
     fun finish(): SignatureBuilder {
         return SignatureBuilder(gtxBuilder.finish())
-    }
-
-    fun partialFinish(): SignatureBuilder{
-        return SignatureBuilder(gtxBuilder.partialFinish())
     }
 
     inner class SignatureBuilder(private val signBuilder: GtxBuilder.GtxSignBuilder) {
