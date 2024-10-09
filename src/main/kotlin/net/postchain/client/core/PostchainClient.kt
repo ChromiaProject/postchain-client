@@ -25,8 +25,14 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      */
     fun transactionBuilder(signers: List<KeyPair>): TransactionBuilder
 
-    fun transactionBuilder(initialSigners: List<KeyPair>, allSigners: List<PubKey>): TransactionBuilder
-
+    /**
+     * Creates a [TransactionBuilder] that supports multi-sign by being partially signed by
+     * an initial group of signers and later be completely signed by the remaining required signers.
+     *
+     * @param initialSigners A list of key pairs representing the signers who will initiate the transaction.
+     * @param remainingRequiredSigners A list of public keys representing the remaining signers who need to sign the transaction.
+     */
+    fun transactionBuilder(initialSigners: List<KeyPair>, remainingRequiredSigners: List<PubKey>): TransactionBuilder
 
     /**
      * Post a [Gtx] transaction.

@@ -3,6 +3,7 @@ package net.postchain.client.transaction
 import net.postchain.client.core.PostchainClient
 import net.postchain.common.BlockchainRid
 import net.postchain.crypto.CryptoSystem
+import net.postchain.crypto.KeyPair
 import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.SigMaker
 import net.postchain.crypto.Signature
@@ -20,7 +21,7 @@ class TransactionBuilder(
         private val defaultSigners: List<SigMaker> = listOf(),
         private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
         private val maxTxSize: Int = -1,
-        private val defaultSignersPubkey: List<ByteArray> = listOf(),
+        private val defaultSignersKeypair: List<KeyPair> = listOf(),
 ) : Postable {
     private val EMPTY_SIGNATURE: ByteArray = ByteArray(64)
 
@@ -61,7 +62,7 @@ class TransactionBuilder(
     fun build(): ByteArray {
         return uncheckedSignBuilder().apply {
             defaultSigners.forEach { sign(it) }
-            subtractFrom(signers, defaultSignersPubkey).forEach { sign(Signature(it, EMPTY_SIGNATURE)) }
+            subtractFrom(signers, defaultSignersKeypair.map { it.pubKey.data }).forEach { sign(Signature(it, EMPTY_SIGNATURE)) }
         }.buildGtx().encode()
     }
 
@@ -75,9 +76,15 @@ class TransactionBuilder(
 
         val signBuilder = gtxBuilder.uncheckedSignBuilder()
         val signerToSignature = gtx.gtxBody.signers.zip(gtx.signatures).toMap()
-
-        subtractFrom(gtx.gtxBody.signers, defaultSignersPubkey).forEach { signer -> signBuilder.sign(Signature(signer, signerToSignature[signer]!!)) }
-        defaultSigners.forEach { signer -> signBuilder.sign(signer) }
+        val defaultSignersListPubKeys = defaultSignersKeypair.map { it.pubKey.data }
+        gtx.gtxBody.signers.forEach { signer ->
+            val defaultSigner = defaultSignersListPubKeys.find { it.contentEquals(signer) }
+            if (defaultSigner != null) {
+                signBuilder.sign(defaultSignersKeypair[defaultSignersListPubKeys.indexOf(defaultSigner)].sigMaker(cryptoSystem))
+            } else {
+                signBuilder.sign(Signature(signer, signerToSignature[signer]!!))
+            }
+        }
         return signBuilder.buildGtx().encode()
     }
 
