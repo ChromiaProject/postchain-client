@@ -29,6 +29,7 @@ import net.postchain.common.tx.TransactionStatus.REJECTED
 import net.postchain.common.tx.TransactionStatus.UNKNOWN
 import net.postchain.common.tx.TransactionStatus.WAITING
 import net.postchain.crypto.KeyPair
+import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvEncoder
@@ -76,6 +77,16 @@ class PostchainClientImpl(
             signers.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize
+    )
+
+    override fun transactionBuilder(initialSigners: List<KeyPair>, remainingRequiredSigners: List<PubKey>) = TransactionBuilder(
+            this,
+            config.blockchainRid,
+            initialSigners.map { it.pubKey.data } + remainingRequiredSigners.map { it.data },
+            initialSigners.map { it.sigMaker(cryptoSystem) },
+            cryptoSystem,
+            config.maxTxSize,
+            remainingRequiredSigners.map { it.data }
     )
 
     @Throws(IOException::class)
