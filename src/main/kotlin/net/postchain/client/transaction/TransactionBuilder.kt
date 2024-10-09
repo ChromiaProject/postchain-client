@@ -5,6 +5,7 @@ import net.postchain.common.BlockchainRid
 import net.postchain.crypto.CryptoSystem
 import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.SigMaker
+import net.postchain.crypto.Signature
 import net.postchain.gtv.Gtv
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxBuilder
@@ -17,9 +18,11 @@ class TransactionBuilder(
         blockchainRid: BlockchainRid,
         signers: List<ByteArray>,
         private val defaultSigners: List<SigMaker> = listOf(),
-        cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
-        maxTxSize: Int = -1
+        private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
+        private val maxTxSize: Int = -1,
+        private val remainingRequiredSigners: List<ByteArray> = listOf(),
 ) : Postable {
+
     private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, maxTxSize)
 
     /**
@@ -52,6 +55,31 @@ class TransactionBuilder(
     fun sign() = sign(*defaultSigners.toTypedArray())
 
     /**
+     * Builds a multi-sig transaction, sign it with initial signers and prepare the transaction to be signed by the remaining required signers.
+     */
+    fun build(): ByteArray {
+        return gtxBuilder.uncheckedSignBuilder().apply {
+            defaultSigners.forEach { sign(it) }
+            remainingRequiredSigners.forEach { emptySign(it) }
+        }.buildGtx().encode()
+    }
+
+    /**
+     * Rebuilds a transaction from gtx, verify the signatures and post the transaction.
+     */
+    fun sendTransaction(gtxByteArray: ByteArray) {
+        val gtx = Gtx.decode(gtxByteArray)
+        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize, gtx.gtxBody.operations)
+
+        val signBuilder = gtxBuilder.finish()
+        signBuilder.addSignatures(gtx.signatures)
+        PostableTransaction(signBuilder.buildGtx()).post()
+    }
+
+    private fun subtractFrom(list: List<ByteArray>, elementsToRemove: List<ByteArray>) =
+            ArrayList(list.filter { element -> elementsToRemove.none { elementToRemove -> element.contentEquals(elementToRemove) } })
+
+    /**
      * Sign this transaction and prepare it to be posted
      */
     fun sign(vararg sigMaker: SigMaker): PostableTransaction {
@@ -74,6 +102,10 @@ class TransactionBuilder(
          */
         fun sign(sigMaker: SigMaker) = apply {
             signBuilder.sign(sigMaker)
+        }
+
+        fun sign(signature: Signature) = apply {
+            signBuilder.sign(signature)
         }
 
         /**
@@ -100,5 +132,6 @@ class TransactionBuilder(
          * [PostchainClient.postTransactionAwaitConfirmation]
          */
         override fun postAwaitConfirmation() = client.postTransactionAwaitConfirmation(tx)
+
     }
 }
