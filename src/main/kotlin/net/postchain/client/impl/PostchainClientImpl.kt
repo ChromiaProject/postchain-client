@@ -76,8 +76,7 @@ class PostchainClientImpl(
             signers.map { it.pubKey.data },
             signers.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
-            config.maxTxSize,
-            signers
+            config.maxTxSize
     )
 
     override fun transactionBuilder(initialSigners: List<KeyPair>, remainingRequiredSigners: List<PubKey>) = TransactionBuilder(
@@ -87,7 +86,7 @@ class PostchainClientImpl(
             initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
-            initialSigners
+            remainingRequiredSigners.map { it.data }
     )
 
     @Throws(IOException::class)

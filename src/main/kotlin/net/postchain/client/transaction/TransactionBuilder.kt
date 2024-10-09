@@ -3,7 +3,6 @@ package net.postchain.client.transaction
 import net.postchain.client.core.PostchainClient
 import net.postchain.common.BlockchainRid
 import net.postchain.crypto.CryptoSystem
-import net.postchain.crypto.KeyPair
 import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.SigMaker
 import net.postchain.crypto.Signature
@@ -17,13 +16,12 @@ import net.postchain.gtx.GtxBuilder
 class TransactionBuilder(
         private val client: PostchainClient,
         blockchainRid: BlockchainRid,
-        private val signers: List<ByteArray>,
+        signers: List<ByteArray>,
         private val defaultSigners: List<SigMaker> = listOf(),
         private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
         private val maxTxSize: Int = -1,
-        private val defaultSignersKeypair: List<KeyPair> = listOf(),
+        private val remainingRequiredSigners: List<ByteArray> = listOf(),
 ) : Postable {
-    private val EMPTY_SIGNATURE: ByteArray = ByteArray(64)
 
     private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, maxTxSize)
 
@@ -60,32 +58,10 @@ class TransactionBuilder(
      * Builds a multi-sig transaction, sign it with initial signers and prepare the transaction to be signed by the remaining required signers.
      */
     fun build(): ByteArray {
-        return uncheckedSignBuilder().apply {
+        return gtxBuilder.uncheckedSignBuilder().apply {
             defaultSigners.forEach { sign(it) }
-            subtractFrom(signers, defaultSignersKeypair.map { it.pubKey.data }).forEach { sign(Signature(it, EMPTY_SIGNATURE)) }
+            remainingRequiredSigners.forEach { emptySign(it) }
         }.buildGtx().encode()
-    }
-
-    /**
-     * Rebuilds a transaction from gtx and sign it with provided signers.
-     */
-    fun signTransaction(gtxByteArray: ByteArray): ByteArray {
-        val gtx = Gtx.decode(gtxByteArray)
-        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize)
-        gtx.gtxBody.operations.forEach { gtxBuilder.addOperation(it.opName, *it.args) }
-
-        val signBuilder = gtxBuilder.uncheckedSignBuilder()
-        val signerToSignature = gtx.gtxBody.signers.zip(gtx.signatures).toMap()
-        val defaultSignersListPubKeys = defaultSignersKeypair.map { it.pubKey.data }
-        gtx.gtxBody.signers.forEach { signer ->
-            val defaultSigner = defaultSignersListPubKeys.find { it.contentEquals(signer) }
-            if (defaultSigner != null) {
-                signBuilder.sign(defaultSignersKeypair[defaultSignersListPubKeys.indexOf(defaultSigner)].sigMaker(cryptoSystem))
-            } else {
-                signBuilder.sign(Signature(signer, signerToSignature[signer]!!))
-            }
-        }
-        return signBuilder.buildGtx().encode()
     }
 
     /**
@@ -93,22 +69,16 @@ class TransactionBuilder(
      */
     fun sendTransaction(gtxByteArray: ByteArray) {
         val gtx = Gtx.decode(gtxByteArray)
-        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize)
-        gtx.gtxBody.operations.forEach { gtxBuilder.addOperation(it.opName, *it.args) }
+        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize, gtx.gtxBody.operations)
 
         val signBuilder = gtxBuilder.finish()
-        val signerToSignature = gtx.gtxBody.signers.zip(gtx.signatures).toMap()
-
-        gtx.gtxBody.signers.forEach { signer -> signBuilder.sign(Signature(signer, signerToSignature[signer]!!)) }
+        signBuilder.addSignatures(gtx.signatures)
         PostableTransaction(signBuilder.buildGtx()).post()
     }
 
     private fun subtractFrom(list: List<ByteArray>, elementsToRemove: List<ByteArray>) =
             ArrayList(list.filter { element -> elementsToRemove.none { elementToRemove -> element.contentEquals(elementToRemove) } })
 
-    private fun uncheckedSignBuilder(): SignatureBuilder {
-        return SignatureBuilder(gtxBuilder.uncheckedSignBuilder())
-    }
     /**
      * Sign this transaction and prepare it to be posted
      */
