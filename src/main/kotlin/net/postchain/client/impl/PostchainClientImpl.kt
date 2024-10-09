@@ -414,10 +414,17 @@ class PostchainClientImpl(
         else null
     }
 
-    private fun responseStream(response: Response) = if (response.header("content-encoding") == "gzip") {
-        BoundedInputStream(GZIPInputStream(response.body.stream), config.maxResponseSize.toLong())
-    } else {
-        BoundedInputStream(response.body.stream, config.maxResponseSize.toLong())
+    private fun responseStream(response: Response): BoundedInputStream {
+        val originalStream = if (response.header("content-encoding") == "gzip") {
+            GZIPInputStream(response.body.stream)
+        } else {
+            response.body.stream
+        }
+        return BoundedInputStream.builder()
+                .setInputStream(originalStream)
+                .setMaxCount(config.maxResponseSize.toLong())
+                .setPropagateClose(true)
+                .get()
     }
 
     @Throws(IOException::class)
