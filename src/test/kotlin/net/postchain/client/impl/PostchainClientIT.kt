@@ -12,7 +12,9 @@ import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.transaction.TransactionBuilder
+import net.postchain.client.transaction.signTransaction
 import net.postchain.common.BlockchainRid
+import net.postchain.common.hexStringToByteArray
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.crypto.KeyPair
@@ -52,6 +54,18 @@ class PostchainClientIT : IntegrationTestSetup() {
     private val pubKey0 = PubKey(KeyPairHelper.pubKey(0))
     private val privKey0 = PrivKey(KeyPairHelper.privKey(0))
     private val sigMaker0 = cryptoSystem.buildSigMaker(KeyPair(pubKey0, privKey0))
+
+    private val alicePubkey = "038f888dec563b5bc253e87abc90afd26c3287021d10236ea19d248043dc39e0b8".hexStringToByteArray()
+    private val alicePrivkey = "71b5b7f8de0661af934a5e4612f3d0ba183e639bdf4e7452fb6457ed3cfbc825".hexStringToByteArray()
+    private val aliceKeyPair = KeyPair(alicePubkey, alicePrivkey)
+
+    private val bobPubkey = "02E0A8A3C79C9F18B7CEAD2493435AC926B4A527EF670B873F5F1410084EFF9C80".hexStringToByteArray()
+    private val bobPrivkey = "B31AB878C62B0E940B345C659A456D3573CF25960823C34C7BEEB5D1F813BEFD".hexStringToByteArray()
+    private val bobKeyPair = KeyPair(bobPubkey, bobPrivkey)
+
+    private val charliePubkey = "02620EB55BF0E3116F95D4D21771313AE5A477D5D166787DD8586D4413E3405D7E".hexStringToByteArray()
+    private val charliePrivkey = "944D38EA36E0FA2D9862D77F99874D88FD172559E56913DA55578740573B19ED".hexStringToByteArray()
+    private val charlieKeyPair = KeyPair(charliePubkey, charliePrivkey)
 
     private fun randomStr() = "hello${Random().nextLong()}"
 
@@ -110,6 +124,42 @@ class PostchainClientIT : IntegrationTestSetup() {
         tx.post()
 
         // Then
+        verify(client).postTransaction(any())
+    }
+
+    @Test
+    fun signingMultiSigTransaction() {
+        val alice = listOf(aliceKeyPair)
+        val bob = listOf(bobKeyPair)
+        createTestNodes(1, configFileName1)
+        val client = spy(createPostChainClient(blockchainRID))
+        val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
+
+        val signedTx = signTransaction(partiallySignedTx, bob)
+
+        client.transactionBuilder().sendTransaction(signedTx)
+
+        verify(client).postTransaction(any())
+    }
+
+    @Test
+    fun signingMultiSigTransactionWithAnySigningOrder() {
+        val alice = listOf(aliceKeyPair)
+        val bob = listOf(bobKeyPair)
+        val charlie = listOf(charlieKeyPair)
+        createTestNodes(1, configFileName1)
+        val client = spy(createPostChainClient(blockchainRID))
+        val signerTransactionCharlie = client
+                .transactionBuilder(charlie, listOf(bobKeyPair.pubKey, aliceKeyPair.pubKey))
+                .addOperation("nop")
+                .build()
+
+        val signedTxAlice = signTransaction(signerTransactionCharlie, alice)
+
+        val signedTxBob = signTransaction(signedTxAlice, bob)
+
+        client.transactionBuilder().sendTransaction(signedTxBob)
+
         verify(client).postTransaction(any())
     }
 
