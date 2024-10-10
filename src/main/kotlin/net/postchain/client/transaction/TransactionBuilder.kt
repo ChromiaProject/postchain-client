@@ -76,9 +76,6 @@ class TransactionBuilder(
         PostableTransaction(signBuilder.buildGtx()).post()
     }
 
-    private fun subtractFrom(list: List<ByteArray>, elementsToRemove: List<ByteArray>) =
-            ArrayList(list.filter { element -> elementsToRemove.none { elementToRemove -> element.contentEquals(elementToRemove) } })
-
     /**
      * Sign this transaction and prepare it to be posted
      */
