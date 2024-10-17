@@ -137,9 +137,24 @@ class PostchainClientIT : IntegrationTestSetup() {
 
         val signedTx = signTransaction(partiallySignedTx, bob)
 
-        client.transactionBuilder().sendTransaction(signedTx)
+        client.transactionBuilder().postTransaction(signedTx)
 
         verify(client).postTransaction(any())
+    }
+
+    @Test
+    fun signingMultiSigTransaction_postTransactionAwaitConfirmation() {
+        val alice = listOf(aliceKeyPair)
+        val bob = listOf(bobKeyPair)
+        createTestNodes(1, configFileName1)
+        val client = spy(createPostChainClient(blockchainRID))
+        val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
+
+        val signedTx = signTransaction(partiallySignedTx, bob)
+
+        client.transactionBuilder().postTransactionAwaitConfirmation(signedTx)
+
+        verify(client).postTransactionAwaitConfirmation(any())
     }
 
     @Test
@@ -158,7 +173,7 @@ class PostchainClientIT : IntegrationTestSetup() {
 
         val signedTxBob = signTransaction(signedTxAlice, bob)
 
-        client.transactionBuilder().sendTransaction(signedTxBob)
+        client.transactionBuilder().postTransaction(signedTxBob)
 
         verify(client).postTransaction(any())
     }

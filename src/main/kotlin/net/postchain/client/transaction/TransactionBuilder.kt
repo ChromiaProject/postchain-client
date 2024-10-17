@@ -67,13 +67,26 @@ class TransactionBuilder(
     /**
      * Rebuilds a transaction from gtx, verify the signatures and post the transaction.
      */
-    fun sendTransaction(gtxByteArray: ByteArray) {
+    fun postTransaction(gtxByteArray: ByteArray) {
+        val signBuilder = gtxSignBuilder(gtxByteArray)
+        PostableTransaction(signBuilder.buildGtx()).post()
+    }
+
+    /**
+     * Rebuilds a transaction from gtx, verify the signatures, post the transaction and awaits confirmation.
+     */
+    fun postTransactionAwaitConfirmation(gtxByteArray: ByteArray) {
+        val signBuilder = gtxSignBuilder(gtxByteArray)
+        PostableTransaction(signBuilder.buildGtx()).postAwaitConfirmation()
+    }
+
+    private fun gtxSignBuilder(gtxByteArray: ByteArray): GtxBuilder.GtxSignBuilder {
         val gtx = Gtx.decode(gtxByteArray)
         val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize, gtx.gtxBody.operations)
 
         val signBuilder = gtxBuilder.finish()
         signBuilder.addSignatures(gtx.signatures)
-        PostableTransaction(signBuilder.buildGtx()).post()
+        return signBuilder
     }
 
     /**
