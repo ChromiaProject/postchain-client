@@ -1,6 +1,7 @@
 package net.postchain.client.transaction
 
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.TransactionResult
 import net.postchain.common.BlockchainRid
 import net.postchain.crypto.CryptoSystem
 import net.postchain.crypto.Secp256K1CryptoSystem
@@ -67,17 +68,17 @@ class TransactionBuilder(
     /**
      * Rebuilds a transaction from gtx, verify the signatures and post the transaction.
      */
-    fun postTransaction(gtxByteArray: ByteArray) {
+    fun postTransaction(gtxByteArray: ByteArray): TransactionResult {
         val signBuilder = gtxSignBuilder(gtxByteArray)
-        PostableTransaction(signBuilder.buildGtx()).post()
+        return PostableTransaction(signBuilder.buildGtx()).post()
     }
 
     /**
      * Rebuilds a transaction from gtx, verify the signatures, post the transaction and awaits confirmation.
      */
-    fun postTransactionAwaitConfirmation(gtxByteArray: ByteArray) {
+    fun postTransactionAwaitConfirmation(gtxByteArray: ByteArray): TransactionResult {
         val signBuilder = gtxSignBuilder(gtxByteArray)
-        PostableTransaction(signBuilder.buildGtx()).postAwaitConfirmation()
+        return PostableTransaction(signBuilder.buildGtx()).postAwaitConfirmation()
     }
 
     private fun gtxSignBuilder(gtxByteArray: ByteArray): GtxBuilder.GtxSignBuilder {
