@@ -2,6 +2,7 @@ package net.postchain.client.impl
 
 import assertk.assertFailure
 import assertk.assertThat
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
@@ -27,12 +28,15 @@ import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
+import net.postchain.gtv.GtvException
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
+import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.InfiniteCircularInputStream
 import org.http4k.core.Body
 import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
+import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
@@ -41,7 +45,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.io.EOFException
 import java.io.IOException
 import java.time.Duration
 import java.util.concurrent.CompletionException
@@ -146,7 +149,7 @@ internal class PostchainClientImplTest {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) = Response(Status.OK).body(Body.EMPTY)
-            }).query("foo", gtv(mapOf()))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(IOException::class)
     }
 
@@ -155,7 +158,7 @@ internal class PostchainClientImplTest {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) = Response(Status.BAD_REQUEST).body(Body.EMPTY)
-            }).query("foo", gtv(mapOf()))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(ClientError::class)
     }
 
@@ -282,11 +285,18 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `raw query can be serialized correctly`() {
+    fun `query is sent with POST`() {
+        val queryArgs = gtv(mapOf("arg1" to gtv("value1"), "arg2" to gtv(17)))
         val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
-            override fun invoke(request: Request) =
-                    Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
-        }).query("test_query", gtv("arg"))
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.POST)
+                assertThat(request.uri.path).isEqualTo("/query_gtv/$brid")
+                assertThat(request.uri.query).isEmpty()
+                assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                assertThat(request.body.stream.use { it.readAllBytes()}).isContentEqualTo(GtxQuery("test_query", queryArgs).encode())
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
+            }
+        }).query("test_query", queryArgs)
         assertThat(queryResponse.asString()).isEqualTo("query_response")
     }
 
@@ -297,7 +307,7 @@ internal class PostchainClientImplTest {
                 override fun invoke(request: Request) =
                         Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(ByteArray(2 * 1024))).inputStream())
             }).query("test_query", gtv("arg"))
-        }.isInstanceOf(EOFException::class)
+        }.isInstanceOf(GtvException::class)
     }
 
     @Test
@@ -503,7 +513,7 @@ internal class PostchainClientImplTest {
     }
 
     @Nested
-    inner class getTransactionInfo {
+    inner class GetTransactionInfo {
         @Test
         fun `Transaction info can be parsed`() {
             val body = """{
@@ -546,7 +556,7 @@ internal class PostchainClientImplTest {
     }
 
     @Nested
-    inner class getTransactionsInfo {
+    inner class GetTransactionsInfo {
         @Test
         fun `Transactions info can be parsed`() {
             val infos = listOf(
@@ -612,7 +622,7 @@ internal class PostchainClientImplTest {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), endpointPool), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) = throw SSLException("Bad SSL")
-            }).query("foo", gtv(mapOf()))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(ClientError::class)
     }
 
@@ -622,6 +632,6 @@ internal class PostchainClientImplTest {
                 assertThat(request.uri.path.endsWith(suffix))
                 return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("foobar")).inputStream())
             }
-        }).query("foo", gtv(mapOf()))
+        }).query("test_query", gtv(mapOf()))
     }
 }
