@@ -9,6 +9,7 @@ import assertk.assertions.isNull
 import assertk.isContentEqualTo
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import mu.KLogging
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
@@ -41,11 +42,16 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.StandardProtocolFamily
+import java.nio.channels.ServerSocketChannel
 import java.time.Duration
 import java.util.concurrent.CompletionException
 import javax.net.ssl.SSLException
@@ -55,6 +61,8 @@ internal class PostchainClientImplTest {
     private lateinit var httpClient: HttpHandler
     private val brid = "EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8F"
     private var requestCounter = 0
+
+    companion object : KLogging()
 
     @BeforeEach
     fun setup() {
@@ -293,7 +301,7 @@ internal class PostchainClientImplTest {
                 assertThat(request.uri.path).isEqualTo("/query_gtv/$brid")
                 assertThat(request.uri.query).isEmpty()
                 assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
-                assertThat(request.body.stream.use { it.readAllBytes()}).isContentEqualTo(GtxQuery("test_query", queryArgs).encode())
+                assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery("test_query", queryArgs).encode())
                 return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
             }
         }).query("test_query", queryArgs)
@@ -624,6 +632,46 @@ internal class PostchainClientImplTest {
                 override fun invoke(request: Request) = throw SSLException("Bad SSL")
             }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(ClientError::class)
+    }
+
+    @Test
+    @Disabled // for manual testing
+    @Timeout(5)
+    fun `connect timeout`() {
+        val client = PostchainClientImpl(PostchainClientConfig(
+                BlockchainRid.buildFromHex(brid),
+                EndpointPool.singleUrl("http://example.com:1234"),
+                failOverConfig = FailOverConfig(1),
+                connectTimeout = Duration.ofSeconds(1),
+        ))
+        try {
+            logger.info("Start")
+            client.getVersion()
+            logger.info("Done")
+        } catch (e: Exception) {
+            logger.info(e) { "Error" }
+        }
+    }
+
+    @Test
+    @Timeout(5)
+    fun `request timeout`() {
+        ServerSocketChannel.open(StandardProtocolFamily.INET).use { serverSocketChannel ->
+            serverSocketChannel.configureBlocking(false)
+            serverSocketChannel.bind(null)
+            serverSocketChannel.accept()
+            val localAddress = (serverSocketChannel.localAddress as InetSocketAddress)
+            logger.info("Listening on: $localAddress")
+            val client = PostchainClientImpl(PostchainClientConfig(
+                    BlockchainRid.buildFromHex(brid),
+                    EndpointPool.singleUrl("http://${localAddress.hostName}:${localAddress.port}"),
+                    failOverConfig = FailOverConfig(1),
+                    responseTimeout = Duration.ofSeconds(1)
+            ))
+            assertFailure {
+                client.getVersion()
+            }.isInstanceOf(ClientError::class)
+        }
     }
 
     private fun assertQueryUrlEndsWith(config: PostchainClientConfig, suffix: String) {
