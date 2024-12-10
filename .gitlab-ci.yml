@@ -131,7 +131,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
   DOCKER_CLI_EXPERIMENTAL: enabled
-  JACOCO_REPORT_DIR: target/site/jacoco
+  JACOCO_REPORT_DIR: postchain-client/target/site/jacoco
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
