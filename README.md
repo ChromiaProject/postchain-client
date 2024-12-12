@@ -1,24 +1,55 @@
 # Postchain-client
 
-Postchain-client is a kotlin client for making queries and transactions from an application
+Postchain-client is a Kotlin client for making queries and transactions from an application.
 
 ## Setup
 
-To depend on this jar file you need to add this to your Maven "pom.xml" (currently it's not on Maven central, so this
-requires Gitlab access):
+To use the library, you'll need to add these package registries since it's not available on Maven Central. 
+The specific steps for adding the URL may differ based on your chosen build tool.
+
+For Maven add this to your `pom.xml`:
 
 ```xml
-<dependency>
-    <groupId>net.postchain.client</groupId>
-    <artifactId>postchain-client</artifactId>
-</dependency>
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>net.postchain.client</groupId>
+            <artifactId>postchain-client</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <repositories>
+        <repository>
+            <id>chromia-parent</id>
+            <name>Chromia parent GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/50818999/packages/maven</url>
+        </repository>
+        <repository>
+            <id>postchain</id>
+            <name>Postchain GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/32294340/packages/maven</url>
+        </repository>
+        <repository>
+            <id>postchain-client</id>
+            <name>Postchain Client GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
+        </repository>
+    </repositories>
+</project>
 ```
-```xml
-<repository>
-    <id>Postchain Client</id>
-    <name>Postchain Client GitLab Registry</name>
-    <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
-</repository>
+
+For Gradle, add this to your `build.gradle.kts`:
+
+```kotlin
+repositories {
+    maven("https://gitlab.com/api/v4/projects/50818999/packages/maven")
+    maven("https://gitlab.com/api/v4/projects/32294340/packages/maven")
+    maven("https://gitlab.com/api/v4/projects/46288950/packages/maven")
+}
+
+dependencies {
+    implementation("net.postchain.client:postchain-client")
+}
 ```
 
 ## Usage
@@ -79,7 +110,3 @@ txBuilder.addNop()
 txBuilder.sign(sigMaker0) // Sign it
 val result = txBuilder.post()
 ```
-
-
-
-... see PostchainClientTest in the devtools Maven module for more examples.
