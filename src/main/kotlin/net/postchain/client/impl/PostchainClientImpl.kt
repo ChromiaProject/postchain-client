@@ -32,6 +32,7 @@ import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvDecoder
+import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.mapper.GtvObjectMapper
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -40,7 +41,13 @@ import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.BoundedInputStream
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.http4k.core.*
+import org.http4k.core.ContentType
+import org.http4k.core.HttpHandler
+import org.http4k.core.MemoryBody
+import org.http4k.core.Method
+import org.http4k.core.Request
+import org.http4k.core.Response
+import org.http4k.core.Status
 import java.io.EOFException
 import java.io.IOException
 import java.lang.Thread.sleep
@@ -53,6 +60,9 @@ object Header {
     const val Accept = "Accept"
     const val XPostchainSignature = "X-Postchain-Signature"
 }
+
+const val QUERY_TYPE = "type"
+const val QUERY_ARGS = "~args"
 
 class PostchainClientImpl(
         override val config: PostchainClientConfig,
@@ -91,17 +101,31 @@ class PostchainClientImpl(
 
     @Throws(IOException::class)
     override fun query(name: String, args: Gtv): Gtv = requestStrategy.request({ endpoint ->
-        val gtxQuery = GtxQuery(name, args)
-        Request(Method.POST, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
-                .header(Header.ContentType, ContentType.OCTET_STREAM.value)
-                .header(Header.Accept, ContentType.OCTET_STREAM.value)
-                .body(MemoryBody(gtxQuery.encode()))
+        if (args is GtvDictionary && args.dict.isEmpty()) {
+            Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
+                    .query(QUERY_TYPE, name)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+        } else if (args is GtvDictionary && args.dict.size == 1 && isSmallArg(args.dict.entries.first())) {
+            Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
+                    .query(QUERY_TYPE, name)
+                    .query(QUERY_ARGS, GtvEncoder.encodeGtv(args).toHex())
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+        } else {
+            Request(Method.POST, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
+                    .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                    .body(MemoryBody(GtxQuery(name, args).encode()))
+        }
     }, { response, endpoint ->
         decodeGtv("query", response, endpoint)
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("query", response, endpoint)
     },
             true)
+
+    // Max safe length for URL:s is 2000
+    // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
+    private fun isSmallArg(arg: Map.Entry<String, Gtv>) = (arg.key.length + arg.value.nrOfBytes()) * 2 < 1900
 
     @Throws(IOException::class)
     override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->
@@ -349,7 +373,7 @@ class PostchainClientImpl(
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
         try {
             return converter(responseStream(response).bufferedReader().readText())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw ClientError(context, response.status, "Parsing response failed", endpoint)
         }
     }

@@ -293,7 +293,34 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `query is sent with POST`() {
+    fun `query without args is sent with GET`() {
+        val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.GET)
+                assertThat(request.uri.path).isEqualTo("/query_gtv/$brid")
+                assertThat(request.uri.query).isEqualTo("type=test_query")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
+            }
+        }).query("test_query", gtv(mapOf()))
+        assertThat(queryResponse.asString()).isEqualTo("query_response")
+    }
+
+    @Test
+    fun `query with one small arg is sent with GET`() {
+        val queryArgs = gtv(mapOf("arg" to gtv("value")))
+        val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.GET)
+                assertThat(request.uri.path).isEqualTo("/query_gtv/$brid")
+                assertThat(request.uri.query).isEqualTo("type=test_query&%7Eargs=${encodeGtv(queryArgs).toHex()}")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
+            }
+        }).query("test_query", queryArgs)
+        assertThat(queryResponse.asString()).isEqualTo("query_response")
+    }
+
+    @Test
+    fun `query with multiple args is sent with POST`() {
         val queryArgs = gtv(mapOf("arg1" to gtv("value1"), "arg2" to gtv(17)))
         val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
@@ -301,7 +328,7 @@ internal class PostchainClientImplTest {
                 assertThat(request.uri.path).isEqualTo("/query_gtv/$brid")
                 assertThat(request.uri.query).isEmpty()
                 assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
-                assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery("test_query", queryArgs).encode())
+                assertThat(request.body.stream.use { it.readAllBytes()}).isContentEqualTo(GtxQuery("test_query", queryArgs).encode())
                 return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("query_response")).inputStream())
             }
         }).query("test_query", queryArgs)
@@ -314,7 +341,7 @@ internal class PostchainClientImplTest {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url), maxResponseSize = 1024), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) =
                         Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(ByteArray(2 * 1024))).inputStream())
-            }).query("test_query", gtv("arg"))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(GtvException::class)
     }
 
@@ -324,7 +351,7 @@ internal class PostchainClientImplTest {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url), maxResponseSize = 1024), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) =
                         Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(ByteArray(100).inputStream())
-            }).query("test_query", gtv("arg"))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(IOException::class)
     }
 
@@ -334,7 +361,7 @@ internal class PostchainClientImplTest {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url), maxResponseSize = 1024), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) =
                         Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("the error")).inputStream())
-            }).query("test_query", gtv("arg"))
+            }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(ClientError::class)
     }
 
