@@ -35,7 +35,7 @@ import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.mapper.GtvObjectMapper
-import net.postchain.gtv.merkle.makeMerkleHashCalculator
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
 import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
@@ -74,7 +74,7 @@ class PostchainClientImpl(
     private val blockchainRIDHex = config.blockchainRid.toHex()
     private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
     private val cryptoSystem = config.cryptoSystem
-    private val hashCalculator = makeMerkleHashCalculator(config.merkleHashVersion.toLong())
+    private val hashCalculator = GtvMerkleHashCalculatorV1(cryptoSystem)
     private val gson = Gson()
     private val requestStrategy = config.requestStrategy.create(config, httpClient)
 
@@ -84,7 +84,6 @@ class PostchainClientImpl(
             this,
             config.blockchainRid,
             signers.map { it.pubKey.data },
-            hashCalculator,
             signers.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
@@ -94,7 +93,6 @@ class PostchainClientImpl(
             this,
             config.blockchainRid,
             initialSigners.map { it.pubKey.data } + remainingRequiredSigners.map { it.data },
-            hashCalculator,
             initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,

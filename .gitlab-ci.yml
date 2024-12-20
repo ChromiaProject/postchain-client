@@ -53,13 +53,13 @@ deploy:
   extends: .setup
   stage: deploy
   rules:
-    - if: $CI_COMMIT_TAG =~ /^[0-9]+\.[0-9]+\.[0-9]+$/
+    - if: $CI_COMMIT_BRANCH == "support/hash-diff"
   script:
     - mvn
       $MAVEN_CLI_OPTS
-      --activate-profiles ci      
-      -Drevision=$CI_COMMIT_TAG
-      source:jar deploy
+      --activate-profiles ci
+      -Drevision=rell-hash-diff-logging
+      clean source:jar deploy
 
 build:
   extends:
@@ -70,6 +70,7 @@ build:
   except:
     refs:
       - tags
+      - /^support\/.*$/
   script:
     - mvn
       $MAVEN_CLI_OPTS
@@ -106,6 +107,7 @@ test-coverage-report:
   except:
     refs:
       - tags
+      - /^support\/.*$/
   dependencies:
     - build
 
