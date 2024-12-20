@@ -8,6 +8,7 @@ import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.SigMaker
 import net.postchain.crypto.Signature
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorBase
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxBuilder
 
@@ -18,13 +19,14 @@ class TransactionBuilder(
         private val client: PostchainClient,
         blockchainRid: BlockchainRid,
         signers: List<ByteArray>,
+        private val hashCalculator: GtvMerkleHashCalculatorBase,
         private val defaultSigners: List<SigMaker> = listOf(),
         private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
         private val maxTxSize: Int = -1,
         private val remainingRequiredSigners: List<ByteArray> = listOf(),
 ) : Postable {
 
-    private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, maxTxSize)
+    private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, hashCalculator, maxTxSize)
 
     /**
      * Adds an operation to this transaction
@@ -83,7 +85,7 @@ class TransactionBuilder(
 
     private fun gtxSignBuilder(gtxByteArray: ByteArray): GtxBuilder.GtxSignBuilder {
         val gtx = Gtx.decode(gtxByteArray)
-        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, maxTxSize, gtx.gtxBody.operations)
+        val gtxBuilder = GtxBuilder(gtx.gtxBody.blockchainRid, gtx.gtxBody.signers, cryptoSystem, hashCalculator, maxTxSize, gtx.gtxBody.operations)
 
         val signBuilder = gtxBuilder.finish()
         signBuilder.addSignatures(gtx.signatures)

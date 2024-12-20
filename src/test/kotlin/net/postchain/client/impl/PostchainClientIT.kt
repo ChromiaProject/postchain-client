@@ -21,12 +21,14 @@ import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PrivKey
 import net.postchain.crypto.PubKey
 import net.postchain.crypto.devtools.KeyPairHelper
+import net.postchain.crypto.sha256Digest
 import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.gtvml.GtvMLParser
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
 import net.postchain.gtx.GtxQuery
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
@@ -67,6 +69,8 @@ class PostchainClientIT : IntegrationTestSetup() {
     private val charliePrivkey = "944D38EA36E0FA2D9862D77F99874D88FD172559E56913DA55578740573B19ED".hexStringToByteArray()
     private val charlieKeyPair = KeyPair(charliePubkey, charliePrivkey)
 
+    private val hashCalculator = GtvMerkleHashCalculatorV2(::sha256Digest)
+
     private fun randomStr() = "hello${Random().nextLong()}"
 
     private fun createTestNodes(nodesCount: Int, configFileName: String): Array<PostchainTestNode> {
@@ -78,7 +82,7 @@ class PostchainClientIT : IntegrationTestSetup() {
     }
 
     private fun createSignedNopTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
-        return TransactionBuilder(client, bcRid, listOf(pubKey0.data), listOf(), cryptoSystem)
+        return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
                 .addOperation("gtx_test", gtv(1L), gtv(randomStr))
                 .sign(sigMaker0)
     }
@@ -88,7 +92,8 @@ class PostchainClientIT : IntegrationTestSetup() {
                 PostchainClientConfig(
                         bcRid,
                         EndpointPool.singleUrl("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}"),
-                        listOf(KeyPair(pubKey0, privKey0))
+                        listOf(KeyPair(pubKey0, privKey0)),
+                        merkleHashVersion = 2
                 ))
     }
 
@@ -135,7 +140,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val client = spy(createPostChainClient(blockchainRID))
         val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
 
-        val signedTx = signTransaction(partiallySignedTx, bob)
+        val signedTx = signTransaction(partiallySignedTx, bob, hashCalculator)
 
         client.transactionBuilder().postTransaction(signedTx)
 
@@ -150,7 +155,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val client = spy(createPostChainClient(blockchainRID))
         val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
 
-        val signedTx = signTransaction(partiallySignedTx, bob)
+        val signedTx = signTransaction(partiallySignedTx, bob, hashCalculator)
 
         client.transactionBuilder().postTransactionAwaitConfirmation(signedTx)
 
@@ -169,9 +174,9 @@ class PostchainClientIT : IntegrationTestSetup() {
                 .addOperation("nop")
                 .build()
 
-        val signedTxAlice = signTransaction(signerTransactionCharlie, alice)
+        val signedTxAlice = signTransaction(signerTransactionCharlie, alice, hashCalculator)
 
-        val signedTxBob = signTransaction(signedTxAlice, bob)
+        val signedTxBob = signTransaction(signedTxAlice, bob, hashCalculator)
 
         client.transactionBuilder().postTransaction(signedTxBob)
 
