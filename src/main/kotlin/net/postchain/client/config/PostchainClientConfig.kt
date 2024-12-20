@@ -43,7 +43,8 @@ data class PostchainClientConfig @JvmOverloads constructor(
         val requestStrategy: RequestStrategyFactory = AbortOnErrorRequestStrategyFactory(),
         val maxTxSize: Int = MAX_TX_SIZE,
         /** Will only be applied to synchronous client if enabled */
-        val compressRequestBodies: Boolean = false
+        val compressRequestBodies: Boolean = false,
+        val merkleHashVersion: Int = 1,
 ) : Config {
     companion object {
         @JvmStatic
@@ -72,6 +73,7 @@ data class PostchainClientConfig @JvmOverloads constructor(
                             .let { RequestStrategies.valueOf(it).factory },
                     maxTxSize = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_MAX_TX_SIZE", "max.tx.size", MAX_TX_SIZE), 
                     compressRequestBodies = config.getEnvOrBooleanProperty("POSTCHAIN_CLIENT_COMPRESS_REQUEST_BODIES", "compress.requests", false),
+                    merkleHashVersion = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_MERKLE_HASH_VERSION", "merkle-hash-version", 1),
             )
         }
     }

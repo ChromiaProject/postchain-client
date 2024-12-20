@@ -35,7 +35,7 @@ import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.mapper.GtvObjectMapper
-import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkle.makeMerkleHashCalculator
 import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
@@ -74,7 +74,7 @@ class PostchainClientImpl(
     private val blockchainRIDHex = config.blockchainRid.toHex()
     private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
     private val cryptoSystem = config.cryptoSystem
-    private val calculator = GtvMerkleHashCalculator(cryptoSystem)
+    private val hashCalculator = makeMerkleHashCalculator(config.merkleHashVersion.toLong())
     private val gson = Gson()
     private val requestStrategy = config.requestStrategy.create(config, httpClient)
 
@@ -84,15 +84,17 @@ class PostchainClientImpl(
             this,
             config.blockchainRid,
             signers.map { it.pubKey.data },
+            hashCalculator,
             signers.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
-            config.maxTxSize
+            config.maxTxSize,
     )
 
     override fun transactionBuilder(initialSigners: List<KeyPair>, remainingRequiredSigners: List<PubKey>) = TransactionBuilder(
             this,
             config.blockchainRid,
             initialSigners.map { it.pubKey.data } + remainingRequiredSigners.map { it.data },
+            hashCalculator,
             initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
@@ -155,7 +157,7 @@ class PostchainClientImpl(
 
     @Throws(IOException::class)
     override fun postTransaction(tx: Gtx): TransactionResult {
-        val txRid = TxRid(tx.calculateTxRid(calculator).toHex())
+        val txRid = TxRid(tx.calculateTxRid(hashCalculator).toHex())
         return requestStrategy.request({ endpoint ->
             Request(Method.POST, "${endpoint.url}/tx/$blockchainRIDHex")
                     .header(Header.ContentType, ContentType.OCTET_STREAM.value)
@@ -319,8 +321,7 @@ class PostchainClientImpl(
 
     @Throws(IOException::class)
     override fun validateConfiguration(configuration: Gtv) {
-
-        val configHash = configuration.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
+        val configHash = configuration.merkleHash(hashCalculator)
         val signatures = config.signers
                 .map { it.sigMaker(cryptoSystem) }
                 .map { it.signDigest(configHash) }
