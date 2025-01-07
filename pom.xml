@@ -13,16 +13,23 @@
     <artifactId>postchain-clients</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
+
     <modules>
+        <module>directory-chain</module>
         <module>postchain-client</module>
+        <module>chromia-client</module>
+        <module>chromia-core</module>
+        <module>coverage-report-aggregate</module>
     </modules>
 
-    <name>Postchain Client Parent</name>
+    <name>Postchain Clients</name>
     <description>Parent of postchain-client and chromia-client</description>
 
     <properties>
         <revision>dev</revision>
         <postchain.version>3.26.0</postchain.version>
+        <directory.chain.version>1.75.0</directory.chain.version>
+        <rell.maven.plugin.version>0.12.5</rell.maven.plugin.version>
         <kotlin.version>2.0.0</kotlin.version>
 
         <maven.compiler.source>21</maven.compiler.source>
@@ -30,6 +37,9 @@
         <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
 
         <kotlin.code.style>obsolete</kotlin.code.style> <!-- Kotlin obsolete IntelliJ IDEA codestyle -->
+
+        <!--suppress UnresolvedMavenProperty -->
+        <directory.source>directory-chain/target/directory1/src</directory.source>
     </properties>
 
     <dependencyManagement>
@@ -40,6 +50,37 @@
                 <version>${postchain.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>net.postchain.client</groupId>
+                <artifactId>postchain-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.postchain.client</groupId>
+                <artifactId>chromia-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.postchain</groupId>
+                <artifactId>chromia-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.postchain</groupId>
+                <artifactId>directory-chain</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.tomakehurst</groupId>
+                <artifactId>wiremock-jre8</artifactId>
+                <version>2.35.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -66,6 +107,77 @@
         </repository>
     </distributionManagement>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <version>${kotlin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>compile</id>
+                            <goals>
+                                <goal>compile</goal>
+                            </goals>
+                            <configuration>
+                                <sourceDirs>
+                                    <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                                    <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                                </sourceDirs>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>test-compile</id>
+                            <goals>
+                                <goal>test-compile</goal>
+                            </goals>
+                            <configuration>
+                                <sourceDirs>
+                                    <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+                                    <sourceDir>${project.basedir}/src/test/java</sourceDir>
+                                    <sourceDir>${project.basedir}/target/generated-test-sources</sourceDir>
+                                </sourceDirs>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>net.postchain.rell</groupId>
+                    <artifactId>rell-maven-plugin</artifactId>
+                    <version>${rell.maven.plugin.version}</version>
+                    <configuration>
+                        <source>${maven.multiModuleProjectDirectory}/${directory.source}</source>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <environmentVariables>
+                            <D1_SOURCE>${maven.multiModuleProjectDirectory}/${directory.source}</D1_SOURCE>
+                        </environmentVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <environmentVariables>
+                            <D1_SOURCE>${maven.multiModuleProjectDirectory}/${directory.source}</D1_SOURCE>
+                        </environmentVariables>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
     <repositories>
         <repository>
             <id>chromia-parent</id>
@@ -80,6 +192,18 @@
     </repositories>
 
     <profiles>
+        <profile>
+            <id>d1-local</id>
+            <activation>
+                <property>
+                    <name>local</name>
+                </property>
+            </activation>
+            <properties>
+                <!--suppress UnresolvedMavenProperty -->
+                <directory.source>../directory-chain/src</directory.source>
+            </properties>
+        </profile>
         <profile>
             <id>ci</id>
             <build>

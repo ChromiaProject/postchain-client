@@ -1,4 +1,4 @@
-image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker-java21:1.0.3
+image: registry.gitlab.com/chromaway/core-tools/chromia-images/maven-docker-java21:1.0.4@sha256:88452414ed925621474c30416be80d35acd9cfe5a2d5b74cc73f571a6fa61cce
 include:
   - project: "chromaway/core-infra/gitlab-automation"
     ref: 1.2.0
@@ -26,19 +26,15 @@ include:
       alias: docker
       command: [ "--tls=false" , "--experimental" ]
   artifacts:
-    when: on_failure
+    when: always
     paths:
       - "**/*.log"
+      - $JACOCO_REPORT_DIR/*
     reports:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
         - "**/target/failsafe-reports/TEST-*.xml"
         - "**/target/rell-reports/rell-tests.xml"
-    expire_in: 1 week
-  artifacts:
-    when: always
-    paths:
-      - $JACOCO_REPORT_DIR/*
     expire_in: 1 week
 
 stages:
@@ -49,6 +45,25 @@ stages:
   - prepare_release
   - release
 
+# Triggered by that something was merged into or pushed onto main
+deploy-snapshot:
+  extends: .setup
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  script:
+    - git fetch --unshallow
+    - git fetch --tags
+    - CURRENT_VERSION=$(git describe --tags --abbrev=0)
+    - IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+    - SNAPSHOT_VERSION=$MAJOR.$((MINOR + 1)).0-SNAPSHOT
+    - mvn
+      $MAVEN_CLI_OPTS
+      --activate-profiles ci,distro
+      -Drevision=$SNAPSHOT_VERSION
+      clean source:jar deploy
+
+# Triggered by that a semver tag was pushed
 deploy:
   extends: .setup
   stage: deploy
@@ -59,7 +74,7 @@ deploy:
       $MAVEN_CLI_OPTS
       --activate-profiles ci      
       -Drevision=$CI_COMMIT_TAG
-      source:jar deploy
+      clean source:jar deploy
 
 build:
   extends:
@@ -69,6 +84,7 @@ build:
   interruptible: true
   except:
     refs:
+      - dev
       - tags
   script:
     - mvn
@@ -97,7 +113,7 @@ gitlab-release:
   script:
     - echo "Running the release job."
   release:
-    name: 'Postchain client $CI_COMMIT_TAG'
+    name: 'Postchain & Chromia client $CI_COMMIT_TAG'
     description: release_notes.md
     tag_name: '$CI_COMMIT_TAG'
 
@@ -105,6 +121,7 @@ test-coverage-report:
   stage: code-coverage
   except:
     refs:
+      - dev
       - tags
   dependencies:
     - build
@@ -131,7 +148,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
   DOCKER_CLI_EXPERIMENTAL: enabled
-  JACOCO_REPORT_DIR: postchain-client/target/site/jacoco
+  JACOCO_REPORT_DIR: coverage-report-aggregate/target/site/jacoco-aggregate
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
