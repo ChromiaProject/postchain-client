@@ -19,6 +19,7 @@ import net.postchain.client.request.RequestStrategyFactory
 import net.postchain.common.BlockchainRid
 import java.lang.Thread.sleep
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
 
 /**
@@ -33,8 +34,8 @@ class StandardChromiaClient(
     constructor(endpointPool: EndpointPool) : this(ChromiaClientConfig(endpointPool))
 
     val managementPostchainClient: PostchainClient
-    private val clusterNodes = mutableMapOf<String, CmClusterInfo>()
-    private val clients = mutableMapOf<BlockchainRid, PostchainClient>()
+    private val clusterNodes = ConcurrentHashMap<String, CmClusterInfo>()
+    private val clients = ConcurrentHashMap<BlockchainRid, PostchainClient>()
 
     init {
         val initialConfig = PostchainClientConfig(
