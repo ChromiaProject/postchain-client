@@ -9,7 +9,7 @@ target
 *.pid
 *.log
 *.log.lck
-logs
+postchain/logs
 *.jar
 
 .flattened-pom.xml

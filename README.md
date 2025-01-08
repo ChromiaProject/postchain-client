@@ -110,3 +110,65 @@ txBuilder.addNop()
 txBuilder.sign(sigMaker0) // Sign it
 val result = txBuilder.post()
 ```
+
+# Chromia client
+
+The Chromia client is an alternative to the Postchain client and can be used to more easily communicate with Chromia networks. When initialized it will lookup and connect to system nodes of the network.
+
+## Setup
+
+For Maven add this to your `pom.xml`:
+
+```xml
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>net.postchain.client</groupId>
+            <artifactId>chromia-client</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <repositories>
+        <repository>
+            <id>chromia-parent</id>
+            <name>Chromia parent GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/50818999/packages/maven</url>
+        </repository>
+        <repository>
+            <id>postchain</id>
+            <name>Postchain GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/32294340/packages/maven</url>
+        </repository>
+        <repository>
+            <id>postchain-client</id>
+            <name>Postchain Client GitLab Registry</name>
+            <url>https://gitlab.com/api/v4/projects/46288950/packages/maven</url>
+        </repository>
+    </repositories>
+</project>
+```
+
+For Gradle, add this to your `build.gradle.kts`:
+
+```kotlin
+repositories {
+    maven("https://gitlab.com/api/v4/projects/50818999/packages/maven")
+    maven("https://gitlab.com/api/v4/projects/32294340/packages/maven")
+    maven("https://gitlab.com/api/v4/projects/46288950/packages/maven")
+}
+
+dependencies {
+    implementation("net.postchain.client:postchain-client")
+}
+```
+
+## Example usage
+
+To create a client and wait for a transaction to be anchored:
+
+```kotlin
+val chromiaClient = StandardChromiaClient("http://127.0.0.1:7740")
+chromiaClient.awaitAnchoredTx(
+        BlockchainRid.buildFromHex("335C75E08AFAC7D6678263F1A13D5AFED9CD009344B6349107D7CEEA3A40EA08"),
+        TxRid("3DE7FC7BCF6DAF2FFD8564D46D73F42C069818DDC249835535AD50D8D9270FF3"))
+```
