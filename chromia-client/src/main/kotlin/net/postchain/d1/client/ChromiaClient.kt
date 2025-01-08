@@ -12,12 +12,12 @@ interface ChromiaClient {
     /** Chromia configuration used to configure new subsequent created postchain clients */
     val config: ChromiaClientConfig
 
-    fun isTxAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean
+    fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean
 
-    fun isBlockAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean
+    fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean
 
     /** Block until the transaction is either anchored or the timeout is reached and an exception is thrown. */
-    fun awaitAnchoredTx(
+    fun awaitClusterAnchoredTx(
             blockchainRid: BlockchainRid,
             txId: TxRid,
             retries: Int = config.statusPollCount,
@@ -25,10 +25,10 @@ interface ChromiaClient {
     )
 
     /** Create a postchain client for the chain anchoring the given dapp chain */
-    fun getAnchoringPostchainClient(dappBlockchainRid: BlockchainRid): PostchainClient
+    fun getClusterAnchoringPostchainClient(dappBlockchainRid: BlockchainRid): PostchainClient
 
     /** Create a postchain client for the chain anchoring the given cluster */
-    fun getAnchoringPostchainClient(cluster: String): PostchainClient
+    fun getClusterAnchoringPostchainClient(cluster: String): PostchainClient
 
     /** Get a postchain client for the specific blockchainRid and based on the implementation configuration. */
     fun getPostchainClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory()): PostchainClient

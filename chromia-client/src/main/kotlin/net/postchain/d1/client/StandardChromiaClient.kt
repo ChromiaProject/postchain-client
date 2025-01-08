@@ -1,6 +1,8 @@
 package net.postchain.d1.client
 
 import net.postchain.chain0.anchoring_chain_common.isBlockAnchored
+import net.postchain.chromia.cm_api.CmClusterInfo
+import net.postchain.chromia.cm_api.CmPeerInfo
 import net.postchain.chromia.cm_api.cmGetBlockchainApiUrls
 import net.postchain.chromia.cm_api.cmGetBlockchainCluster
 import net.postchain.chromia.cm_api.cmGetClusterInfo
@@ -12,6 +14,7 @@ import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.impl.QueryMajorityRequestStrategyFactory
 import net.postchain.client.impl.TryNextOnErrorRequestStrategyFactory
 import net.postchain.client.request.EndpointPool
+import net.postchain.client.request.RandomizedEndpointPool
 import net.postchain.client.request.RequestStrategyFactory
 import net.postchain.common.BlockchainRid
 import java.lang.Thread.sleep
@@ -30,6 +33,8 @@ class StandardChromiaClient(
     constructor(endpointPool: EndpointPool) : this(ChromiaClientConfig(endpointPool))
 
     val managementPostchainClient: PostchainClient
+    private val clusterNodes = mutableMapOf<String, CmClusterInfo>()
+    private val clients = mutableMapOf<BlockchainRid, PostchainClient>()
 
     init {
         val initialConfig = PostchainClientConfig(
@@ -50,17 +55,17 @@ class StandardChromiaClient(
         managementPostchainClient = PostchainClientImpl(dcBridConfig.copy(endpointPool = EndpointPool.default(apiUrls.toList())))
     }
 
-    override fun isTxAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean {
+    override fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean {
         val transactionInfo = getTransactionInfo(blockchainRid, txId)
-        return isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
+        return isBlockClusterAnchored(blockchainRid, transactionInfo.blockRID.data)
     }
 
-    override fun isBlockAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean {
-        val anchoringPostchainClient = getAnchoringPostchainClient(blockchainRid)
+    override fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean {
+        val anchoringPostchainClient = getClusterAnchoringPostchainClient(blockchainRid)
         return anchoringPostchainClient.isBlockAnchored(blockchainRid, blockRid)
     }
 
-    override fun awaitAnchoredTx(
+    override fun awaitClusterAnchoredTx(
             blockchainRid: BlockchainRid,
             txId: TxRid,
             retries: Int,
@@ -68,7 +73,7 @@ class StandardChromiaClient(
         ) {
 
         val transactionInfo = getTransactionInfo(blockchainRid, txId)
-        val anchoringPostchainClient = getAnchoringPostchainClient(blockchainRid)
+        val anchoringPostchainClient = getClusterAnchoringPostchainClient(blockchainRid)
 
         repeat(retries) {
             val blockAnchored = anchoringPostchainClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
@@ -81,22 +86,46 @@ class StandardChromiaClient(
     }
 
     private fun getTransactionInfo(blockchainRid: BlockchainRid, txId: TxRid): TransactionInfo {
-        val sourceChainClient = getPostchainClient(blockchainRid)
+        val sourceChainClient = getOrCreatePostchainClient(blockchainRid)
         val transactionInfo = sourceChainClient.getTransactionInfo(txId)
         return transactionInfo
     }
 
-    override fun getAnchoringPostchainClient(dappBlockchainRid: BlockchainRid): PostchainClient {
-        return getAnchoringPostchainClient(managementPostchainClient.cmGetBlockchainCluster(dappBlockchainRid.data))
+    override fun getClusterAnchoringPostchainClient(dappBlockchainRid: BlockchainRid): PostchainClient {
+        return getClusterAnchoringPostchainClient(managementPostchainClient.cmGetBlockchainCluster(dappBlockchainRid.data))
     }
 
-    override fun getAnchoringPostchainClient(cluster: String): PostchainClient {
+    override fun getClusterAnchoringPostchainClient(cluster: String): PostchainClient {
         val clusterInfo = managementPostchainClient.cmGetClusterInfo(cluster)
-        return getPostchainClient(BlockchainRid(clusterInfo.anchoringChain), QueryMajorityRequestStrategyFactory())
+        return getOrCreatePostchainClient(BlockchainRid(clusterInfo.anchoringChain), QueryMajorityRequestStrategyFactory())
     }
 
     override fun getPostchainClient(
             blockchainRid: BlockchainRid,
             requestStrategy: RequestStrategyFactory
-    ) = PostchainClientImpl(managementPostchainClient.config.copy(blockchainRid = blockchainRid, requestStrategy = requestStrategy))
+    ): PostchainClient {
+        val clusterName = managementPostchainClient.cmGetBlockchainCluster(blockchainRid.data)
+        val clusterInfo = getClusterInfo(clusterName)
+
+        return PostchainClientImpl(managementPostchainClient.config.copy(
+                    blockchainRid = blockchainRid,
+                    requestStrategy = requestStrategy,
+                    endpointPool = RandomizedEndpointPool(clusterInfo.peers.map(CmPeerInfo::apiUrl))
+            ))
+    }
+
+    private fun getOrCreatePostchainClient(
+            blockchainRid: BlockchainRid,
+            requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory()
+    ): PostchainClient {
+        return clients.getOrPut(blockchainRid) {
+            getPostchainClient(blockchainRid, requestStrategy)
+        }
+    }
+
+    private fun getClusterInfo(cluster: String): CmClusterInfo {
+        return clusterNodes.getOrPut(cluster) {
+            managementPostchainClient.cmGetClusterInfo(cluster)
+        }
+    }
 }
