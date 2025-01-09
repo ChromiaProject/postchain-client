@@ -267,7 +267,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val err = assertThrows<ClientError> {
             client.validateConfiguration(loadConfig("blockchain_config_invalid.xml"))
         }
-        assertThat(err.errorMessage).contains("Invalid configuration: net.postchain.gtx.NonExistent")
+        assertThat(err.errorMessage).contains("Module class was not found: net.postchain.gtx.NonExistent")
     }
 
     @Test
@@ -298,7 +298,7 @@ class PostchainClientIT : IntegrationTestSetup() {
 
     private fun addTransactions(client: PostchainClient, blockchainRid: BlockchainRid, txCount: Int): List<TxRid> {
         val txRids = mutableListOf<TxRid>()
-        for (i in 0 until txCount) {
+        (0 until txCount).forEach { i ->
             val builder = createSignedNopTx(client, blockchainRid)
             val post = builder.post()
             txRids.add(post.txRid)
