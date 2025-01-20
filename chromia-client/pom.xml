@@ -29,10 +29,6 @@
         </dependency>
         <dependency>
             <groupId>net.postchain</groupId>
-            <artifactId>chromia-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.postchain</groupId>
             <artifactId>directory-chain</artifactId>
             <type>pom</type>
         </dependency>
@@ -95,6 +91,7 @@
                             <packageName>net.postchain.chain0</packageName>
                             <mainModules>
                                 <mainModule>anchoring_chain_common</mainModule>
+                                <mainModule>cm_api</mainModule>
                             </mainModules>
                         </configuration>
                     </execution>
