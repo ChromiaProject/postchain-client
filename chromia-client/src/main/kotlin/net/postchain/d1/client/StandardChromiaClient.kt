@@ -1,11 +1,11 @@
 package net.postchain.d1.client
 
 import net.postchain.chain0.anchoring_chain_common.isBlockAnchored
-import net.postchain.chromia.cm_api.CmClusterInfo
-import net.postchain.chromia.cm_api.CmPeerInfo
-import net.postchain.chromia.cm_api.cmGetBlockchainApiUrls
-import net.postchain.chromia.cm_api.cmGetBlockchainCluster
-import net.postchain.chromia.cm_api.cmGetClusterInfo
+import net.postchain.chain0.cm_api.CmClusterInfo
+import net.postchain.chain0.cm_api.CmPeerInfo
+import net.postchain.chain0.cm_api.cmGetBlockchainApiUrls
+import net.postchain.chain0.cm_api.cmGetBlockchainCluster
+import net.postchain.chain0.cm_api.cmGetClusterInfo
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TransactionInfo
