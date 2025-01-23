@@ -161,6 +161,22 @@
                         </environmentVariables>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>com.chromaway</groupId>
+                    <artifactId>kotlin-bcv-maven-plugin</artifactId>
+                    <version>0.1.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
