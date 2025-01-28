@@ -14,10 +14,10 @@ import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.impl.QueryMajorityRequestStrategyFactory
 import net.postchain.client.impl.TryNextOnErrorRequestStrategyFactory
 import net.postchain.client.request.EndpointPool
-import net.postchain.client.request.RandomizedEndpointPool
 import net.postchain.client.request.RequestStrategyFactory
 import net.postchain.common.BlockchainRid
 import java.lang.Thread.sleep
+import java.net.URI
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
@@ -29,9 +29,7 @@ import java.util.concurrent.TimeoutException
 class StandardChromiaClient(
         override val config: ChromiaClientConfig
 ) : ChromiaClient {
-    constructor(endpoint: String) : this(EndpointPool.singleUrl(endpoint))
-
-    constructor(endpointPool: EndpointPool) : this(ChromiaClientConfig(endpointPool))
+    constructor(nodes: List<URI>) : this(ChromiaClientConfig(nodes))
 
     val managementPostchainClient: PostchainClient
     private val clusterNodes = ConcurrentHashMap<String, CmClusterInfo>()
@@ -40,7 +38,7 @@ class StandardChromiaClient(
     init {
         val initialConfig = PostchainClientConfig(
                 BlockchainRid.ZERO_RID,
-                config.endpointPool,
+                EndpointPool.default(config.nodes.map { it.toString() }),
                 config.signers,
                 statusPollCount = config.statusPollCount,
                 statusPollInterval = config.statusPollInterval,
@@ -53,7 +51,7 @@ class StandardChromiaClient(
         val dcBridConfig = initialConfig.copy(blockchainRid = dcBrid)
         val apiUrls = PostchainClientImpl(dcBridConfig).cmGetBlockchainApiUrls(dcBrid)
 
-        managementPostchainClient = PostchainClientImpl(dcBridConfig.copy(endpointPool = EndpointPool.default(apiUrls.toList())))
+        managementPostchainClient = PostchainClientImpl(dcBridConfig.copy(endpointPool = EndpointPool.default(apiUrls)))
     }
 
     override fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean {
@@ -101,18 +99,46 @@ class StandardChromiaClient(
         return getOrCreatePostchainClient(BlockchainRid(clusterInfo.anchoringChain), QueryMajorityRequestStrategyFactory())
     }
 
-    override fun getPostchainClient(
-            blockchainRid: BlockchainRid,
-            requestStrategy: RequestStrategyFactory
-    ): PostchainClient {
+    override fun getPostchainClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory): PostchainClient {
+        val signerNodes = getSignerNodes(blockchainRid)
+
+        val client = PostchainClientImpl(managementPostchainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+                endpointPool = signerNodes
+        ))
+        return ChromiaPostchainClient(txClient = client, queryClient = client)
+    }
+
+    override fun getPostchainClientForQueryReplica(blockchainRid: BlockchainRid, queryNodes: List<URI>, requestStrategy: RequestStrategyFactory): PostchainClient {
+        val signerNodes = getSignerNodes(blockchainRid)
+
+        val txClient = PostchainClientImpl(managementPostchainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+                endpointPool = signerNodes
+        ))
+        val queryClient = PostchainClientImpl(managementPostchainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+                endpointPool = EndpointPool.default(queryNodes.map { it.toString() })
+        ))
+        return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient)
+    }
+
+    override fun getPostchainClientForFullReplica(blockchainRid: BlockchainRid, nodes: List<URI>, requestStrategy: RequestStrategyFactory): PostchainClient {
+        val client = PostchainClientImpl(managementPostchainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+                endpointPool = EndpointPool.default(nodes.map { it.toString() })
+        ))
+        return ChromiaPostchainClient(txClient = client, queryClient = client)
+    }
+
+    private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool {
         val clusterName = managementPostchainClient.cmGetBlockchainCluster(blockchainRid.data)
         val clusterInfo = getClusterInfo(clusterName)
-
-        return PostchainClientImpl(managementPostchainClient.config.copy(
-                    blockchainRid = blockchainRid,
-                    requestStrategy = requestStrategy,
-                    endpointPool = RandomizedEndpointPool(clusterInfo.peers.map(CmPeerInfo::apiUrl))
-            ))
+        return EndpointPool.default(clusterInfo.peers.map(CmPeerInfo::apiUrl))
     }
 
     private fun getOrCreatePostchainClient(
