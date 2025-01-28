@@ -13,13 +13,20 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED
+import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxRid
 import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.common.tx.TransactionStatus
+import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
+import net.postchain.gtx.Gtx
+import net.postchain.gtx.GtxBody
+import net.postchain.gtx.GtxOp
 import net.postchain.gtx.GtxQuery
 import org.http4k.core.ContentType
 import org.junit.jupiter.api.AfterEach
@@ -27,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.net.URI
 import java.util.concurrent.TimeoutException
 
 class StandardChromiaClientTest {
@@ -83,7 +91,7 @@ class StandardChromiaClientTest {
                         .withBody(GtvEncoder.encodeGtv(gtv(true))))
         )
 
-        val cc = StandardChromiaClient("http://localhost:${server.port()}")
+        val cc = StandardChromiaClient(listOf(URI("http://localhost:${server.port()}")))
         cc.awaitClusterAnchoredTx(dappBrid, dappTxRid)
         assertThat(cc.isTxClusterAnchored(dappBrid, dappTxRid)).isEqualTo(true)
     }
@@ -99,7 +107,7 @@ class StandardChromiaClientTest {
         mockPostQuery(anchorChainBrid, "is_block_anchored",
                 mapOf("blockchain_rid" to gtv(dappBrid), "block_rid" to gtv(txBlockRid)), gtv(false))
 
-        val cc = StandardChromiaClient("http://localhost:${server.port()}")
+        val cc = StandardChromiaClient(listOf(URI("http://localhost:${server.port()}")))
         val e = assertThrows<TimeoutException> {
             cc.awaitClusterAnchoredTx(dappBrid, dappTxRid, retries = 1)
         }
@@ -107,6 +115,102 @@ class StandardChromiaClientTest {
                 "Timeout while waiting for transaction to be anchored"
         )
         assertThat(cc.isTxClusterAnchored(dappBrid, dappTxRid)).isEqualTo(false)
+    }
+
+    @Test
+    fun `no replica`() {
+        val dappBrid = BlockchainRid.buildFromHex("335C75E08AFAC7D6678263F1A13D5AFED9CD009344B6349107D7CEEA3A40EA08")
+        val dappTxRid = TxRid("3DE7FC7BCF6DAF2FFD8564D46D73F42C069818DDC249835535AD50D8D9270FF3")
+        val tx = Gtx(GtxBody(dappBrid, listOf(GtxOp("my_op")), listOf()), listOf())
+
+        setupMock("cluster-1", dappBrid, dappTxRid)
+
+        stubFor(get("/query_gtv/${dappBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
+        )
+
+        stubFor(post("/tx/${dappBrid}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .withRequestBody(binaryEqualTo(tx.encode()))
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv(mapOf()))))
+        )
+
+        val cc = StandardChromiaClient(listOf(URI("http://localhost:${server.port()}")))
+        val pc = cc.getPostchainClient(dappBrid)
+        assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
+
+        assertThat(pc.postTransaction(tx)).isEqualTo(
+                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                        TransactionStatus.WAITING, 200, "OK"))
+    }
+
+    @Test
+    fun `query replica`() {
+        val dappBrid = BlockchainRid.buildFromHex("335C75E08AFAC7D6678263F1A13D5AFED9CD009344B6349107D7CEEA3A40EA08")
+        val dappTxRid = TxRid("3DE7FC7BCF6DAF2FFD8564D46D73F42C069818DDC249835535AD50D8D9270FF3")
+        val tx = Gtx(GtxBody(dappBrid, listOf(GtxOp("my_op")), listOf()), listOf())
+
+        setupMock("cluster-1", dappBrid, dappTxRid)
+
+        stubFor(get("/replica/query_gtv/${dappBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
+        )
+
+        stubFor(post("/tx/${dappBrid}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .withRequestBody(binaryEqualTo(tx.encode()))
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv(mapOf()))))
+        )
+
+        val cc = StandardChromiaClient(listOf(URI("http://localhost:${server.port()}")))
+        val pc = cc.getPostchainClientForQueryReplica(dappBrid, queryNodes = listOf(URI("http://localhost:${server.port()}/replica")))
+        assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
+
+        assertThat(pc.postTransaction(tx)).isEqualTo(
+                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                        TransactionStatus.WAITING, 200, "OK"))
+    }
+
+    @Test
+    fun `full replica`() {
+        val dappBrid = BlockchainRid.buildFromHex("335C75E08AFAC7D6678263F1A13D5AFED9CD009344B6349107D7CEEA3A40EA08")
+        val dappTxRid = TxRid("3DE7FC7BCF6DAF2FFD8564D46D73F42C069818DDC249835535AD50D8D9270FF3")
+        val tx = Gtx(GtxBody(dappBrid, listOf(GtxOp("my_op")), listOf()), listOf())
+
+        setupMock("cluster-1", dappBrid, dappTxRid)
+
+        stubFor(get("/replica/query_gtv/${dappBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
+        )
+
+        stubFor(post("/replica/tx/${dappBrid}")
+                .inScenario("main")
+                .whenScenarioStateIs(STARTED)
+                .withRequestBody(binaryEqualTo(tx.encode()))
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv(mapOf()))))
+        )
+
+        val cc = StandardChromiaClient(listOf(URI("http://localhost:${server.port()}")))
+        val pc = cc.getPostchainClientForFullReplica(dappBrid, nodes = listOf(URI("http://localhost:${server.port()}/replica")))
+        assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
+
+        assertThat(pc.postTransaction(tx)).isEqualTo(
+                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                        TransactionStatus.WAITING, 200, "OK"))
     }
 
     private fun buildGetQueryGtv(brid: BlockchainRid, name: String, args: Map<String, Gtv>): MappingBuilder {
@@ -162,9 +266,9 @@ class StandardChromiaClientTest {
     @Disabled
     @Test
     fun test() {
-//        val cc = StandardChromiaClient("https://system.chromaway.com:7740")
-//        val cc = StandardChromiaClient("https://dapps0.chromaway.com:7740")
-        val cc = StandardChromiaClient("https://replica0.chromaway.com:7740")
+//        val cc = StandardChromiaClient(listOf(URI("https://system.chromaway.com:7740")))
+//        val cc = StandardChromiaClient(listOf(URI("https://dapps0.chromaway.com:7740")))
+        val cc = StandardChromiaClient(listOf(URI("https://replica0.chromaway.com:7740")))
 
         println("System node endpoints:")
         cc.managementPostchainClient.config.endpointPool.forEach { println(it.url) }
