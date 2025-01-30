@@ -1,17 +1,20 @@
 package net.postchain.d1.client
 
+import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TxRid
-import net.postchain.client.impl.TryNextOnErrorRequestStrategyFactory
+import net.postchain.client.request.EndpointPool
 import net.postchain.client.request.RequestStrategyFactory
 import net.postchain.common.BlockchainRid
-import java.net.URI
 import java.time.Duration
 
 interface ChromiaClient {
 
-    /** Chromia configuration used to configure new subsequent created postchain clients */
-    val config: ChromiaClientConfig
+    /** Configuration used to configure new subsequent created postchain clients */
+    val config: PostchainClientConfig
+
+    /** Directory chain blockchain RID, as specified or looked up. */
+    val directoryChainRid: BlockchainRid
 
     fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean
 
@@ -26,20 +29,43 @@ interface ChromiaClient {
     )
 
     /** Create a postchain client for the chain anchoring the given dapp chain */
-    fun getClusterAnchoringPostchainClient(dappBlockchainRid: BlockchainRid): PostchainClient
+    fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): PostchainClient
 
     /** Create a postchain client for the chain anchoring the given cluster */
-    fun getClusterAnchoringPostchainClient(cluster: String): PostchainClient
+    fun getClusterAnchoringClient(cluster: String): PostchainClient
+
+    /** Create a postchain client for the directory chain. */
+    fun getDirectoryChainClient(
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
+    ): PostchainClient
+
+    /**
+     * Get a postchain client for the directory chain.
+     *
+     * Queries will be sent to the specified node(s), transactions will be sent to signer nodes in the system cluster.
+     *
+     * @param queryNodes  node(s) to query
+     * @param requestStrategy  request strategy to use
+     * @param addNop add a no-op to each transaction builder
+     */
+    fun getDirectoryChainClientForQueryReplica(
+            queryNodes: EndpointPool,
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
+    ): PostchainClient
 
     /**
      * Get a postchain client for the specified blockchain and based on the implementation configuration.
      *
      * @param blockchainRid  the RID of the blockchain
      * @param requestStrategy  request strategy to use
+     * @param addNop add a no-op to each transaction builder
      */
-    fun getPostchainClient(
+    fun getClient(
             blockchainRid: BlockchainRid,
-            requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory(),
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
     ): PostchainClient
 
     /**
@@ -50,25 +76,12 @@ interface ChromiaClient {
      * @param blockchainRid  the RID of the blockchain
      * @param queryNodes  node(s) to query
      * @param requestStrategy  request strategy to use
+     * @param addNop add a no-op to each transaction builder
      */
-    fun getPostchainClientForQueryReplica(
+    fun getClientForQueryReplica(
             blockchainRid: BlockchainRid,
-            queryNodes: List<URI>,
-            requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory(),
-    ): PostchainClient
-
-    /**
-     * Get a postchain client for the specified blockchain and based on the implementation configuration.
-     *
-     * Both queries and transactions will be sent to the specified node(s).
-     *
-     * @param blockchainRid  the RID of the blockchain
-     * @param nodes  node(s) to use
-     * @param requestStrategy  request strategy to use
-     */
-    fun getPostchainClientForFullReplica(
-            blockchainRid: BlockchainRid,
-            nodes: List<URI>,
-            requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory(),
+            queryNodes: EndpointPool,
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
     ): PostchainClient
 }
