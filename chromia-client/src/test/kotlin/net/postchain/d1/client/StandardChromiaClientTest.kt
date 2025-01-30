@@ -66,6 +66,9 @@ class StandardChromiaClientTest {
 
         setupMock("cluster-1", dappBrid, dappTxRid)
 
+        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+                mapOf("brid" to gtv(dappBrid.data)), gtv("cluster-1"))
+
         stubFor(post("/query_gtv/${anchorChainBrid}")
                 .inScenario("first false, second true")
                 .whenScenarioStateIs(STARTED)
@@ -105,6 +108,9 @@ class StandardChromiaClientTest {
         val dappTxRid = TxRid("3DE7FC7BCF6DAF2FFD8564D46D73F42C069818DDC249835535AD50D8D9270FF3")
 
         setupMock("cluster-2", dappBrid, dappTxRid)
+
+        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+                mapOf("brid" to gtv(dappBrid.data)), gtv("cluster-2"))
 
         mockPostQuery(anchorChainBrid, "is_block_anchored",
                 mapOf("blockchain_rid" to gtv(dappBrid), "block_rid" to gtv(txBlockRid)), gtv(false))
@@ -307,8 +313,8 @@ class StandardChromiaClientTest {
                     |"blockRID": "$txBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
                     |""".trimMargin())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
-                mapOf("brid" to gtv(dappBrid.data)), gtv(cluster))
+        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(dappBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(anchorChainBrid.data)), gtv(cluster))

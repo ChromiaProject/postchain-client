@@ -1,8 +1,6 @@
 package net.postchain.d1.client
 
 import net.postchain.chain0.anchoring_chain_common.isBlockAnchored
-import net.postchain.chain0.cm_api.CmClusterInfo
-import net.postchain.chain0.cm_api.CmPeerInfo
 import net.postchain.chain0.cm_api.cmGetBlockchainApiUrls
 import net.postchain.chain0.cm_api.cmGetBlockchainCluster
 import net.postchain.chain0.cm_api.cmGetClusterInfo
@@ -40,7 +38,6 @@ class StandardChromiaClient(
     val directoryChainConfig: PostchainClientConfig
     internal val directoryChainClient: PostchainClient
 
-    private val clusterNodes = ConcurrentHashMap<String, CmClusterInfo>()
     private val clients = ConcurrentHashMap<BlockchainRid, PostchainClient>()
 
     init {
@@ -98,7 +95,11 @@ class StandardChromiaClient(
 
     override fun getClusterAnchoringClient(cluster: String): PostchainClient {
         val clusterInfo = directoryChainClient.cmGetClusterInfo(cluster)
-        return getOrCreatePostchainClient(BlockchainRid(clusterInfo.anchoringChain), QueryMajorityRequestStrategyFactory())
+        return PostchainClientImpl(config.copy(
+                blockchainRid = BlockchainRid(clusterInfo.anchoringChain),
+                endpointPool = EndpointPool.default(clusterInfo.peers.map { it.apiUrl }),
+                requestStrategy = QueryMajorityRequestStrategyFactory(),
+        ))
     }
 
     override fun getDirectoryChainClient(requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -147,11 +148,8 @@ class StandardChromiaClient(
         return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
     }
 
-    private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool {
-        val clusterName = directoryChainClient.cmGetBlockchainCluster(blockchainRid.data)
-        val clusterInfo = getClusterInfo(clusterName)
-        return EndpointPool.default(clusterInfo.peers.map(CmPeerInfo::apiUrl))
-    }
+    private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool =
+            EndpointPool.default(directoryChainClient.cmGetBlockchainApiUrls(blockchainRid))
 
     private fun getOrCreatePostchainClient(
             blockchainRid: BlockchainRid,
@@ -159,12 +157,6 @@ class StandardChromiaClient(
     ): PostchainClient {
         return clients.getOrPut(blockchainRid) {
             getClient(blockchainRid, requestStrategy)
-        }
-    }
-
-    private fun getClusterInfo(cluster: String): CmClusterInfo {
-        return clusterNodes.getOrPut(cluster) {
-            directoryChainClient.cmGetClusterInfo(cluster)
         }
     }
 }
