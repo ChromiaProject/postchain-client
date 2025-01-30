@@ -6,7 +6,6 @@ import net.postchain.chain0.cm_api.cmGetBlockchainCluster
 import net.postchain.chain0.cm_api.cmGetClusterInfo
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.PostchainClient
-import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.impl.QueryMajorityRequestStrategyFactory
@@ -16,7 +15,6 @@ import net.postchain.client.request.RequestStrategyFactory
 import net.postchain.common.BlockchainRid
 import java.lang.Thread.sleep
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
 
 /**
@@ -38,8 +36,6 @@ class StandardChromiaClient(
     val directoryChainConfig: PostchainClientConfig
     internal val directoryChainClient: PostchainClient
 
-    private val clients = ConcurrentHashMap<BlockchainRid, PostchainClient>()
-
     init {
         val initialConfig = config.copy(requestStrategy = TryNextOnErrorRequestStrategyFactory())
 
@@ -55,28 +51,17 @@ class StandardChromiaClient(
         directoryChainClient = PostchainClientImpl(directoryChainConfig)
     }
 
-    override fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean {
-        val transactionInfo = getTransactionInfo(blockchainRid, txId)
-        return isBlockClusterAnchored(blockchainRid, transactionInfo.blockRID.data)
-    }
-
-    override fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean {
-        val anchoringPostchainClient = getClusterAnchoringClient(blockchainRid)
-        return anchoringPostchainClient.isBlockAnchored(blockchainRid, blockRid)
-    }
-
     override fun awaitClusterAnchoredTx(
             blockchainRid: BlockchainRid,
             txId: TxRid,
             retries: Int,
             pollInterval: Duration
     ) {
-
-        val transactionInfo = getTransactionInfo(blockchainRid, txId)
-        val anchoringPostchainClient = getClusterAnchoringClient(blockchainRid)
+        val (anchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
+        val transactionInfo = sourceChainClient.getTransactionInfo(txId)
 
         repeat(retries) {
-            val blockAnchored = anchoringPostchainClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
+            val blockAnchored = anchoringClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
             if (blockAnchored) {
                 return
             }
@@ -85,10 +70,30 @@ class StandardChromiaClient(
         throw TimeoutException("Timeout while waiting for transaction to be anchored")
     }
 
-    private fun getTransactionInfo(blockchainRid: BlockchainRid, txId: TxRid): TransactionInfo {
-        val sourceChainClient = getOrCreatePostchainClient(blockchainRid)
-        return sourceChainClient.getTransactionInfo(txId)
+    override fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean {
+        val (anchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
+        val transactionInfo = sourceChainClient.getTransactionInfo(txId)
+        return anchoringClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
     }
+
+    private fun getClusterAnchoringAndSourceChainClients(blockchainRid: BlockchainRid): Pair<PostchainClientImpl, PostchainClientImpl> {
+        val clusterInfo = directoryChainClient.cmGetClusterInfo(directoryChainClient.cmGetBlockchainCluster(blockchainRid.data))
+        val signerNodes = EndpointPool.default(clusterInfo.peers.map { it.apiUrl })
+        val anchoringClient = PostchainClientImpl(config.copy(
+                blockchainRid = BlockchainRid(clusterInfo.anchoringChain),
+                endpointPool = signerNodes,
+                requestStrategy = QueryMajorityRequestStrategyFactory(),
+        ))
+        val sourceChainClient = PostchainClientImpl(config.copy(
+                blockchainRid = blockchainRid,
+                endpointPool = signerNodes,
+                requestStrategy = QueryMajorityRequestStrategyFactory(),
+        ))
+        return anchoringClient to sourceChainClient
+    }
+
+    override fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean =
+            getClusterAnchoringClient(blockchainRid).isBlockAnchored(blockchainRid, blockRid)
 
     override fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): PostchainClient =
             getClusterAnchoringClient(directoryChainClient.cmGetBlockchainCluster(dappBlockchainRid.data))
@@ -150,13 +155,4 @@ class StandardChromiaClient(
 
     private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool =
             EndpointPool.default(directoryChainClient.cmGetBlockchainApiUrls(blockchainRid))
-
-    private fun getOrCreatePostchainClient(
-            blockchainRid: BlockchainRid,
-            requestStrategy: RequestStrategyFactory = TryNextOnErrorRequestStrategyFactory()
-    ): PostchainClient {
-        return clients.getOrPut(blockchainRid) {
-            getClient(blockchainRid, requestStrategy)
-        }
-    }
 }
