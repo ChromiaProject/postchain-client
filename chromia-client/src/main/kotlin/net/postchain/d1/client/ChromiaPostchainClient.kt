@@ -9,14 +9,15 @@ import net.postchain.crypto.PubKey
 import net.postchain.gtx.Gtx
 import java.time.Duration
 
-internal class ChromiaPostchainClient(val txClient: PostchainClient, val queryClient: PostchainClient) : PostchainClient by queryClient {
-    override fun transactionBuilder(): TransactionBuilder = txClient.transactionBuilder()
+class ChromiaPostchainClient(val txClient: PostchainClient, val queryClient: PostchainClient, val addNop: Boolean)
+    : PostchainClient by queryClient {
+    override fun transactionBuilder(): TransactionBuilder = txClient.transactionBuilder().apply { if (addNop) addNop() }
 
     override fun transactionBuilder(signers: List<KeyPair>): TransactionBuilder =
-            txClient.transactionBuilder(signers)
+            txClient.transactionBuilder(signers).apply { if (addNop) addNop() }
 
     override fun transactionBuilder(initialSigners: List<KeyPair>, remainingRequiredSigners: List<PubKey>): TransactionBuilder =
-            txClient.transactionBuilder(initialSigners, remainingRequiredSigners)
+            txClient.transactionBuilder(initialSigners, remainingRequiredSigners).apply { if (addNop) addNop() }
 
     override fun postTransaction(tx: Gtx): TransactionResult =
             txClient.postTransaction(tx)
