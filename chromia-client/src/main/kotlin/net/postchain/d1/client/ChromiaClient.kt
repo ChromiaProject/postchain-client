@@ -16,14 +16,14 @@ interface ChromiaClient {
     /** Directory chain blockchain RID, as specified or looked up. */
     val directoryChainRid: BlockchainRid
 
-    fun isTxClusterAnchored(blockchainRid: BlockchainRid, txId: TxRid): Boolean
+    fun isTxClusterAnchored(blockchainRid: BlockchainRid, txRid: TxRid): Boolean
 
     fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean
 
     /** Block until the transaction is either anchored or the timeout is reached and an exception is thrown. */
     fun awaitClusterAnchoredTx(
             blockchainRid: BlockchainRid,
-            txId: TxRid,
+            txRid: TxRid,
             retries: Int = config.statusPollCount,
             pollInterval: Duration = config.statusPollInterval,
     )
@@ -33,6 +33,21 @@ interface ChromiaClient {
 
     /** Create a postchain client for the chain anchoring the given cluster */
     fun getClusterAnchoringClient(cluster: String): PostchainClient
+
+    fun isTxSystemAnchored(blockchainRid: BlockchainRid, txRid: TxRid): Boolean
+
+    fun isBlockSystemAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean
+
+    /** Block until the transaction is either system anchored or the timeout is reached and an exception is thrown. */
+    fun awaitSystemAnchoredTx(
+            blockchainRid: BlockchainRid,
+            txRid: TxRid,
+            retries: Int = config.statusPollCount,
+            pollInterval: Duration = config.statusPollInterval,
+    )
+
+    /** Create a postchain client for the system anchoring chain */
+    fun getSystemAnchoringClient(): PostchainClient
 
     /** Create a postchain client for the directory chain. */
     fun getDirectoryChainClient(
