@@ -107,7 +107,7 @@ class PostchainClientImpl(
             Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .query(QUERY_TYPE, name)
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
-        } else if (args is GtvDictionary && args.dict.size == 1 && isSmallArg(args.dict.entries.first())) {
+        } else if (args is GtvDictionary && isSmallArgs(args.dict)) {
             Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .query(QUERY_TYPE, name)
                     .query(QUERY_ARGS, GtvEncoder.encodeGtv(args).toHex())
@@ -127,7 +127,11 @@ class PostchainClientImpl(
 
     // Max safe length for URL:s is 2000
     // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
-    private fun isSmallArg(arg: Map.Entry<String, Gtv>) = (arg.key.length + arg.value.nrOfBytes()) * 2 < 1900
+    private fun isSmallArgs(args: Map<String, Gtv>) = argsSize(args) < 1900
+
+    private fun argsSize(args: Map<String, Gtv>): Int = args.entries.sumOf { argSize(it) }
+
+    private fun argSize(arg: Map.Entry<String, Gtv>): Int = (arg.key.length + arg.value.nrOfBytes()) * 2
 
     @Throws(IOException::class)
     override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->

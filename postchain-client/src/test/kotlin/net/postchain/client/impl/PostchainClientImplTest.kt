@@ -306,8 +306,8 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `query with one small arg is sent with GET`() {
-        val queryArgs = gtv(mapOf("arg" to gtv("value")))
+    fun `query with small args is sent with GET`() {
+        val queryArgs = gtv(mapOf("arg1" to gtv("value"), "arg2" to gtv("value2")))
         val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.method).isEqualTo(Method.GET)
@@ -320,8 +320,8 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `query with multiple args is sent with POST`() {
-        val queryArgs = gtv(mapOf("arg1" to gtv("value1"), "arg2" to gtv(17)))
+    fun `query with large args is sent with POST`() {
+        val queryArgs = gtv(mapOf("arg1" to gtv("ab".repeat(1000)), "arg2" to gtv(17)))
         val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(brid), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.method).isEqualTo(Method.POST)
