@@ -9,6 +9,7 @@ import net.postchain.chain0.cm_api.cmGetSystemAnchoringChain
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TxRid
+import net.postchain.client.exception.ClientError
 import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.impl.SingleEndpointRequestStrategyFactory
 import net.postchain.client.impl.TryNextOnErrorRequestStrategyFactory
@@ -54,7 +55,9 @@ class StandardChromiaClient(
         directoryChainRid = dcBridConfig.blockchainRid
 
         val apiUrls = PostchainClientImpl(dcBridConfig).cmGetBlockchainApiUrls(directoryChainRid)
-
+        if (apiUrls.isEmpty()) {
+            throw ClientError("chromia", null, "No signer nodes for directory chain $directoryChainRid", null)
+        }
         directoryChainConfig = dcBridConfig.copy(endpointPool = EndpointPool.default(apiUrls))
         directoryChainClient = PostchainClientImpl(directoryChainConfig)
     }
@@ -223,6 +226,11 @@ class StandardChromiaClient(
         return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
     }
 
-    private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool =
-            EndpointPool.default(directoryChainClient.cmGetBlockchainApiUrls(blockchainRid))
+    private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool {
+        val apiUrls = directoryChainClient.cmGetBlockchainApiUrls(blockchainRid)
+        if (apiUrls.isEmpty()) {
+            throw ClientError("chromia", null, "No signer nodes for blockchain $blockchainRid", null)
+        }
+        return EndpointPool.default(apiUrls)
+    }
 }
