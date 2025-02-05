@@ -66,7 +66,7 @@ const val QUERY_ARGS = "~args"
 
 class PostchainClientImpl(
         override val config: PostchainClientConfig,
-        httpClient: HttpHandler = defaultHttpHandler(config),
+        private val httpClient: HttpHandler = defaultHttpHandler(config),
 ) : PostchainClient {
 
     companion object : KLogging()
@@ -460,6 +460,14 @@ class PostchainClientImpl(
     override fun close() {
         requestStrategy.close()
     }
+
+    /**
+     * Updates the configuration of the client and returns a new instance with the specified configuration.
+     *
+     * Using this instead `PostchainClientImpl(config)` to keep the same `HttpHandler` and enable connection reuse.
+     */
+    fun reconfigure(config: PostchainClientConfig): PostchainClientImpl =
+            PostchainClientImpl(config, httpClient)
 
     /* JSON structures */
     data class TxStatus(val status: String?, val rejectReason: String?)

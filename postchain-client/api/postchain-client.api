@@ -367,6 +367,7 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun postTransaction (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun query (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/gtv/Gtv;
+	public final fun reconfigure (Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/impl/PostchainClientImpl;
 	public fun transactionBuilder ()Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
