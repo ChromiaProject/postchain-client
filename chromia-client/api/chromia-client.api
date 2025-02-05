@@ -863,7 +863,6 @@ public final class net/postchain/d1/client/StandardChromiaClient : net/postchain
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getDirectoryChainClient (Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getDirectoryChainClientForQueryReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
-	public final fun getDirectoryChainConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getDirectoryChainRid ()Lnet/postchain/common/BlockchainRid;
 	public fun getSystemAnchoringClient ()Lnet/postchain/client/core/PostchainClient;
 	public fun isBlockClusterAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
