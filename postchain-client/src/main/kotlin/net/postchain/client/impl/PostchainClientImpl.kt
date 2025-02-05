@@ -107,11 +107,12 @@ class PostchainClientImpl(
             Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .query(QUERY_TYPE, name)
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
-        } else if (args is GtvDictionary && isSmallArgs(args.dict)) {
+            // TODO enable this when all nodes have updated to Postchain 3.23.2 (postchain-chromia 3.22.3)
+            /*        } else if (args is GtvDictionary && isSmallArgs(args.dict)) {
             Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .query(QUERY_TYPE, name)
                     .query(QUERY_ARGS, GtvEncoder.encodeGtv(args).toHex())
-                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value) */
         } else {
             Request(Method.POST, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .header(Header.ContentType, ContentType.OCTET_STREAM.value)
@@ -124,7 +125,7 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("query", response, endpoint)
     },
             true)
-
+/*
     // Max safe length for URL:s is 2000
     // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
     private fun isSmallArgs(args: Map<String, Gtv>) = argsSize(args) < 1900
@@ -132,7 +133,7 @@ class PostchainClientImpl(
     private fun argsSize(args: Map<String, Gtv>): Int = args.entries.sumOf { argSize(it) }
 
     private fun argSize(arg: Map.Entry<String, Gtv>): Int = (arg.key.length + arg.value.nrOfBytes()) * 2
-
+*/
     @Throws(IOException::class)
     override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->
         Request(Method.GET, "${endpoint.url}/blockchain/$blockchainRIDOrID/height")
