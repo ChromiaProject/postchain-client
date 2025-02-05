@@ -22,4 +22,6 @@ class RandomizedEndpointPool(urls: List<String>) : EndpointPool {
         }
         return reachableEndpoints.shuffled(randGenerator).iterator()
     }
+
+    override fun toString(): String = "RandomizedEndpointPool(endpoints=$endpoints)"
 }

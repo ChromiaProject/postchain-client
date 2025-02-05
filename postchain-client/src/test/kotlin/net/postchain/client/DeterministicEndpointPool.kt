@@ -21,4 +21,6 @@ class DeterministicEndpointPool(urls: List<String>) : EndpointPool {
         }
         return reachableEndpoints.iterator()
     }
+
+    override fun toString(): String = "DeterministicEndpointPool(endpoints=$endpoints)"
 }

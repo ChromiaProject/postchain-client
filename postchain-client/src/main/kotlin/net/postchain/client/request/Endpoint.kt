@@ -24,4 +24,6 @@ class Endpoint(url: String, private val clock: Clock = Clock.systemUTC()) {
     fun setReachable() {
         whenReachable = Instant.EPOCH
     }
+
+    override fun toString(): String = "Endpoint(url='$url')"
 }
