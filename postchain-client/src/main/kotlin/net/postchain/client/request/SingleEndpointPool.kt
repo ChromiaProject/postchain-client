@@ -6,4 +6,6 @@ class SingleEndpointPool(url: String) : EndpointPool {
     override val size: Int = 1
 
     override fun iterator(): Iterator<Endpoint> = endpoints.iterator()
+
+    override fun toString(): String = "SingleEndpointPool(endpoints=$endpoints)"
 }
