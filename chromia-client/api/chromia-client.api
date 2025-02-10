@@ -798,11 +798,13 @@ public abstract interface class net/postchain/d1/client/ChromiaClient {
 	public abstract fun awaitClusterAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public abstract fun awaitSystemAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public abstract fun getClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public abstract fun getClientForForwardingReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getClientForQueryReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getClusterAnchoringClient (Ljava/lang/String;)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getClusterAnchoringClient (Lnet/postchain/common/BlockchainRid;)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public abstract fun getDirectoryChainClient (Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public abstract fun getDirectoryChainClientForForwardingReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getDirectoryChainClientForQueryReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getDirectoryChainRid ()Lnet/postchain/common/BlockchainRid;
 	public abstract fun getSystemAnchoringClient ()Lnet/postchain/client/core/PostchainClient;
@@ -816,8 +818,10 @@ public final class net/postchain/d1/client/ChromiaClient$DefaultImpls {
 	public static synthetic fun awaitClusterAnchoredTx-SyyshaE$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;ILjava/lang/Object;)V
 	public static synthetic fun awaitSystemAnchoredTx-SyyshaE$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;ILjava/lang/Object;)V
 	public static synthetic fun getClient$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
+	public static synthetic fun getClientForForwardingReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 	public static synthetic fun getClientForQueryReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 	public static synthetic fun getDirectoryChainClient$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
+	public static synthetic fun getDirectoryChainClientForForwardingReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 	public static synthetic fun getDirectoryChainClientForQueryReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 }
 
@@ -857,11 +861,13 @@ public final class net/postchain/d1/client/StandardChromiaClient : net/postchain
 	public fun awaitClusterAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public fun awaitSystemAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public fun getClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public fun getClientForForwardingReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getClientForQueryReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getClusterAnchoringClient (Ljava/lang/String;)Lnet/postchain/client/core/PostchainClient;
 	public fun getClusterAnchoringClient (Lnet/postchain/common/BlockchainRid;)Lnet/postchain/client/core/PostchainClient;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getDirectoryChainClient (Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public fun getDirectoryChainClientForForwardingReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getDirectoryChainClientForQueryReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getDirectoryChainRid ()Lnet/postchain/common/BlockchainRid;
 	public fun getSystemAnchoringClient ()Lnet/postchain/client/core/PostchainClient;
