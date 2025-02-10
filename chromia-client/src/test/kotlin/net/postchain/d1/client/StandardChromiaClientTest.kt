@@ -306,6 +306,35 @@ class StandardChromiaClientTest {
     }
 
     @Test @Disabled
+    fun `forwarding replica directory chain`() {
+        val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
+
+        stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+
+        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+
+        stubFor(get("/replica/query_gtv/${directoryChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
+        )
+
+        stubFor(post("/replica/tx/${directoryChainBrid}")
+                .withRequestBody(binaryEqualTo(tx.encode()))
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv(mapOf()))))
+        )
+
+        val cc = StandardChromiaClient(EndpointPool.singleUrl("http://localhost:${server.port()}"))
+        val pc = cc.getDirectoryChainClientForForwardingReplica(EndpointPool.singleUrl("http://localhost:${server.port()}/replica"))
+        assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
+
+        assertThat(pc.postTransaction(tx)).isEqualTo(
+                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                        TransactionStatus.WAITING, 200, "OK"))
+    }
+
+    @Test @Disabled
     fun `no replica dapp chain`() {
         val tx = Gtx(GtxBody(dappChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
@@ -350,6 +379,32 @@ class StandardChromiaClientTest {
 
         val cc = StandardChromiaClient(EndpointPool.singleUrl("http://localhost:${server.port()}"))
         val pc = cc.getClientForQueryReplica(dappChainBrid, queryNodes = EndpointPool.singleUrl("http://localhost:${server.port()}/replica"))
+        assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
+
+        assertThat(pc.postTransaction(tx)).isEqualTo(
+                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                        TransactionStatus.WAITING, 200, "OK"))
+    }
+
+    @Test @Disabled
+    fun `forwarding replica dapp chain`() {
+        val tx = Gtx(GtxBody(dappChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
+
+        setupMock("cluster-1", dappChainBrid)
+
+        stubFor(get("/replica/query_gtv/${dappChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
+        )
+
+        stubFor(post("/replica/tx/${dappChainBrid}")
+                .withRequestBody(binaryEqualTo(tx.encode()))
+                .willReturn(ok(ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(gtv(mapOf()))))
+        )
+
+        val cc = StandardChromiaClient(EndpointPool.singleUrl("http://localhost:${server.port()}"))
+        val pc = cc.getClientForForwardingReplica(dappChainBrid, nodes = EndpointPool.singleUrl("http://localhost:${server.port()}/replica"))
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(

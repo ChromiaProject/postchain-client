@@ -58,7 +58,8 @@ interface ChromiaClient {
     /**
      * Get a postchain client for the directory chain.
      *
-     * Queries will be sent to the specified node(s), transactions will be sent to signer nodes in the system cluster.
+     * Queries will be sent to the specified node(s),
+     * transactions and transaction status requests will be sent to signer nodes in the system cluster.
      *
      * @param queryNodes  node(s) to query
      * @param requestStrategy  request strategy to use
@@ -66,6 +67,22 @@ interface ChromiaClient {
      */
     fun getDirectoryChainClientForQueryReplica(
             queryNodes: EndpointPool,
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
+    ): PostchainClient
+
+    /**
+     * Get a postchain client for the directory chain.
+     *
+     * Both queries and transactions will be sent to the specified node(s).
+     * Useful for replica nodes started with `forwarding_replica=true` in node configuration.
+     *
+     * @param nodes  node(s) to use
+     * @param requestStrategy  request strategy to use
+     * @param addNop add a no-op to each transaction builder
+     */
+    fun getDirectoryChainClientForForwardingReplica(
+            nodes: EndpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
     ): PostchainClient
@@ -86,7 +103,8 @@ interface ChromiaClient {
     /**
      * Get a postchain client for the specified blockchain and based on the implementation configuration.
      *
-     * Queries will be sent to the specified node(s), transactions will be sent to signer nodes.
+     * Queries will be sent to the specified node(s),
+     * transactions and transaction status requests will be sent to signer nodes.
      *
      * @param blockchainRid  the RID of the blockchain
      * @param queryNodes  node(s) to query
@@ -96,6 +114,24 @@ interface ChromiaClient {
     fun getClientForQueryReplica(
             blockchainRid: BlockchainRid,
             queryNodes: EndpointPool,
+            requestStrategy: RequestStrategyFactory = config.requestStrategy,
+            addNop: Boolean = false,
+    ): PostchainClient
+
+    /**
+     * Get a postchain client for the specified blockchain and based on the implementation configuration.
+     *
+     * Both queries and transactions will be sent to the specified node(s).
+     * Useful for replica nodes started with `forwarding_replica=true` in node configuration.
+     *
+     * @param blockchainRid  the RID of the blockchain
+     * @param nodes  node(s) to use
+     * @param requestStrategy  request strategy to use
+     * @param addNop add a no-op to each transaction builder
+     */
+    fun getClientForForwardingReplica(
+            blockchainRid: BlockchainRid,
+            nodes: EndpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
     ): PostchainClient
