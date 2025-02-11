@@ -808,6 +808,9 @@ public abstract interface class net/postchain/d1/client/ChromiaClient {
 	public abstract fun getDirectoryChainClientForQueryReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun getDirectoryChainRid ()Lnet/postchain/common/BlockchainRid;
 	public abstract fun getSystemAnchoringClient ()Lnet/postchain/client/core/PostchainClient;
+	public abstract fun getSystemChainClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public abstract fun getSystemChainClientForForwardingReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public abstract fun getSystemChainClientForQueryReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public abstract fun isBlockClusterAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
 	public abstract fun isBlockSystemAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
 	public abstract fun isTxClusterAnchored-U_MHK2w (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;)Z
@@ -823,6 +826,9 @@ public final class net/postchain/d1/client/ChromiaClient$DefaultImpls {
 	public static synthetic fun getDirectoryChainClient$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 	public static synthetic fun getDirectoryChainClientForForwardingReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 	public static synthetic fun getDirectoryChainClientForQueryReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
+	public static synthetic fun getSystemChainClient$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
+	public static synthetic fun getSystemChainClientForForwardingReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
+	public static synthetic fun getSystemChainClientForQueryReplica$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/client/core/PostchainClient;
 }
 
 public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchain/client/core/PostchainClient {
@@ -871,6 +877,9 @@ public final class net/postchain/d1/client/StandardChromiaClient : net/postchain
 	public fun getDirectoryChainClientForQueryReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getDirectoryChainRid ()Lnet/postchain/common/BlockchainRid;
 	public fun getSystemAnchoringClient ()Lnet/postchain/client/core/PostchainClient;
+	public fun getSystemChainClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public fun getSystemChainClientForForwardingReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
+	public fun getSystemChainClientForQueryReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun isBlockClusterAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
 	public fun isBlockSystemAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
 	public fun isTxClusterAnchored-U_MHK2w (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;)Z

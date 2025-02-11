@@ -207,6 +207,36 @@ class StandardChromiaClient(
         return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
     }
 
+    override fun getSystemChainClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
+        val client = directoryChainClient.reconfigure(directoryChainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+        ))
+        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+    }
+
+    override fun getSystemChainClientForQueryReplica(blockchainRid: BlockchainRid, queryNodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
+        val txClient = directoryChainClient.reconfigure(directoryChainClient.config.copy(
+                blockchainRid = blockchainRid,
+                requestStrategy = requestStrategy,
+        ))
+        val queryClient = directoryChainClient.reconfigure(config.copy(
+                blockchainRid = blockchainRid,
+                endpointPool = queryNodes,
+                requestStrategy = requestStrategy,
+        ))
+        return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
+    }
+
+    override fun getSystemChainClientForForwardingReplica(blockchainRid: BlockchainRid, nodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
+        val client = directoryChainClient.reconfigure(config.copy(
+                blockchainRid = blockchainRid,
+                endpointPool = nodes,
+                requestStrategy = requestStrategy,
+        ))
+        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+    }
+
     override fun getClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
         val signerNodes = getSignerNodes(blockchainRid)
 
