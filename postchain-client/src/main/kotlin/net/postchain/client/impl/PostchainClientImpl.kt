@@ -8,6 +8,7 @@ import com.google.gson.reflect.TypeToken
 import mu.KLogging
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.BlockDetail
+import net.postchain.client.core.BlockHeaderData
 import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TransactionInfo
@@ -28,6 +29,7 @@ import net.postchain.common.tx.TransactionStatus.CONFIRMED
 import net.postchain.common.tx.TransactionStatus.REJECTED
 import net.postchain.common.tx.TransactionStatus.UNKNOWN
 import net.postchain.common.tx.TransactionStatus.WAITING
+import net.postchain.common.wrap
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
@@ -125,15 +127,16 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("query", response, endpoint)
     },
             true)
-/*
-    // Max safe length for URL:s is 2000
-    // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
-    private fun isSmallArgs(args: Map<String, Gtv>) = argsSize(args) < 1900
 
-    private fun argsSize(args: Map<String, Gtv>): Int = args.entries.sumOf { argSize(it) }
+    /*
+        // Max safe length for URL:s is 2000
+        // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
+        private fun isSmallArgs(args: Map<String, Gtv>) = argsSize(args) < 1900
 
-    private fun argSize(arg: Map.Entry<String, Gtv>): Int = (arg.key.length + arg.value.nrOfBytes()) * 2
-*/
+        private fun argsSize(args: Map<String, Gtv>): Int = args.entries.sumOf { argSize(it) }
+
+        private fun argSize(arg: Map.Entry<String, Gtv>): Int = (arg.key.length + arg.value.nrOfBytes()) * 2
+    */
     @Throws(IOException::class)
     override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->
         Request(Method.GET, "${endpoint.url}/blockchain/$blockchainRIDOrID/height")
@@ -154,11 +157,66 @@ class PostchainClientImpl(
                 .header(Header.Accept, ContentType.OCTET_STREAM.value)
     }, { response, endpoint ->
         val gtv = decodeGtv("blockAtHeight", response, endpoint)
-        if (gtv.isNull()) null else GtvObjectMapper.fromGtv(gtv, BlockDetail::class)
+        if (gtv.isNull())
+            null
+        else {
+            val blockDetail = decodeAndValidateBlockDetail(gtv, "blockAtHeight", endpoint)
+            if (blockDetail.height != height) {
+                throw ClientError("blockAtHeight", null, "Block height mismatch, got ${blockDetail.height} but expected $height", endpoint)
+            }
+            blockDetail
+        }
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("blockAtHeight", response, endpoint)
     },
             true)
+
+    @Throws(IOException::class)
+    override fun blockByRid(blockRid: BlockRid): BlockDetail? = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/blocks/$blockchainRIDOrID/${blockRid.rid}")
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+    }, { response, endpoint ->
+        val gtv = decodeGtv("blockByRid", response, endpoint)
+        if (gtv.isNull())
+            null
+        else {
+            val blockDetail = decodeAndValidateBlockDetail(gtv, "blockByRid", endpoint)
+            val expectedBlockRid = blockRid.rid.hexStringToByteArray().wrap()
+            if (blockDetail.rid != expectedBlockRid) {
+                throw ClientError("blockByRid", null, "Block RID mismatch, got ${blockDetail.rid} but expected $expectedBlockRid", endpoint)
+            }
+            blockDetail
+        }
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("blockByRid", response, endpoint)
+    },
+            true)
+
+    private fun decodeAndValidateBlockDetail(gtv: Gtv, context: String, endpoint: Endpoint): BlockDetail {
+        val blockDetail = GtvObjectMapper.fromGtv(gtv, BlockDetail::class)
+        val blockHeader = BlockHeaderData.fromBinary(blockDetail.header.data)
+        val actualBlockRid = blockHeader.blockRid().wrap()
+        if (actualBlockRid != blockDetail.rid) {
+            throw ClientError(context, null, "Invalid block header, got with RID $actualBlockRid but expected RID ${blockDetail.rid}", endpoint)
+        }
+        if (blockHeader.gtvHeight.integer != blockDetail.height) {
+            throw ClientError(context, null, "Invalid block height, got ${blockHeader.gtvHeight.integer} but expected ${blockDetail.height}", endpoint)
+        }
+        if (blockHeader.gtvTimestamp.integer != blockDetail.timestamp) {
+            throw ClientError(context, null, "Invalid block timestamp, got ${blockHeader.gtvTimestamp.integer} but expected ${blockDetail.timestamp}", endpoint)
+        }
+        if (blockHeader.gtvPreviousBlockRid.bytearray.wrap() != blockDetail.prevBlockRID) {
+            throw ClientError(context, null, "Invalid previous block RID, got ${blockHeader.gtvPreviousBlockRid.bytearray.toHex()} but expected ${blockDetail.prevBlockRID}", endpoint)
+        }
+        if (blockHeader.gtvBlockchainRid.bytearray.wrap() != blockchainRIDHex.hexStringToByteArray().wrap()) {
+            throw ClientError(context, null, "Invalid blockchain RID, got ${blockHeader.gtvBlockchainRid.bytearray.toHex()} but expected $blockchainRIDHex", endpoint)
+        }
+        val merkleRootHash = blockHeader.computeMerkleRootHash(blockDetail.transactions.map { it.hash.data }).wrap()
+        if (blockHeader.gtvMerkleRootHash.bytearray.wrap() != merkleRootHash) {
+            throw ClientError(context, null, "Invalid merkle root hash, got ${blockHeader.gtvMerkleRootHash.bytearray.toHex()} but expected $merkleRootHash", endpoint)
+        }
+        return blockDetail
+    }
 
     @Throws(IOException::class)
     override fun postTransaction(tx: Gtx): TransactionResult {
@@ -362,19 +420,6 @@ class PostchainClientImpl(
         buildExceptionFromErrorResponse("getHighestBlockHeightAnchoringCheck", response, endpoint)
     },
             true)
-
-    @Throws(IOException::class)
-    override fun blockByRid(blockRid: BlockRid): BlockDetail? = requestStrategy.request({ endpoint ->
-        Request(Method.GET, "${endpoint.url}/blocks/$blockchainRIDOrID/${blockRid.rid}")
-                .header(Header.Accept, ContentType.OCTET_STREAM.value)
-    }, { response, endpoint ->
-        val gtv = decodeGtv("blockByRid", response, endpoint)
-        if (gtv.isNull()) null else GtvObjectMapper.fromGtv(gtv, BlockDetail::class)
-    }, { response, endpoint ->
-        buildExceptionFromErrorResponse("blockByRid", response, endpoint)
-    },
-            true)
-
 
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
         try {

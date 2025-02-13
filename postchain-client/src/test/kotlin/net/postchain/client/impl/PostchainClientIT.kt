@@ -4,8 +4,10 @@ package net.postchain.client.impl
 
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.isEqualTo
 import net.postchain.api.rest.controller.Model
 import net.postchain.client.config.PostchainClientConfig
+import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
@@ -242,6 +244,21 @@ class PostchainClientIT : IntegrationTestSetup() {
         val info = client.getTransactionInfo(result.txRid)
         assertEquals(1, info.blockHeight)
         assertEquals(result.txRid.rid, info.txRID.toHex())
+    }
+
+    @Test
+    fun testBlockDetail() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = createSignedNopTx(client, blockchainRid)
+        val result = builder.postAwaitConfirmation()
+        assertEquals(TransactionStatus.CONFIRMED, result.status)
+
+        val blockDetail1 = client.blockAtHeight(1)!!
+        assertThat(blockDetail1.transactions.size).isEqualTo(1)
+        val blockDetail2 = client.blockByRid(BlockRid(blockDetail1.rid.toHex()))!!
+        assertThat(blockDetail2.transactions.size).isEqualTo(1)
     }
 
     @Test
