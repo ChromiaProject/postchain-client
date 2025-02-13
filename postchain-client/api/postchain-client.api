@@ -132,6 +132,40 @@ public final class net/postchain/client/core/BlockDetail {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/postchain/client/core/BlockHeaderData {
+	public static final field Companion Lnet/postchain/client/core/BlockHeaderData$Companion;
+	public fun <init> (Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/GtvDictionary;)V
+	public final fun blockRid ()[B
+	public final fun component1 ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun component2 ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun component3 ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun component4 ()Lnet/postchain/gtv/GtvInteger;
+	public final fun component5 ()Lnet/postchain/gtv/GtvInteger;
+	public final fun component6 ()Lnet/postchain/gtv/Gtv;
+	public final fun component7 ()Lnet/postchain/gtv/GtvDictionary;
+	public final fun computeMerkleRootHash (Ljava/util/List;)[B
+	public final fun copy (Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/GtvDictionary;)Lnet/postchain/client/core/BlockHeaderData;
+	public static synthetic fun copy$default (Lnet/postchain/client/core/BlockHeaderData;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/GtvDictionary;ILjava/lang/Object;)Lnet/postchain/client/core/BlockHeaderData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGtvBlockchainRid ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun getGtvDependencies ()Lnet/postchain/gtv/Gtv;
+	public final fun getGtvExtra ()Lnet/postchain/gtv/GtvDictionary;
+	public final fun getGtvHeight ()Lnet/postchain/gtv/GtvInteger;
+	public final fun getGtvMerkleRootHash ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun getGtvPreviousBlockRid ()Lnet/postchain/gtv/GtvByteArray;
+	public final fun getGtvTimestamp ()Lnet/postchain/gtv/GtvInteger;
+	public final fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
+	public final fun getMerkleHashVersion ()J
+	public fun hashCode ()I
+	public final fun toGtv ()Lnet/postchain/gtv/GtvArray;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/postchain/client/core/BlockHeaderData$Companion {
+	public final fun fromBinary ([B)Lnet/postchain/client/core/BlockHeaderData;
+	public final fun fromGtv (Lnet/postchain/gtv/Gtv;)Lnet/postchain/client/core/BlockHeaderData;
+}
+
 public final class net/postchain/client/core/BlockRid {
 	public static final synthetic fun box-impl (Ljava/lang/String;)Lnet/postchain/client/core/BlockRid;
 	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;

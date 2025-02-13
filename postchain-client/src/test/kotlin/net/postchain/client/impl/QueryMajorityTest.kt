@@ -13,7 +13,6 @@ import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
 import net.postchain.common.BlockchainRid
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
@@ -29,7 +28,6 @@ import javax.net.ssl.SSLException
 
 internal class QueryMajorityTest {
     private val urls = listOf("http://localhost:1", "http://localhost:2", "http://localhost:3", "http://localhost:4")
-    private val bcRid = "EC03EDC6959E358B80D226D16A5BB6BC8EDE80EC17BD8BD0F21846C244AE7E8F"
 
     private var requestCounter = 0
 
@@ -131,7 +129,7 @@ internal class QueryMajorityTest {
     private fun makeQuery(asyncHttpHandler: AsyncHttpHandler): Gtv =
             PostchainClientImpl(
                     PostchainClientConfig(
-                            BlockchainRid.buildFromHex(bcRid),
+                            BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                             DeterministicEndpointPool(urls),
                             requestStrategy = QueryMajorityRequestStrategyFactory(asyncHttpHandler))
             ).query("test_query", gtv("arg"))
@@ -139,13 +137,13 @@ internal class QueryMajorityTest {
     @Test
     fun `blockAtHeight found`() {
         val someBlock: BlockDetail? = PostchainClientImpl(PostchainClientConfig(
-                BlockchainRid.buildFromHex(bcRid),
+                BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                 DeterministicEndpointPool(urls),
                 requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                     override fun invoke(request: Request, fn: (Response) -> Unit) {
                         requestCounter++
                         assertThat(request.header("Accept")).isEqualTo("application/octet-stream")
-                        fn(Response(Status.OK).body(blockDetail(1).inputStream()))
+                        fn(Response(Status.OK).body(encodeGtv(validBlockDetail(1)).inputStream()))
                     }
                 }))).blockAtHeight(1L)
         assertThat(someBlock!!.height).isEqualTo(1L)
@@ -155,7 +153,7 @@ internal class QueryMajorityTest {
     @Test
     fun `blockAtHeight not found`() {
         val someBlock: BlockDetail? = PostchainClientImpl(PostchainClientConfig(
-                BlockchainRid.buildFromHex(bcRid),
+                BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                 DeterministicEndpointPool(urls),
                 requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                     override fun invoke(request: Request, fn: (Response) -> Unit) {
@@ -172,13 +170,13 @@ internal class QueryMajorityTest {
     fun `blockAtHeight disagree`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(
-                    BlockchainRid.buildFromHex(bcRid),
+                    BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                     DeterministicEndpointPool(urls),
                     requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                         override fun invoke(request: Request, fn: (Response) -> Unit) {
                             requestCounter++
                             assertThat(request.header("Accept")).isEqualTo("application/octet-stream")
-                            fn(Response(Status.OK).body(blockDetail((request.uri.port ?: 0).toLong()).inputStream()))
+                            fn(Response(Status.OK).body(encodeGtv(validBlockDetail(request.uri.port?.toByte() ?: 0)).inputStream()))
                         }
                     }))).blockAtHeight(1L)
         }.isInstanceOf(NodesDisagree::class)
@@ -189,7 +187,7 @@ internal class QueryMajorityTest {
     fun `blockAtHeight disagree found or not found`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(
-                    BlockchainRid.buildFromHex(bcRid),
+                    BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                     DeterministicEndpointPool(urls),
                     requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                         override fun invoke(request: Request, fn: (Response) -> Unit) {
@@ -198,7 +196,7 @@ internal class QueryMajorityTest {
                             fn(if ((request.uri.port ?: 0) > 2)
                                 Response(Status.OK).body(encodeGtv(GtvNull).inputStream())
                             else
-                                Response(Status.OK).body(blockDetail(1).inputStream()))
+                                Response(Status.OK).body(encodeGtv(validBlockDetail(1)).inputStream()))
                         }
                     }))).blockAtHeight(1L)
         }.isInstanceOf(NodesDisagree::class)
@@ -208,7 +206,7 @@ internal class QueryMajorityTest {
     @Test
     fun `txStatus agree`() {
         val txStatus: TransactionResult = PostchainClientImpl(PostchainClientConfig(
-                BlockchainRid.buildFromHex(bcRid),
+                BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                 DeterministicEndpointPool(urls),
                 requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                     override fun invoke(request: Request, fn: (Response) -> Unit) {
@@ -224,7 +222,7 @@ internal class QueryMajorityTest {
     fun `SSLExceptions should be handled`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(
-                    BlockchainRid.buildFromHex(bcRid),
+                    BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                     DeterministicEndpointPool(urls),
                     requestStrategy = QueryMajorityRequestStrategyFactory(object : AsyncHttpHandler {
                         override fun invoke(request: Request, fn: (Response) -> Unit) {
@@ -235,18 +233,4 @@ internal class QueryMajorityTest {
         }.isInstanceOf(SSLException::class)
         assertThat(requestCounter).isEqualTo(4)
     }
-
-    private fun blockDetail(timestamp: Long) = encodeGtv(gtv(mapOf(
-            "rid" to gtv("34ED10678AAE0414562340E8754A7CCD174B435B52C7F0A4E69470537AEE47E6".hexStringToByteArray()),
-            "prevBlockRID" to gtv("5AF85874B9CCAC197AA739585449668BE15650C534E08705F6D60A6993FE906D".hexStringToByteArray()),
-            "header" to gtv("023F9C7FBAFD92E53D7890A61B50B33EC0375FA424D60BD328AA2454408430C383".hexStringToByteArray()),
-            "height" to gtv(1),
-            "transactions" to gtv(listOf(gtv(mapOf(
-                    "rid" to gtv("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29".hexStringToByteArray()),
-                    "hash" to gtv("F537E4B8224F4BC84DB37AD3E4F898A3A9127D2E86C25213508F7236016E58B9".hexStringToByteArray()),
-                    "data" to GtvNull
-            )))),
-            "witness" to gtv("03D8844CFC0CE7BECD33CDF49A9881364695C944E266E06356CDA11C2305EAB83A".hexStringToByteArray()),
-            "timestamp" to gtv(timestamp)
-    )))
 }
