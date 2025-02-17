@@ -234,7 +234,7 @@ class PostchainClientIT : IntegrationTestSetup() {
     }
 
     @Test
-    fun testTransactionInfo() {
+    fun testTransaction() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)

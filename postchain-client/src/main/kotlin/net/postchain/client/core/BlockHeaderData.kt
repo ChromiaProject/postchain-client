@@ -6,6 +6,7 @@ import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
+import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.merkle.makeMerkleHashCalculator
@@ -20,11 +21,31 @@ data class BlockHeaderData(
         val gtvDependencies: Gtv, // Can be either GtvNull or GtvArray
         val gtvExtra: GtvDictionary) {
 
+    constructor(
+            blockchainRid: ByteArray,
+            previousBlockRid: ByteArray,
+            merkleRootHash: ByteArray,
+            timestamp: Long,
+            height: Long,
+            dependencies: Gtv, // Can be either GtvNull or GtvArray
+            extra: Map<String, Gtv>
+    ) : this(
+            gtv(blockchainRid),
+            gtv(previousBlockRid),
+            gtv(merkleRootHash),
+            gtv(timestamp),
+            gtv(height),
+            dependencies,
+            GtvDictionary.build(extra)
+    )
+
     val merkleHashVersion: Long = gtvExtra["merkle_hash_version"]?.asInteger() ?: 1
 
     val merkleHashCalculator = makeMerkleHashCalculator(merkleHashVersion)
 
     fun blockRid(): Hash = toGtv().merkleHash(merkleHashCalculator)
+
+    fun toBinary(): ByteArray = GtvEncoder.encodeGtv(toGtv())
 
     fun toGtv(): GtvArray = gtv(gtvBlockchainRid, gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvDependencies, gtvExtra)
 

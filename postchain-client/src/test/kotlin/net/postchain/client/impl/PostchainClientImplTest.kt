@@ -448,23 +448,31 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `Confirmation proof can be parsed`() {
-        val proofString = "A48202C5308202C13081B80C0B626C6F636B486561646572A181A80481A5A581A230819FA122042082"
+    fun `JSON confirmation proof can be parsed`() {
         val proof: ByteArray = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request) =
-                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"proof":"$proofString"}""")
+                    Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"proof":"${encodedConfirmationProof.toHex()}"}""")
         }).confirmationProof(TxRid("42"))
-        assertThat(proof.toHex()).isEqualTo(proofString)
+        assertThat(proof).isContentEqualTo(encodedConfirmationProof)
     }
 
     @Test
-    fun `Confirmation proof not found`() {
+    fun `binary confirmation proof can be parsed`() {
+        val proof: ByteArray = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodedConfirmationProof.inputStream())
+        }).confirmationProof(TxRid("42"))
+        assertThat(proof).isContentEqualTo(encodedConfirmationProof)
+    }
+
+    @Test
+    fun `confirmation proof not found`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) =
                         Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"error":"Can't find tx with hash 42"}""")
             }).confirmationProof(TxRid("42"))
-        }.isInstanceOf(ClientError::class)
+        }.isInstanceOf(ClientError::class).messageContains("404")
     }
 
     @Test
@@ -583,7 +591,7 @@ internal class PostchainClientImplTest {
             "blockHeader": "ABBAABBAABBAABBAABBA",
             "witness": "AABBAABB",
             "timestamp": 42,
-            "txRID": "123412341234",
+            "txRID": "42",
             "txHash": "432143214321",
             "txData": "DABA1234DABA1234"
             }""".trimIndent()
@@ -597,7 +605,7 @@ internal class PostchainClientImplTest {
             assertThat(result.blockHeader.toHex()).isEqualTo("ABBAABBAABBAABBAABBA")
             assertThat(result.witness.toHex()).isEqualTo("AABBAABB")
             assertThat(result.timestamp).isEqualTo(42)
-            assertThat(result.txRID.toHex()).isEqualTo("123412341234")
+            assertThat(result.txRID.toHex()).isEqualTo("42")
             assertThat(result.txHash.toHex()).isEqualTo("432143214321")
             assertThat(result.txData.toHex()).isEqualTo("DABA1234DABA1234")
         }
@@ -612,7 +620,7 @@ internal class PostchainClientImplTest {
                         }
                     """.trimIndent())
                 }).getTransactionInfo(TxRid("42"))
-            }.isInstanceOf(ClientError::class)
+            }.isInstanceOf(ClientError::class).messageContains("Can't find blockchain with blockchainRID")
         }
     }
 

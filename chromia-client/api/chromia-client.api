@@ -832,7 +832,7 @@ public final class net/postchain/d1/client/ChromiaClient$DefaultImpls {
 }
 
 public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchain/client/core/PostchainClient {
-	public fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/core/PostchainClient;Z)V
+	public fun <init> (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/core/PostchainClient;Z)V
 	public fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
 	public fun blockAtHeight (J)Lnet/postchain/client/core/BlockDetail;
 	public fun blockByRid-1Mf0NN0 (Ljava/lang/String;)Lnet/postchain/client/core/BlockDetail;
@@ -840,10 +840,12 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun close ()V
 	public fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
 	public fun currentBlockHeight (Ljava/lang/String;)J
+	public final fun decodedConfirmationProof-CTXur5g (Ljava/lang/String;)Lnet/postchain/d1/client/ConfirmationProof;
 	public final fun getAddNop ()Z
 	public fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
+	public final fun getDirectoryChainClient ()Lnet/postchain/client/core/PostchainQuery;
 	public fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public final fun getQueryClient ()Lnet/postchain/client/core/PostchainClient;
 	public fun getTransaction-CTXur5g (Ljava/lang/String;)[B
@@ -859,6 +861,17 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun transactionBuilder (Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun validateConfiguration (Lnet/postchain/gtv/Gtv;)V
+	public final fun verifiedTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
+}
+
+public final class net/postchain/d1/client/ConfirmationProof {
+	public fun <init> ([B[B[BLnet/postchain/gtv/merkle/proof/GtvMerkleProofTree;JLnet/postchain/client/core/BlockHeaderData;)V
+	public final fun getBlockHeader ()[B
+	public final fun getBlockHeaderData ()Lnet/postchain/client/core/BlockHeaderData;
+	public final fun getHash ()[B
+	public final fun getMerkleProofTree ()Lnet/postchain/gtv/merkle/proof/GtvMerkleProofTree;
+	public final fun getTxIndex ()J
+	public final fun getWitness ()[B
 }
 
 public final class net/postchain/d1/client/StandardChromiaClient : net/postchain/d1/client/ChromiaClient {
@@ -869,8 +882,10 @@ public final class net/postchain/d1/client/StandardChromiaClient : net/postchain
 	public fun getClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getClientForForwardingReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getClientForQueryReplica (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
-	public fun getClusterAnchoringClient (Ljava/lang/String;)Lnet/postchain/client/core/PostchainClient;
-	public fun getClusterAnchoringClient (Lnet/postchain/common/BlockchainRid;)Lnet/postchain/client/core/PostchainClient;
+	public synthetic fun getClusterAnchoringClient (Ljava/lang/String;)Lnet/postchain/client/core/PostchainClient;
+	public fun getClusterAnchoringClient (Ljava/lang/String;)Lnet/postchain/d1/client/ChromiaPostchainClient;
+	public synthetic fun getClusterAnchoringClient (Lnet/postchain/common/BlockchainRid;)Lnet/postchain/client/core/PostchainClient;
+	public fun getClusterAnchoringClient (Lnet/postchain/common/BlockchainRid;)Lnet/postchain/d1/client/ChromiaPostchainClient;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getDirectoryChainClient (Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
 	public fun getDirectoryChainClientForForwardingReplica (Lnet/postchain/client/request/EndpointPool;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/client/core/PostchainClient;
@@ -884,5 +899,10 @@ public final class net/postchain/d1/client/StandardChromiaClient : net/postchain
 	public fun isBlockSystemAnchored (Lnet/postchain/common/BlockchainRid;[B)Z
 	public fun isTxClusterAnchored-U_MHK2w (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;)Z
 	public fun isTxSystemAnchored-U_MHK2w (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;)Z
+}
+
+public final class net/postchain/d1/client/WitnessKt {
+	public static final fun decodeWitness ([B)[Lnet/postchain/crypto/Signature;
+	public static final fun encodeWitness ([Lnet/postchain/crypto/Signature;)[B
 }
 
