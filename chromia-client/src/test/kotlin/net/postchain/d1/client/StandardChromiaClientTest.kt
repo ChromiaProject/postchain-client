@@ -5,30 +5,40 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.ok
-import com.github.tomakehurst.wiremock.client.WireMock.okJson
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED
 import net.postchain.client.config.PostchainClientConfig
+import net.postchain.client.core.BlockHeaderData
 import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxRid
+import net.postchain.client.impl.ConfirmationProofData
+import net.postchain.client.impl.Header
 import net.postchain.client.request.EndpointPool
 import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
-import net.postchain.common.wrap
+import net.postchain.crypto.Secp256K1CryptoSystem
+import net.postchain.crypto.Signature
 import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
+import net.postchain.gtv.GtvNull
+import net.postchain.gtv.generateProof
+import net.postchain.gtv.mapper.GtvObjectMapper
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxBody
 import net.postchain.gtx.GtxOp
@@ -40,20 +50,46 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.TimeoutException
 
-// TODO enable this when all nodes have updated to Postchain 3.23.2 (postchain-chromia 3.22.3)
 class StandardChromiaClientTest {
 
-    private val directoryChainBrid = BlockchainRid.buildRepeat(1)
-    private val clusterAnchorChainBrid = BlockchainRid.buildRepeat(2)
-    private val systemAnchorChainBrid = BlockchainRid.buildRepeat(3)
-    private val dappChainBrid = BlockchainRid.buildRepeat(4)
+    val cryptoSystem = Secp256K1CryptoSystem()
+    val hashCalculator = GtvMerkleHashCalculatorV2(::sha256Digest)
+    val peer = cryptoSystem.generateKeyPair()
 
-    private val dappTxRid = TxRid(ByteArray(32) { 5 }.toHex())
-    private val txBlockRid = ByteArray(32) { 6 }.wrap()
-    private val clusterAnchorBlockRid = ByteArray(32) { 7 }.wrap()
-    private val clusterAnchorTxRid = TxRid(ByteArray(32) { 8 }.toHex())
+    val directoryChainBrid = BlockchainRid.buildRepeat(1)
+    val clusterAnchorChainBrid = BlockchainRid.buildRepeat(2)
+    val systemAnchorChainBrid = BlockchainRid.buildRepeat(3)
+    val dappChainBrid = BlockchainRid.buildRepeat(4)
 
-    private val server = WireMockServer(wireMockConfig().dynamicPort())
+    val dappTxRid = TxRid(ByteArray(32) { 5 }.toHex())
+    val dappTxHash = ByteArray(32) { 6 }
+    val dappMerkleProofTree = gtv(gtv(dappTxHash)).generateProof(listOf(0), hashCalculator)
+    val dappBlockHeader = BlockHeaderData(
+            blockchainRid = dappChainBrid.data,
+            previousBlockRid = ByteArray(32) { 7 },
+            merkleRootHash = dappMerkleProofTree.merkleHash(hashCalculator),
+            timestamp = 17L,
+            height = 1L,
+            dependencies = GtvNull,
+            extra = emptyMap<String, Gtv>()
+    )
+    val dappBlockRid = dappBlockHeader.blockRid()
+
+    val clusterAnchorTxRid = TxRid(ByteArray(32) { 8 }.toHex())
+    val clusterAnchorTxHash = ByteArray(32) { 9 }
+    val clusterAnchorMerkleProofTree = gtv(gtv(clusterAnchorTxHash)).generateProof(listOf(0), hashCalculator)
+    val clusterAnchorBlockHeader = BlockHeaderData(
+            blockchainRid = clusterAnchorChainBrid.data,
+            previousBlockRid = ByteArray(32) { 10 },
+            merkleRootHash = gtv(gtv(clusterAnchorTxHash)).merkleHash(hashCalculator),
+            timestamp = 4711L,
+            height = 2L,
+            dependencies = GtvNull,
+            extra = emptyMap<String, Gtv>()
+    )
+    val clusterAnchorBlockRid = clusterAnchorBlockHeader.blockRid()
+
+    val server = WireMockServer(wireMockConfig().dynamicPort())
 
     @BeforeEach
     fun beforeEach() {
@@ -66,60 +102,57 @@ class StandardChromiaClientTest {
         server.shutdown()
     }
 
-    @Test @Disabled
+    @Test
     fun `cluster anchoring happy path`() {
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(dappChainBrid.data)), gtv("cluster-1"))
 
-        stubFor(get("/transactions/$dappChainBrid/${dappTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$txBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
+        stubConfirmationProof(dappChainBrid, dappTxRid, dappTxHash, dappBlockHeader, dappMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(dappBlockRid)))
 
-        stubFor(get(buildGetQueryGtv(clusterAnchorChainBrid, "is_block_anchored", mapOf(
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(dappChainBrid.data), "height" to gtv(1)), gtv(gtv(peer.pubKey.data)))
+
+        stubFor(stubQueryBuilder(baseUrl = "", clusterAnchorChainBrid, "is_block_anchored", mapOf(
                 "blockchain_rid" to gtv(dappChainBrid),
-                "block_rid" to gtv(txBlockRid)
-        )))
+                "block_rid" to gtv(dappBlockRid)
+        ), gtv(false))
                 .inScenario("first false, second true")
                 .whenScenarioStateIs(STARTED)
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv(false))))
-                .willSetStateTo("Second Call")
-        )
+                .willSetStateTo("Second Call"))
 
-        stubFor(get(buildGetQueryGtv(clusterAnchorChainBrid, "is_block_anchored", mapOf(
+        stubFor(stubQueryBuilder(baseUrl = "", clusterAnchorChainBrid, "is_block_anchored", mapOf(
                 "blockchain_rid" to gtv(dappChainBrid),
-                "block_rid" to gtv(txBlockRid)
-        )))
+                "block_rid" to gtv(dappBlockRid)
+        ), gtv(true))
                 .inScenario("first false, second true")
-                .whenScenarioStateIs("Second Call")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv(true))))
-        )
+                .whenScenarioStateIs("Second Call"))
+
 
         val cc = StandardChromiaClient(EndpointPool.singleUrl("http://localhost:${server.port()}"))
         cc.awaitClusterAnchoredTx(dappChainBrid, dappTxRid)
         assertThat(cc.isTxClusterAnchored(dappChainBrid, dappTxRid)).isEqualTo(true)
     }
 
-    @Test @Disabled
+    @Test
     fun `cluster anchoring timeout`() {
 
-        setupMock("cluster-2", dappChainBrid)
+        setupStubs("cluster-2", dappChainBrid)
 
-        stubFor(get("/transactions/$dappChainBrid/${dappTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$txBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
-
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(dappChainBrid.data)), gtv("cluster-2"))
 
-        mockGetQuery(clusterAnchorChainBrid, "is_block_anchored",
-                mapOf("blockchain_rid" to gtv(dappChainBrid), "block_rid" to gtv(txBlockRid)), gtv(false))
+        stubConfirmationProof(dappChainBrid, dappTxRid, dappTxHash, dappBlockHeader, dappMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(dappBlockRid)))
+
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(dappChainBrid.data), "height" to gtv(1)), gtv(gtv(peer.pubKey.data)))
+
+        stubQuery(baseUrl = "", clusterAnchorChainBrid, "is_block_anchored",
+                mapOf("blockchain_rid" to gtv(dappChainBrid), "block_rid" to gtv(dappBlockRid)), gtv(false))
 
         val cc = StandardChromiaClient(EndpointPool.singleUrl("http://localhost:${server.port()}"))
         val e = assertThrows<TimeoutException> {
@@ -131,23 +164,24 @@ class StandardChromiaClientTest {
         assertThat(cc.isTxClusterAnchored(dappChainBrid, dappTxRid)).isFalse()
     }
 
-    @Test @Disabled
+    @Test
     fun `system anchoring happy path`() {
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(dappChainBrid.data)), gtv("cluster-1"))
 
-        stubFor(get("/transactions/$dappChainBrid/${dappTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$txBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
+        stubConfirmationProof(dappChainBrid, dappTxRid, dappTxHash, dappBlockHeader, dappMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(dappBlockRid)))
 
-        mockGetQuery(clusterAnchorChainBrid, "get_anchoring_transaction_for_block_rid",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(dappChainBrid.data), "height" to gtv(1)), gtv(gtv(peer.pubKey.data)))
+
+        stubQuery(baseUrl = "", clusterAnchorChainBrid, "get_anchoring_transaction_for_block_rid",
                 mapOf(
                         "blockchain_rid" to gtv(dappChainBrid),
-                        "block_rid" to gtv(txBlockRid)
+                        "block_rid" to gtv(dappBlockRid)
                 ),
                 gtv(mapOf(
                         "tx_rid" to gtv(clusterAnchorTxRid.rid.hexStringToByteArray()),
@@ -155,12 +189,13 @@ class StandardChromiaClientTest {
                         "tx_op_index" to gtv(1)
                 )))
 
-        stubFor(get("/transactions/$clusterAnchorChainBrid/${clusterAnchorTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$clusterAnchorBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
+        stubConfirmationProof(clusterAnchorChainBrid, clusterAnchorTxRid, clusterAnchorTxHash, clusterAnchorBlockHeader, clusterAnchorMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(clusterAnchorBlockRid)))
 
-        mockGetQuery(systemAnchorChainBrid, "is_block_anchored",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(clusterAnchorChainBrid.data), "height" to gtv(2)), gtv(gtv(peer.pubKey.data)))
+
+        stubQuery(baseUrl = "", systemAnchorChainBrid, "is_block_anchored",
                 mapOf(
                         "blockchain_rid" to gtv(clusterAnchorChainBrid),
                         "block_rid" to gtv(clusterAnchorBlockRid)
@@ -173,23 +208,24 @@ class StandardChromiaClientTest {
         assertThat(cc.isTxSystemAnchored(dappChainBrid, dappTxRid)).isTrue()
     }
 
-    @Test @Disabled
+    @Test
     fun `system anchoring timeout`() {
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(dappChainBrid.data)), gtv("cluster-1"))
 
-        stubFor(get("/transactions/$dappChainBrid/${dappTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$txBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
+        stubConfirmationProof(dappChainBrid, dappTxRid, dappTxHash, dappBlockHeader, dappMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(dappBlockRid)))
 
-        mockGetQuery(clusterAnchorChainBrid, "get_anchoring_transaction_for_block_rid",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(dappChainBrid.data), "height" to gtv(1)), gtv(gtv(peer.pubKey.data)))
+
+        stubQuery(baseUrl = "", clusterAnchorChainBrid, "get_anchoring_transaction_for_block_rid",
                 mapOf(
                         "blockchain_rid" to gtv(dappChainBrid),
-                        "block_rid" to gtv(txBlockRid)
+                        "block_rid" to gtv(dappBlockRid)
                 ),
                 gtv(mapOf(
                         "tx_rid" to gtv(clusterAnchorTxRid.rid.hexStringToByteArray()),
@@ -198,12 +234,13 @@ class StandardChromiaClientTest {
                 ))
         )
 
-        stubFor(get("/transactions/$clusterAnchorChainBrid/${clusterAnchorTxRid.rid}")
-                .willReturn(okJson("""{
-                    |"blockRID": "$clusterAnchorBlockRid", "blockHeight": 1, "blockHeader": "", "witness": "", "timestamp": 1, "txRID": "", "txHash": "", "txData": "FF"}
-                    |""".trimMargin())))
+        stubConfirmationProof(clusterAnchorChainBrid, clusterAnchorTxRid, clusterAnchorTxHash, clusterAnchorBlockHeader, clusterAnchorMerkleProofTree,
+                arrayOf(cryptoSystem.buildSigMaker(peer).signDigest(clusterAnchorBlockRid)))
 
-        mockGetQuery(systemAnchorChainBrid, "is_block_anchored",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_peer_info",
+                mapOf("brid" to gtv(clusterAnchorChainBrid.data), "height" to gtv(2)), gtv(gtv(peer.pubKey.data)))
+
+        stubQuery(baseUrl = "", systemAnchorChainBrid, "is_block_anchored",
                 mapOf(
                         "blockchain_rid" to gtv(clusterAnchorChainBrid),
                         "block_rid" to gtv(clusterAnchorBlockRid)
@@ -221,9 +258,9 @@ class StandardChromiaClientTest {
         assertThat(cc.isTxSystemAnchored(dappChainBrid, dappTxRid)).isFalse()
     }
 
-    @Test @Disabled
+    @Test
     fun `specify directory chain RID`() {
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         val cc = StandardChromiaClient(PostchainClientConfig(
@@ -233,11 +270,11 @@ class StandardChromiaClientTest {
         assertThat(cc.directoryChainRid).isEqualTo(directoryChainBrid)
     }
 
-    @Test @Disabled
+    @Test
     fun `lookup directory chain RID`() {
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         val cc = StandardChromiaClient(PostchainClientConfig(
@@ -247,19 +284,16 @@ class StandardChromiaClientTest {
         assertThat(cc.directoryChainRid).isEqualTo(directoryChainBrid)
     }
 
-    @Test @Disabled
+    @Test
     fun `no replica directory chain`() {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        stubFor(get("/query_gtv/${directoryChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/tx/${directoryChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -272,23 +306,20 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    @Test @Disabled
+    @Test
     fun `query replica directory chain`() {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        stubFor(get("/replica/query_gtv/${directoryChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "/replica", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/tx/${directoryChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -301,23 +332,20 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    @Test @Disabled
+    @Test
     fun `forwarding replica directory chain`() {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        stubFor(get("/replica/query_gtv/${directoryChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "/replica", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/replica/tx/${directoryChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -330,20 +358,17 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    @Test @Disabled
+    @Test
     fun `no replica dapp chain`() {
         val tx = Gtx(GtxBody(dappChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        stubFor(get("/query_gtv/${dappChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "", dappChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/tx/${dappChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -356,20 +381,17 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    @Test @Disabled
+    @Test
     fun `query replica dapp chain`() {
         val tx = Gtx(GtxBody(dappChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        stubFor(get("/replica/query_gtv/${dappChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "/replica", dappChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/tx/${dappChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -382,20 +404,17 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    @Test @Disabled
+    @Test
     fun `forwarding replica dapp chain`() {
         val tx = Gtx(GtxBody(dappChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
-        setupMock("cluster-1", dappChainBrid)
+        setupStubs("cluster-1", dappChainBrid)
 
-        stubFor(get("/replica/query_gtv/${dappChainBrid}?type=my_query&%7Eargs=${GtvEncoder.encodeGtv(gtv(mapOf("param" to gtv(17)))).toHex()}")
-                .willReturn(ok(ContentType.OCTET_STREAM.value)
-                        .withBody(GtvEncoder.encodeGtv(gtv("foobar"))))
-        )
+        stubQuery(baseUrl = "/replica", dappChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
         stubFor(post("/replica/tx/${dappChainBrid}")
                 .withRequestBody(binaryEqualTo(tx.encode()))
@@ -408,49 +427,67 @@ class StandardChromiaClientTest {
         assertThat(pc.query("my_query", gtv(mapOf("param" to gtv(17)))).asString()).isEqualTo("foobar")
 
         assertThat(pc.postTransaction(tx)).isEqualTo(
-                TransactionResult(TxRid(tx.calculateTxRid(GtvMerkleHashCalculatorV1(::sha256Digest)).toHex()),
+                TransactionResult(TxRid(tx.calculateTxRid(hashCalculator).toHex()),
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
-    private fun mockGetQuery(brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv) {
+    fun stubConfirmationProof(
+            blockchainRid: BlockchainRid,
+            txRid: TxRid,
+            txHash: ByteArray,
+            blockHeader: BlockHeaderData,
+            merkleProofTree: GtvMerkleProofTree,
+            witness: Array<Signature>) {
+        stubFor(get("/tx/$blockchainRid/${txRid.rid}/confirmationProof")
+                .willReturn(ok().withHeader(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .withBody(GtvEncoder.encodeGtv(GtvObjectMapper.toGtvDictionary(ConfirmationProofData(
+                                hash = txHash,
+                                blockHeader = blockHeader.toBinary(),
+                                witness = encodeWitness(witness),
+                                merkleProofTree = merkleProofTree,
+                                txIndex = 0
+                        ))))))
+    }
+
+    fun stubQuery(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv) {
         stubFor(
-                get(buildGetQueryGtv(brid, name, args))
-                        .willReturn(ok(ContentType.OCTET_STREAM.value)
-                                .withBody(GtvEncoder.encodeGtv(response)))
+                stubQueryBuilder(baseUrl, brid, name, args, response)
         )
     }
 
-    private fun mockGetQuery(brid: BlockchainRid, name: String, response: Gtv) {
+    fun stubQueryBuilder(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv): MappingBuilder =
+            post("$baseUrl/query_gtv/${brid}")
+                    .withRequestBody(binaryEqualTo(GtvEncoder.encodeGtv(gtv(gtv(name), gtv(args)))))
+                    .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response)))
+
+    // TODO enable this when all nodes have updated to Postchain 3.23.2 (postchain-chromia 3.22.3)
+    /*fun stubQueryBuilder(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv): MappingBuilder =
+            get("$baseUrl/query_gtv/${brid}?type=${name}&%7Eargs=${GtvEncoder.encodeGtv(gtv(args)).toHex()}")
+                    .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response))) */
+
+    fun stubQuery(baseUrl: String, brid: BlockchainRid, name: String, response: Gtv) {
         stubFor(
-                get(buildGetQueryGtv(brid, name))
-                        .willReturn(ok(ContentType.OCTET_STREAM.value)
-                                .withBody(GtvEncoder.encodeGtv(response)))
+                get("$baseUrl/query_gtv/${brid}?type=$name")
+                        .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response)))
         )
     }
 
-    private fun buildGetQueryGtv(brid: BlockchainRid, name: String, args: Map<String, Gtv>) =
-            "/query_gtv/${brid}?type=${name}&%7Eargs=${GtvEncoder.encodeGtv(gtv(args)).toHex()}"
-
-
-    private fun buildGetQueryGtv(brid: BlockchainRid, name: String) =
-            "/query_gtv/${brid}?type=${name}"
-
-    private fun setupMock(cluster: String, brid: BlockchainRid) {
+    fun setupStubs(cluster: String, brid: BlockchainRid) {
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
 
-        mockGetQuery(directoryChainBrid, "cm_get_system_anchoring_chain", gtv(systemAnchorChainBrid))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_system_anchoring_chain", gtv(systemAnchorChainBrid))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
                 mapOf("blockchain_rid" to gtv(brid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        mockGetQuery(directoryChainBrid, "cm_get_blockchain_cluster",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
                 mapOf("brid" to gtv(clusterAnchorChainBrid.data)), gtv(cluster))
 
-        mockGetQuery(directoryChainBrid, "cm_get_cluster_info",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_cluster_info",
                 mapOf("name" to gtv(cluster)), gtv(
                 "name" to gtv(cluster),
                 "anchoring_chain" to gtv(clusterAnchorChainBrid),
@@ -462,8 +499,9 @@ class StandardChromiaClientTest {
     }
 
     // For manual testing
-    @Disabled
+
     @Test
+    @Disabled
     fun test() {
 //        val cc = StandardChromiaClient(EndpointPool.singleUrl("https://system.chromaway.com:7740"))
 //        val cc = StandardChromiaClient(EndpointPool.singleUrl("https://dapps0.chromaway.com:7740"))

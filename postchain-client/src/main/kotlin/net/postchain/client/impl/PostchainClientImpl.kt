@@ -283,16 +283,27 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
-    override fun confirmationProof(txRid: TxRid): ByteArray = requestStrategy.request({ endpoint ->
-        Request(Method.GET, "${endpoint.url}/tx/$blockchainRIDOrID/${txRid.rid}/confirmationProof")
-                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    override fun confirmationProof(txRid: TxRid): ByteArray = requestStrategy.request<ByteArray>({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/tx/${blockchainRIDOrID}/${txRid.rid}/confirmationProof")
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
     }, { response, endpoint ->
-        val confirmationProof = parseJson("confirmationProof", response, endpoint, ConfirmationProof::class.java)
-        confirmationProof.proof.hexStringToByteArray()
+        handleConfirmationProofData(response, endpoint)
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("confirmationProof", response, endpoint)
     },
             true)
+
+    private fun handleConfirmationProofData(response: Response, endpoint: Endpoint): ByteArray {
+        val contentType = response.header(Header.ContentType) ?: ""
+        return when {
+            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use<BoundedInputStream, ByteArray> { it.readAllBytes() }
+
+            contentType.startsWith(ContentType.APPLICATION_JSON.value) ->
+                parseJson("confirmationProof", response, endpoint, ConfirmationProofWrapper::class.java).proof.hexStringToByteArray()
+
+            else -> throw ClientError("confirmationProof", response.status, "Unexpected response type: $contentType", endpoint)
+        }
+    }
 
     @Throws(IOException::class)
     override fun getTransaction(txRid: TxRid): ByteArray = requestStrategy.request({ endpoint ->
@@ -303,10 +314,8 @@ class PostchainClientImpl(
         when {
             contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readAllBytes() }
 
-            contentType.startsWith(ContentType.APPLICATION_JSON.value) -> {
-                val txResponse = parseJson("getTransaction", response, endpoint, Transaction::class.java)
-                txResponse.tx.hexStringToByteArray()
-            }
+            contentType.startsWith(ContentType.APPLICATION_JSON.value) ->
+                parseJson("getTransaction", response, endpoint, TransactionWrapper::class.java).tx.hexStringToByteArray()
 
             else -> throw ClientError("getTransaction", response.status,
                     "Unexpected response type: $contentType", endpoint)
@@ -321,9 +330,15 @@ class PostchainClientImpl(
         Request(Method.GET, "${endpoint.url}/transactions/$blockchainRIDOrID/${txRid.rid}")
                 .header(Header.Accept, ContentType.APPLICATION_JSON.value)
     }, { response, endpoint ->
-        TransactionInfo.fromJson(
+        val transactionInfo = TransactionInfo.fromJson(
                 parseJson("getTransactionInfo", response, endpoint, TransactionInfo.Json::class.java)
         )
+        if (!transactionInfo.txRID.data.contentEquals(txRid.rid.hexStringToByteArray())) {
+            throw ClientError("getTransactionInfo", null,
+                    "Transaction RID mismatch, expected ${txRid.rid} but was ${transactionInfo.txRID}", null)
+        }
+        transactionInfo
+
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("getTransactionInfo", response, endpoint)
     },
@@ -352,7 +367,7 @@ class PostchainClientImpl(
         Request(Method.GET, "${endpoint.url}/transactions/$blockchainRIDOrID/count")
                 .header(Header.Accept, ContentType.APPLICATION_JSON.value)
     }, { response, endpoint ->
-        parseJson("getTransactionsCount", response, endpoint, TransactionsCount::class.java).transactionsCount
+        parseJson("getTransactionsCount", response, endpoint, TransactionsCountWrapper::class.java).transactionsCount
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("getTransactionInfo", response, endpoint)
     },
@@ -363,9 +378,9 @@ class PostchainClientImpl(
         Request(Method.GET, "${endpoint.url}/brid/iid_$chainIID")
                 .header(Header.Accept, ContentType.TEXT_PLAIN.value)
     }, { response, endpoint ->
-        parsePlainValue("getBrid", response, endpoint) { BlockchainRid(it.hexStringToByteArray()) }
+        parsePlainValue("getBlockchainRID", response, endpoint) { BlockchainRid(it.hexStringToByteArray()) }
     }, { response, endpoint ->
-        buildExceptionFromErrorResponse("getBrid", response, endpoint)
+        buildExceptionFromErrorResponse("getBlockchainRID", response, endpoint)
     },
             true)
 

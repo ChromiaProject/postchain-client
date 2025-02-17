@@ -68,10 +68,10 @@ class StandardChromiaClient(
             pollInterval: Duration
     ) {
         val (anchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
-        val transactionInfo = sourceChainClient.getTransactionInfo(txRid)
+        val blockRid = sourceChainClient.decodedConfirmationProof(txRid).blockHeaderData.blockRid()
 
         repeat(retries) {
-            val blockAnchored = anchoringClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
+            val blockAnchored = anchoringClient.isBlockAnchored(blockchainRid, blockRid)
             if (blockAnchored) {
                 return
             }
@@ -82,11 +82,11 @@ class StandardChromiaClient(
 
     override fun isTxClusterAnchored(blockchainRid: BlockchainRid, txRid: TxRid): Boolean {
         val (anchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
-        val transactionInfo = sourceChainClient.getTransactionInfo(txRid)
-        return anchoringClient.isBlockAnchored(blockchainRid, transactionInfo.blockRID.data)
+        val blockRid = sourceChainClient.decodedConfirmationProof(txRid).blockHeaderData.blockRid()
+        return anchoringClient.isBlockAnchored(blockchainRid, blockRid)
     }
 
-    private fun getClusterAnchoringAndSourceChainClients(blockchainRid: BlockchainRid): Pair<PostchainClientImpl, PostchainClientImpl> {
+    private fun getClusterAnchoringAndSourceChainClients(blockchainRid: BlockchainRid): Pair<ChromiaPostchainClient, ChromiaPostchainClient> {
         val clusterInfo = directoryChainClient.cmGetClusterInfo(directoryChainClient.cmGetBlockchainCluster(blockchainRid.data))
         val signerNodes = EndpointPool.default(clusterInfo.peers.map { it.apiUrl })
         val anchoringClient = directoryChainClient.reconfigure(config.copy(
@@ -99,31 +99,33 @@ class StandardChromiaClient(
                 endpointPool = signerNodes,
                 requestStrategy = TryNextOnErrorRequestStrategyFactory()
         ))
-        return anchoringClient to sourceChainClient
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = anchoringClient, queryClient = anchoringClient, addNop = false) to
+                ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = sourceChainClient, queryClient = sourceChainClient, addNop = false)
     }
 
     override fun isBlockClusterAnchored(blockchainRid: BlockchainRid, blockRid: ByteArray): Boolean =
             getClusterAnchoringClient(blockchainRid).isBlockAnchored(blockchainRid, blockRid)
 
-    override fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): PostchainClient =
+    override fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): ChromiaPostchainClient =
             getClusterAnchoringClient(directoryChainClient.cmGetBlockchainCluster(dappBlockchainRid.data))
 
-    override fun getClusterAnchoringClient(cluster: String): PostchainClient {
+    override fun getClusterAnchoringClient(cluster: String): ChromiaPostchainClient {
         val clusterInfo = directoryChainClient.cmGetClusterInfo(cluster)
-        return directoryChainClient.reconfigure(config.copy(
+        val client = directoryChainClient.reconfigure(config.copy(
                 blockchainRid = BlockchainRid(clusterInfo.anchoringChain),
                 endpointPool = EndpointPool.default(clusterInfo.peers.map { it.apiUrl }),
                 requestStrategy = TryNextOnErrorRequestStrategyFactory()
         ))
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop = false)
     }
 
     override fun isTxSystemAnchored(blockchainRid: BlockchainRid, txRid: TxRid): Boolean {
         val (clusterAnchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
-        val blockRid = sourceChainClient.getTransactionInfo(txRid).blockRID.data
+        val blockRid = sourceChainClient.decodedConfirmationProof(txRid).blockHeaderData.blockRid()
         val clusterAnchoringTxRid = clusterAnchoringClient.getAnchoringTransactionForBlockRid(blockchainRid, blockRid)?.let {
             TxRid(it.txRid.toHex())
         } ?: return false
-        val clusterAnchoringBlockRid = clusterAnchoringClient.getTransactionInfo(clusterAnchoringTxRid).blockRID.data
+        val clusterAnchoringBlockRid = clusterAnchoringClient.decodedConfirmationProof(clusterAnchoringTxRid).blockHeaderData.blockRid()
         return systemAnchoringClient.isBlockAnchored(
                 blockchainRid = clusterAnchoringClient.config.blockchainRid,
                 blockRid = clusterAnchoringBlockRid
@@ -135,7 +137,7 @@ class StandardChromiaClient(
         val clusterAnchoringTxRid = clusterAnchoringClient.getAnchoringTransactionForBlockRid(blockchainRid, blockRid)?.let {
             TxRid(it.txRid.toHex())
         } ?: return false
-        val clusterAnchoringBlockRid = clusterAnchoringClient.getTransactionInfo(clusterAnchoringTxRid).blockRID.data
+        val clusterAnchoringBlockRid = clusterAnchoringClient.decodedConfirmationProof(clusterAnchoringTxRid).blockHeaderData.blockRid()
         return systemAnchoringClient.isBlockAnchored(
                 blockchainRid = clusterAnchoringClient.config.blockchainRid,
                 blockRid = clusterAnchoringBlockRid
@@ -144,7 +146,7 @@ class StandardChromiaClient(
 
     override fun awaitSystemAnchoredTx(blockchainRid: BlockchainRid, txRid: TxRid, retries: Int, pollInterval: Duration) {
         val (clusterAnchoringClient, sourceChainClient) = getClusterAnchoringAndSourceChainClients(blockchainRid)
-        val blockRid = sourceChainClient.getTransactionInfo(txRid).blockRID.data
+        val blockRid = sourceChainClient.decodedConfirmationProof(txRid).blockHeaderData.blockRid()
 
         var retriesLeft = retries
 
@@ -154,7 +156,7 @@ class StandardChromiaClient(
                 TxRid(it.txRid.toHex())
             }
             if (clusterAnchoringTxRid != null) {
-                clusterAnchoringBlockRid = clusterAnchoringClient.getTransactionInfo(clusterAnchoringTxRid).blockRID.data
+                clusterAnchoringBlockRid = clusterAnchoringClient.decodedConfirmationProof(clusterAnchoringTxRid).blockHeaderData.blockRid()
                 break
             } else {
                 retriesLeft--
@@ -183,7 +185,7 @@ class StandardChromiaClient(
         val client = directoryChainClient.reconfigure(directoryChainClient.config.copy(
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     override fun getDirectoryChainClientForQueryReplica(queryNodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -195,7 +197,7 @@ class StandardChromiaClient(
                 endpointPool = queryNodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = txClient, queryClient = queryClient, addNop)
     }
 
     override fun getDirectoryChainClientForForwardingReplica(nodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -204,7 +206,7 @@ class StandardChromiaClient(
                 endpointPool = nodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     override fun getSystemChainClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -212,7 +214,7 @@ class StandardChromiaClient(
                 blockchainRid = blockchainRid,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     override fun getSystemChainClientForQueryReplica(blockchainRid: BlockchainRid, queryNodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -225,7 +227,7 @@ class StandardChromiaClient(
                 endpointPool = queryNodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = txClient, queryClient = queryClient, addNop)
     }
 
     override fun getSystemChainClientForForwardingReplica(blockchainRid: BlockchainRid, nodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -234,7 +236,7 @@ class StandardChromiaClient(
                 endpointPool = nodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     override fun getClient(blockchainRid: BlockchainRid, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -245,7 +247,7 @@ class StandardChromiaClient(
                 endpointPool = signerNodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     override fun getClientForQueryReplica(blockchainRid: BlockchainRid, queryNodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -261,7 +263,7 @@ class StandardChromiaClient(
                 endpointPool = queryNodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = txClient, queryClient = queryClient, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = txClient, queryClient = queryClient, addNop)
     }
 
     override fun getClientForForwardingReplica(blockchainRid: BlockchainRid, nodes: EndpointPool, requestStrategy: RequestStrategyFactory, addNop: Boolean): PostchainClient {
@@ -270,7 +272,7 @@ class StandardChromiaClient(
                 endpointPool = nodes,
                 requestStrategy = requestStrategy,
         ))
-        return ChromiaPostchainClient(txClient = client, queryClient = client, addNop)
+        return ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop)
     }
 
     private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool {

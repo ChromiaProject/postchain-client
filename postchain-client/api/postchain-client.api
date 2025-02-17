@@ -135,6 +135,7 @@ public final class net/postchain/client/core/BlockDetail {
 public final class net/postchain/client/core/BlockHeaderData {
 	public static final field Companion Lnet/postchain/client/core/BlockHeaderData$Companion;
 	public fun <init> (Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvByteArray;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/GtvInteger;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/GtvDictionary;)V
+	public fun <init> ([B[B[BJJLnet/postchain/gtv/Gtv;Ljava/util/Map;)V
 	public final fun blockRid ()[B
 	public final fun component1 ()Lnet/postchain/gtv/GtvByteArray;
 	public final fun component2 ()Lnet/postchain/gtv/GtvByteArray;
@@ -157,6 +158,7 @@ public final class net/postchain/client/core/BlockHeaderData {
 	public final fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
 	public final fun getMerkleHashVersion ()J
 	public fun hashCode ()I
+	public final fun toBinary ()[B
 	public final fun toGtv ()Lnet/postchain/gtv/GtvArray;
 	public fun toString ()Ljava/lang/String;
 }
@@ -360,11 +362,20 @@ public final class net/postchain/client/impl/AbortOnErrorRequestStrategyFactory 
 	public fun create (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;)Lnet/postchain/client/request/RequestStrategy;
 }
 
-public final class net/postchain/client/impl/ConfirmationProof {
+public final class net/postchain/client/impl/ConfirmationProofData {
+	public fun <init> ([B[B[BLnet/postchain/gtv/merkle/proof/GtvMerkleProofTree;J)V
+	public final fun getBlockHeader ()[B
+	public final fun getHash ()[B
+	public final fun getMerkleProofTree ()Lnet/postchain/gtv/merkle/proof/GtvMerkleProofTree;
+	public final fun getTxIndex ()J
+	public final fun getWitness ()[B
+}
+
+public final class net/postchain/client/impl/ConfirmationProofWrapper {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/ConfirmationProof;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/ConfirmationProof;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/ConfirmationProof;
+	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/ConfirmationProofWrapper;
+	public static synthetic fun copy$default (Lnet/postchain/client/impl/ConfirmationProofWrapper;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/ConfirmationProofWrapper;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getProof ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -545,22 +556,22 @@ public abstract class net/postchain/client/impl/SynchronousRequestStrategy : net
 	protected final fun makeRequest (Lorg/http4k/core/Request;)Lorg/http4k/core/Response;
 }
 
-public final class net/postchain/client/impl/Transaction {
+public final class net/postchain/client/impl/TransactionWrapper {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/Transaction;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/Transaction;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/Transaction;
+	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/TransactionWrapper;
+	public static synthetic fun copy$default (Lnet/postchain/client/impl/TransactionWrapper;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/TransactionWrapper;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getTx ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class net/postchain/client/impl/TransactionsCount {
+public final class net/postchain/client/impl/TransactionsCountWrapper {
 	public fun <init> (J)V
 	public final fun component1 ()J
-	public final fun copy (J)Lnet/postchain/client/impl/TransactionsCount;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/TransactionsCount;JILjava/lang/Object;)Lnet/postchain/client/impl/TransactionsCount;
+	public final fun copy (J)Lnet/postchain/client/impl/TransactionsCountWrapper;
+	public static synthetic fun copy$default (Lnet/postchain/client/impl/TransactionsCountWrapper;JILjava/lang/Object;)Lnet/postchain/client/impl/TransactionsCountWrapper;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getTransactionsCount ()J
 	public fun hashCode ()I

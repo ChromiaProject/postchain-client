@@ -74,6 +74,11 @@
             <artifactId>jackson-databind</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-devtools</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
