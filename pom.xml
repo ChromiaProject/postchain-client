@@ -26,7 +26,7 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.27.5</postchain.version>
+        <postchain.version>3.27.6</postchain.version>
         <directory.chain.version>1.75.0</directory.chain.version>
         <rell.maven.plugin.version>0.12.5</rell.maven.plugin.version>
         <kotlin.version>2.0.0</kotlin.version>
@@ -71,9 +71,9 @@
             </dependency>
 
             <dependency>
-                <groupId>com.github.tomakehurst</groupId>
-                <artifactId>wiremock-jre8</artifactId>
-                <version>2.35.1</version>
+              <groupId>org.wiremock</groupId>
+              <artifactId>wiremock</artifactId>
+              <version>3.12.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
