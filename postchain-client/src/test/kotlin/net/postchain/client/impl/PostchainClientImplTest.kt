@@ -331,7 +331,6 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    @Disabled // TODO enable this when all nodes have updated to Postchain 3.23.2 (postchain-chromia 3.22.3)
     fun `query with small args is sent with GET`() {
         val queryArgs = gtv(mapOf("arg1" to gtv("value"), "arg2" to gtv("value2")))
         val queryResponse: Gtv = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
