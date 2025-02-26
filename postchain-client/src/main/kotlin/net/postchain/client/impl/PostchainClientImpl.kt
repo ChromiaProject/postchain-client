@@ -21,6 +21,7 @@ import net.postchain.client.exception.NotFoundError
 import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
+import net.postchain.common.data.Hash
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.toHex
@@ -399,7 +400,7 @@ class PostchainClientImpl(
 
     @Throws(IOException::class)
     override fun validateConfiguration(configuration: Gtv) {
-        val configHash = configuration.merkleHash(hashCalculator)
+        val configHash = configurationHash(configuration)
         val signatures = config.signers
                 .map { it.sigMaker(cryptoSystem) }
                 .map { it.signDigest(configHash) }
@@ -412,6 +413,16 @@ class PostchainClientImpl(
                     .header(Header.XPostchainSignature, signatures)
                     .body(MemoryBody(GtvEncoder.encodeGtv(configuration)))
         }, { _, _ -> }, { response, endpoint -> buildExceptionFromErrorResponse("validateConfig", response, endpoint) }, false)
+    }
+
+    private fun configurationHash(configuration: Gtv): Hash {
+        val merkleHashVersion = configurationMerkleHashVersion(configuration)
+        return configuration.merkleHash(makeMerkleHashCalculator(merkleHashVersion))
+    }
+
+    private fun configurationMerkleHashVersion(configuration: Gtv): Long {
+        val features = configuration["features"]?.asDict()
+        return features?.get("merkle_hash_version")?.asInteger() ?: 1L
     }
 
     @Throws(IOException::class)
