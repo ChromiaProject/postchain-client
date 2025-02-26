@@ -22,6 +22,8 @@ public final class net/postchain/client/config/FailOverConfig : net/postchain/co
 
 public final class net/postchain/client/config/FailOverConfig$Companion {
 	public final fun fromConfiguration (Lorg/apache/commons/configuration2/Configuration;)Lnet/postchain/client/config/FailOverConfig;
+	public final fun fromConfiguration (Lorg/apache/commons/configuration2/Configuration;Lnet/postchain/client/config/FailOverConfig;)Lnet/postchain/client/config/FailOverConfig;
+	public static synthetic fun fromConfiguration$default (Lnet/postchain/client/config/FailOverConfig$Companion;Lorg/apache/commons/configuration2/Configuration;Lnet/postchain/client/config/FailOverConfig;ILjava/lang/Object;)Lnet/postchain/client/config/FailOverConfig;
 }
 
 public final class net/postchain/client/config/FailOverConfigKt {
@@ -65,6 +67,7 @@ public final class net/postchain/client/config/PostchainClientConfig : net/postc
 	public static synthetic fun copy$default (Lnet/postchain/client/config/PostchainClientConfig;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Ljava/util/List;ILjava/time/Duration;Lnet/postchain/client/config/FailOverConfig;Lnet/postchain/crypto/CryptoSystem;Ljava/lang/Long;ILjava/time/Duration;Ljava/time/Duration;Lnet/postchain/client/request/RequestStrategyFactory;IZIILjava/lang/Object;)Lnet/postchain/client/config/PostchainClientConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public static final fun fromProperties (Ljava/lang/String;)Lnet/postchain/client/config/PostchainClientConfig;
+	public static final fun fromProperties (Ljava/lang/String;Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/config/PostchainClientConfig;
 	public final fun getBlockchainRid ()Lnet/postchain/common/BlockchainRid;
 	public final fun getCompressRequestBodies ()Z
 	public final fun getConnectTimeout ()Ljava/time/Duration;
@@ -86,12 +89,18 @@ public final class net/postchain/client/config/PostchainClientConfig : net/postc
 
 public final class net/postchain/client/config/PostchainClientConfig$Companion {
 	public final fun fromConfiguration (Lorg/apache/commons/configuration2/Configuration;)Lnet/postchain/client/config/PostchainClientConfig;
+	public final fun fromConfiguration (Lorg/apache/commons/configuration2/Configuration;Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/config/PostchainClientConfig;
+	public static synthetic fun fromConfiguration$default (Lnet/postchain/client/config/PostchainClientConfig$Companion;Lorg/apache/commons/configuration2/Configuration;Lnet/postchain/client/config/PostchainClientConfig;ILjava/lang/Object;)Lnet/postchain/client/config/PostchainClientConfig;
 	public final fun fromProperties (Ljava/lang/String;)Lnet/postchain/client/config/PostchainClientConfig;
+	public final fun fromProperties (Ljava/lang/String;Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/config/PostchainClientConfig;
+	public static synthetic fun fromProperties$default (Lnet/postchain/client/config/PostchainClientConfig$Companion;Ljava/lang/String;Lnet/postchain/client/config/PostchainClientConfig;ILjava/lang/Object;)Lnet/postchain/client/config/PostchainClientConfig;
+	public final fun getDefaultConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 }
 
 public final class net/postchain/client/config/PostchainClientConfigKt {
 	public static final field MAX_RESPONSE_SIZE I
 	public static final field MAX_TX_SIZE I
+	public static final field MERKLE_HASH_VERSION I
 	public static final field STATUS_POLL_COUNT I
 	public static final fun getCONNECT_TIMEOUT ()Ljava/time/Duration;
 	public static final fun getRESPONSE_TIMEOUT ()Ljava/time/Duration;

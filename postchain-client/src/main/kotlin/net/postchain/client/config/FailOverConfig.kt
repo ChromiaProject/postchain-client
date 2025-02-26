@@ -14,10 +14,13 @@ data class FailOverConfig(
         val attemptInterval: Duration = FAIL_OVER_INTERVAL,
 ) : Config {
     companion object {
-        fun fromConfiguration(config: Configuration): FailOverConfig {
+        @JvmOverloads
+        fun fromConfiguration(config: Configuration, defaults: FailOverConfig = FailOverConfig()): FailOverConfig {
             return FailOverConfig(
-                    attemptsPerEndpoint = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_FAIL_OVER_ATTEMPTS", "failover.attempts", ATTEMPTS_PER_ENDPOINT),
-                    attemptInterval = config.getEnvOrLongProperty("POSTCHAIN_CLIENT_FAIL_OVER_INTERVAL", "failover.interval", FAIL_OVER_INTERVAL.toMillis()).let { Duration.ofMillis(it) }
+                    attemptsPerEndpoint = config.getEnvOrIntProperty("POSTCHAIN_CLIENT_FAIL_OVER_ATTEMPTS", "failover.attempts",
+                            defaults.attemptsPerEndpoint),
+                    attemptInterval = config.getEnvOrLongProperty("POSTCHAIN_CLIENT_FAIL_OVER_INTERVAL", "failover.interval",
+                            defaults.attemptInterval.toMillis()).let { Duration.ofMillis(it) }
             )
         }
     }
