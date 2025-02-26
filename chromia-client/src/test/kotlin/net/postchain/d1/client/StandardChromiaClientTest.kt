@@ -455,15 +455,16 @@ class StandardChromiaClientTest {
         )
     }
 
+    /*
     fun stubQueryBuilder(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv): MappingBuilder =
             post("$baseUrl/query_gtv/${brid}")
                     .withRequestBody(binaryEqualTo(GtvEncoder.encodeGtv(gtv(gtv(name), gtv(args)))))
                     .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response)))
+     */
 
-    // TODO enable this when all nodes have updated to Postchain 3.23.2 (postchain-chromia 3.22.3)
-    /*fun stubQueryBuilder(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv): MappingBuilder =
+    fun stubQueryBuilder(baseUrl: String, brid: BlockchainRid, name: String, args: Map<String, Gtv>, response: Gtv): MappingBuilder =
             get("$baseUrl/query_gtv/${brid}?type=${name}&%7Eargs=${GtvEncoder.encodeGtv(gtv(args)).toHex()}")
-                    .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response))) */
+                    .willReturn(ok(ContentType.OCTET_STREAM.value).withBody(GtvEncoder.encodeGtv(response)))
 
     fun stubQuery(baseUrl: String, brid: BlockchainRid, name: String, response: Gtv) {
         stubFor(
