@@ -3,7 +3,6 @@ package net.postchain.client.core
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
 import net.postchain.client.transaction.TransactionBuilder
-import net.postchain.common.BlockchainRid
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
@@ -12,7 +11,7 @@ import net.postchain.gtx.Gtx
 import java.io.Closeable
 import java.time.Duration
 
-interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
+interface PostchainClient : PostchainReadClient, PostchainBlockClient, PostchainQuery, Closeable {
     val config: PostchainClientConfig
 
     /**
@@ -55,54 +54,6 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
     fun checkTxStatus(txRid: TxRid): TransactionResult
 
     /**
-     * Query current block height.
-     */
-    fun currentBlockHeight(container: String? = null): Long
-
-    /**
-     * Get confirmation proof for transaction.
-     */
-    fun confirmationProof(txRid: TxRid): ByteArray
-
-    /**
-     * Get raw transaction data
-     */
-    fun getTransaction(txRid: TxRid): ByteArray
-
-    /**
-     * Get information about a transaction
-     */
-    fun getTransactionInfo(txRid: TxRid): TransactionInfo
-
-    /**
-     * Get information about all transactions
-     *
-     * @param limit optional limit
-     * @param beforeTime optional before time
-     * @param signer optional signer
-     * @return list of transaction infos
-     */
-    fun getTransactionsInfo(limit: Long = -1, beforeTime: Long = -1, signer: String? = null): List<TransactionInfo>
-
-    /**
-     * Get number of transactions
-     */
-    fun getTransactionsCount(): Long
-
-    /**
-     * Get blockchain RID by chain IID. Please note that chain IID is the internal ID of a chain and might vary between
-     * nodes and is not recommended to use in production.
-     */
-    fun getBlockchainRID(chainIID: Long): BlockchainRid
-
-    /**
-     * Fetch blockchain configuration.
-     *
-     * @param height  block height to fetch configuration for, or null for current/latest configuration
-     */
-    fun getConfiguration(height: Long? = null): Gtv
-
-    /**
      * Validates that the supplied blockchain configuration is compatible with the running blockchain configuration.
      * @param configuration blockchain configuration to verify
      * @throws ClientError
@@ -119,8 +70,4 @@ interface PostchainClient : PostchainBlockClient, PostchainQuery, Closeable {
      */
     fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
 
-    /**
-     * Query block by RID.
-     */
-    fun blockByRid(blockRid: BlockRid): BlockDetail?
 }

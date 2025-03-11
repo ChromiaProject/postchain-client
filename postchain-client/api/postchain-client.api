@@ -195,20 +195,11 @@ public abstract interface class net/postchain/client/core/PostchainBlockClient :
 	public abstract fun blockAtHeight (J)Lnet/postchain/client/core/BlockDetail;
 }
 
-public abstract interface class net/postchain/client/core/PostchainClient : java/io/Closeable, net/postchain/client/core/PostchainBlockClient, net/postchain/client/core/PostchainQuery {
+public abstract interface class net/postchain/client/core/PostchainClient : java/io/Closeable, net/postchain/client/core/PostchainBlockClient, net/postchain/client/core/PostchainQuery, net/postchain/client/core/PostchainReadClient {
 	public abstract fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
-	public abstract fun blockByRid-1Mf0NN0 (Ljava/lang/String;)Lnet/postchain/client/core/BlockDetail;
 	public abstract fun checkTxStatus-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionResult;
-	public abstract fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
-	public abstract fun currentBlockHeight (Ljava/lang/String;)J
-	public abstract fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public abstract fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
-	public abstract fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
 	public abstract fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
-	public abstract fun getTransaction-CTXur5g (Ljava/lang/String;)[B
-	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
-	public abstract fun getTransactionsCount ()J
-	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
 	public abstract fun getVersion ()Lnet/postchain/client/core/Version;
 	public abstract fun postTransaction (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
@@ -218,18 +209,30 @@ public abstract interface class net/postchain/client/core/PostchainClient : java
 	public abstract fun validateConfiguration (Lnet/postchain/gtv/Gtv;)V
 }
 
-public final class net/postchain/client/core/PostchainClient$DefaultImpls {
-	public static synthetic fun currentBlockHeight$default (Lnet/postchain/client/core/PostchainClient;Ljava/lang/String;ILjava/lang/Object;)J
-	public static synthetic fun getConfiguration$default (Lnet/postchain/client/core/PostchainClient;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/gtv/Gtv;
-	public static synthetic fun getTransactionsInfo$default (Lnet/postchain/client/core/PostchainClient;JJLjava/lang/String;ILjava/lang/Object;)Ljava/util/List;
-}
-
 public abstract interface class net/postchain/client/core/PostchainClientProvider {
 	public abstract fun createClient (Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/core/PostchainClient;
 }
 
 public abstract interface class net/postchain/client/core/PostchainQuery {
 	public abstract fun query (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/gtv/Gtv;
+}
+
+public abstract interface class net/postchain/client/core/PostchainReadClient : net/postchain/client/core/PostchainBlockClient, net/postchain/client/core/PostchainQuery {
+	public abstract fun blockByRid-1Mf0NN0 (Ljava/lang/String;)Lnet/postchain/client/core/BlockDetail;
+	public abstract fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
+	public abstract fun currentBlockHeight (Ljava/lang/String;)J
+	public abstract fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
+	public abstract fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
+	public abstract fun getTransaction-CTXur5g (Ljava/lang/String;)[B
+	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
+	public abstract fun getTransactionsCount ()J
+	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
+}
+
+public final class net/postchain/client/core/PostchainReadClient$DefaultImpls {
+	public static synthetic fun currentBlockHeight$default (Lnet/postchain/client/core/PostchainReadClient;Ljava/lang/String;ILjava/lang/Object;)J
+	public static synthetic fun getConfiguration$default (Lnet/postchain/client/core/PostchainReadClient;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/gtv/Gtv;
+	public static synthetic fun getTransactionsInfo$default (Lnet/postchain/client/core/PostchainReadClient;JJLjava/lang/String;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class net/postchain/client/core/TransactionInfo {
