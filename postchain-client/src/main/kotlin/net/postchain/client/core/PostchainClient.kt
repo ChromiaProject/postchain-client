@@ -2,6 +2,7 @@ package net.postchain.client.core
 
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
+import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair

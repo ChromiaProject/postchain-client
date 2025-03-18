@@ -33,6 +33,7 @@ public final class net/postchain/client/config/FailOverConfigKt {
 
 public final class net/postchain/client/config/PostchainClientConfig : net/postchain/common/config/Config {
 	public static final field Companion Lnet/postchain/client/config/PostchainClientConfig$Companion;
+	public fun <init> (Lnet/postchain/client/config/PostchainClientConfig;I)V
 	public fun <init> (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;)V
 	public fun <init> (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Ljava/util/List;)V
 	public fun <init> (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/EndpointPool;Ljava/util/List;I)V
@@ -100,7 +101,7 @@ public final class net/postchain/client/config/PostchainClientConfig$Companion {
 public final class net/postchain/client/config/PostchainClientConfigKt {
 	public static final field MAX_RESPONSE_SIZE I
 	public static final field MAX_TX_SIZE I
-	public static final field MERKLE_HASH_VERSION I
+	public static final field MERKLE_HASH_AUTO_DETECT_VERSION I
 	public static final field STATUS_POLL_COUNT I
 	public static final fun getCONNECT_TIMEOUT ()Ljava/time/Duration;
 	public static final fun getRESPONSE_TIMEOUT ()Ljava/time/Duration;
@@ -223,6 +224,7 @@ public abstract interface class net/postchain/client/core/PostchainReadClient : 
 	public abstract fun currentBlockHeight (Ljava/lang/String;)J
 	public abstract fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public abstract fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
+	public abstract fun getFeatures (Ljava/lang/String;)Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;
 	public abstract fun getTransaction-CTXur5g (Ljava/lang/String;)[B
 	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
 	public abstract fun getTransactionsCount ()J
@@ -415,6 +417,7 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
+	public fun getFeatures (Ljava/lang/String;)Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;
 	public fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public fun getTransaction-CTXur5g (Ljava/lang/String;)[B
 	public fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
@@ -429,6 +432,17 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun transactionBuilder (Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun validateConfiguration (Lnet/postchain/gtv/Gtv;)V
+}
+
+public final class net/postchain/client/impl/PostchainClientImpl$BlockchainFeatures {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;
+	public static synthetic fun copy$default (Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;IILjava/lang/Object;)Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMerkle_hash_version ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class net/postchain/client/impl/PostchainClientImpl$Companion : mu/KLogging {
@@ -473,6 +487,7 @@ public final class net/postchain/client/impl/PostchainClientImpl$getTransactions
 }
 
 public final class net/postchain/client/impl/PostchainClientImplKt {
+	public static final field MERKLE_HASH_FALLBACK_VERSION I
 	public static final field QUERY_ARGS Ljava/lang/String;
 	public static final field QUERY_TYPE Ljava/lang/String;
 }

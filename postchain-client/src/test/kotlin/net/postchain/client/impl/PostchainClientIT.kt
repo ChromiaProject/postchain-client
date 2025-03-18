@@ -343,7 +343,8 @@ class PostchainClientIT : IntegrationTestSetup() {
                         blockchainRid,
                         EndpointPool.default(urls),
                         listOf(KeyPair(pubKey0, privKey0)),
-                        requestStrategy = QueryMajorityRequestStrategyFactory()
+                        requestStrategy = QueryMajorityRequestStrategyFactory(),
+                        merkleHashVersion = 2
                 ))
         val rndStr = randomStr()
         val builder = createSignedNopTx(client, blockchainRid, rndStr)

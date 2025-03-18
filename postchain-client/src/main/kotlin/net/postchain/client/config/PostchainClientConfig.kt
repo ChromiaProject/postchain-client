@@ -25,7 +25,7 @@ const val MAX_RESPONSE_SIZE = 64 * 1024 * 1024 // 64 MiB
 val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(60)
 val RESPONSE_TIMEOUT: Duration = Duration.ofSeconds(60)
 const val MAX_TX_SIZE = -1 // no limit
-const val MERKLE_HASH_VERSION = 1
+const val MERKLE_HASH_AUTO_DETECT_VERSION = 0
 
 data class PostchainClientConfig @JvmOverloads constructor(
         val blockchainRid: BlockchainRid,
@@ -45,8 +45,26 @@ data class PostchainClientConfig @JvmOverloads constructor(
         val maxTxSize: Int = MAX_TX_SIZE,
         /** Will only be applied to synchronous client if enabled */
         val compressRequestBodies: Boolean = false,
-        val merkleHashVersion: Int = MERKLE_HASH_VERSION,
+        val merkleHashVersion: Int = MERKLE_HASH_AUTO_DETECT_VERSION,
 ) : Config {
+    constructor(config: PostchainClientConfig, merkleHashVersion: Int) :
+            this(
+                    config.blockchainRid,
+                    config.endpointPool,
+                    config.signers,
+                    config.statusPollCount,
+                    config.statusPollInterval,
+                    config.failOverConfig,
+                    config.cryptoSystem,
+                    config.queryByChainId,
+                    config.maxResponseSize,
+                    config.connectTimeout,
+                    config.responseTimeout,
+                    config.requestStrategy,
+                    config.maxTxSize,
+                    config.compressRequestBodies,
+                    merkleHashVersion)
+
     companion object {
         val defaultConfig by lazy { PostchainClientConfig(BlockchainRid.ZERO_RID, EndpointPool.singleUrl("")) }
 
