@@ -131,7 +131,8 @@ internal class QueryMajorityTest {
                     PostchainClientConfig(
                             BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
                             DeterministicEndpointPool(urls),
-                            requestStrategy = QueryMajorityRequestStrategyFactory(asyncHttpHandler))
+                            requestStrategy = QueryMajorityRequestStrategyFactory(asyncHttpHandler),
+                            merkleHashVersion = 2)
             ).query("test_query", gtv("arg"))
 
     @Test
@@ -145,7 +146,8 @@ internal class QueryMajorityTest {
                         assertThat(request.header("Accept")).isEqualTo("application/octet-stream")
                         fn(Response(Status.OK).body(encodeGtv(validBlockDetail(1)).inputStream()))
                     }
-                }))).blockAtHeight(1L)
+                }),
+                merkleHashVersion = 2)).blockAtHeight(1L)
         assertThat(someBlock!!.height).isEqualTo(1L)
         assertThat(requestCounter).isEqualTo(4)
     }
@@ -161,7 +163,8 @@ internal class QueryMajorityTest {
                         assertThat(request.header("Accept")).isEqualTo("application/octet-stream")
                         fn(Response(Status.OK).body(encodeGtv(GtvNull).inputStream()))
                     }
-                }))).blockAtHeight(1L)
+                }),
+                merkleHashVersion = 2)).blockAtHeight(1L)
         assertThat(someBlock).isNull()
         assertThat(requestCounter).isEqualTo(4)
     }
@@ -178,7 +181,8 @@ internal class QueryMajorityTest {
                             assertThat(request.header("Accept")).isEqualTo("application/octet-stream")
                             fn(Response(Status.OK).body(encodeGtv(validBlockDetail(request.uri.port?.toByte() ?: 0)).inputStream()))
                         }
-                    }))).blockAtHeight(1L)
+                    }),
+                    merkleHashVersion = 2)).blockAtHeight(1L)
         }.isInstanceOf(NodesDisagree::class)
         assertThat(requestCounter).isEqualTo(4)
     }
@@ -198,7 +202,8 @@ internal class QueryMajorityTest {
                             else
                                 Response(Status.OK).body(encodeGtv(validBlockDetail(1)).inputStream()))
                         }
-                    }))).blockAtHeight(1L)
+                    }),
+                    merkleHashVersion = 2)).blockAtHeight(1L)
         }.isInstanceOf(NodesDisagree::class)
         assertThat(requestCounter).isEqualTo(4)
     }
@@ -213,7 +218,8 @@ internal class QueryMajorityTest {
                         requestCounter++
                         fn(Response(Status.OK).body("""{"status":"CONFIRMED"}"""))
                     }
-                }))).checkTxStatus(TxRid("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29"))
+                }),
+                merkleHashVersion = 2)).checkTxStatus(TxRid("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29"))
         assertThat(txStatus.status).isEqualTo(TransactionStatus.CONFIRMED)
         assertThat(requestCounter).isEqualTo(4)
     }
@@ -229,7 +235,8 @@ internal class QueryMajorityTest {
                             requestCounter++
                             throw SSLException("Bad SSL")
                         }
-                    }))).blockAtHeight(1L)
+                    }),
+                    merkleHashVersion = 2)).blockAtHeight(1L)
         }.isInstanceOf(SSLException::class)
         assertThat(requestCounter).isEqualTo(4)
     }

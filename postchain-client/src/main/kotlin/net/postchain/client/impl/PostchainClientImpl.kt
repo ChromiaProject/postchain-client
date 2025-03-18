@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import mu.KLogging
+import net.postchain.client.config.MERKLE_HASH_AUTO_DETECT_VERSION
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockHeaderData
@@ -66,20 +67,53 @@ object Header {
 
 const val QUERY_TYPE = "type"
 const val QUERY_ARGS = "~args"
+const val MERKLE_HASH_FALLBACK_VERSION = 1
 
 class PostchainClientImpl(
-        override val config: PostchainClientConfig,
-        private val httpClient: HttpHandler = defaultHttpHandler(config),
+        inputConfig: PostchainClientConfig,
+        private val httpClient: HttpHandler = defaultHttpHandler(inputConfig),
 ) : PostchainClient {
 
     companion object : KLogging()
 
-    private val blockchainRIDHex = config.blockchainRid.toHex()
-    private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
-    private val cryptoSystem = config.cryptoSystem
-    private val hashCalculator = makeMerkleHashCalculator(config.merkleHashVersion.toLong())
+    private val maxResponseSize = inputConfig.maxResponseSize
+    private val merkleHashVersion: Int
+    private val blockchainRIDHex = inputConfig.blockchainRid.toHex()
+    private val blockchainRIDOrID = inputConfig.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
+    private val cryptoSystem = inputConfig.cryptoSystem
     private val gson = Gson()
-    private val requestStrategy = config.requestStrategy.create(config, httpClient)
+    private val requestStrategy = inputConfig.requestStrategy.create(inputConfig, httpClient)
+    init {
+        merkleHashVersion = if (inputConfig.merkleHashVersion == MERKLE_HASH_AUTO_DETECT_VERSION) {
+            autoDetectMerkleHashVersion()
+        } else {
+            inputConfig.merkleHashVersion
+        }
+    }
+    override val config: PostchainClientConfig = PostchainClientConfig(inputConfig, merkleHashVersion)
+    private val hashCalculator = makeMerkleHashCalculator(this.config.merkleHashVersion.toLong())
+
+    private fun autoDetectMerkleHashVersion(): Int {
+        var fetchedMerkleHashVersion = MERKLE_HASH_FALLBACK_VERSION
+        try {
+            fetchedMerkleHashVersion = getFeatures(blockchainRIDHex).merkle_hash_version
+        } catch (e: Exception) {
+            logger.warn { "Failed to auto-detect merkleHashVersion with error: ${e.message}, fallback to version: $MERKLE_HASH_FALLBACK_VERSION" }
+        }
+        return if (fetchedMerkleHashVersion < 1) MERKLE_HASH_FALLBACK_VERSION else fetchedMerkleHashVersion
+    }
+
+    override fun getFeatures(blockchainRIDHex: String) =
+            requestStrategy.request({ endpoint ->
+                Request(Method.GET, "${endpoint.url}/config/${blockchainRIDHex}/features")
+                        .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+            }, { response, endpoint ->
+                parseJson("features", response, endpoint, BlockchainFeatures::class.java)
+            }, { response, _ ->
+                val fallbackFeatures = BlockchainFeatures(MERKLE_HASH_FALLBACK_VERSION)
+                logger.warn { "Failed to retrieve blockchain features with status: ${response.status}, return fallback features: $fallbackFeatures." }
+                fallbackFeatures
+            }, true)
 
     override fun transactionBuilder() = transactionBuilder(config.signers)
 
@@ -521,7 +555,7 @@ class PostchainClientImpl(
         }
         return BoundedInputStream.builder()
                 .setInputStream(originalStream)
-                .setMaxCount(config.maxResponseSize.toLong())
+                .setMaxCount(maxResponseSize.toLong())
                 .setPropagateClose(true)
                 .get()
     }
@@ -543,4 +577,5 @@ class PostchainClientImpl(
     data class TxStatus(val status: String?, val rejectReason: String?)
     data class CurrentBlockHeight(val blockHeight: Long)
     data class ErrorResponse(val error: String)
+    data class BlockchainFeatures(val merkle_hash_version: Int)
 }

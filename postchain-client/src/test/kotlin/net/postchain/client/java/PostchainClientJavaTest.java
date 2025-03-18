@@ -5,6 +5,7 @@ import net.postchain.client.config.FailOverConfig;
 import net.postchain.client.config.PostchainClientConfig;
 import net.postchain.client.core.PostchainClientProvider;
 import net.postchain.client.exception.ClientError;
+import net.postchain.client.impl.AbortOnErrorRequestStrategyFactory;
 import net.postchain.client.impl.PostchainClientImpl;
 import net.postchain.client.impl.PostchainClientProviderImpl;
 import net.postchain.client.request.EndpointPool;
@@ -22,6 +23,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
+import static net.postchain.client.config.PostchainClientConfigKt.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PostchainClientJavaTest {
@@ -46,14 +48,24 @@ public class PostchainClientJavaTest {
 
         requestCounter = 0;
 
-        client = new PostchainClientImpl(new PostchainClientConfig(
+        PostchainClientConfig config = new PostchainClientConfig(
                 BlockchainRid.buildFromHex(brid),
                 EndpointPool.singleUrl(url),
                 Collections.emptyList(),
                 0,
                 Duration.ZERO,
-                new FailOverConfig(5, Duration.ZERO)
-        ), httpClient);
+                new FailOverConfig(5, Duration.ZERO),
+                new Secp256K1CryptoSystem(),
+                null,
+                MAX_RESPONSE_SIZE,
+                Duration.ofSeconds(60),
+                Duration.ofSeconds(60),
+                new AbortOnErrorRequestStrategyFactory(),
+                MAX_TX_SIZE,
+                false,
+                2
+        );
+        client = new PostchainClientImpl(config, httpClient);
     }
 
     @Test
