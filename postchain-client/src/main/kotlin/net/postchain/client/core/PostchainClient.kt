@@ -2,18 +2,19 @@ package net.postchain.client.core
 
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
-import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorBase
 import net.postchain.gtx.Gtx
 import java.io.Closeable
 import java.time.Duration
 
 interface PostchainClient : PostchainReadClient, PostchainBlockClient, PostchainQuery, Closeable {
     val config: PostchainClientConfig
+    val merkleHashCalculator: GtvMerkleHashCalculatorBase
 
     /**
      * Creates a [TransactionBuilder] with the default signer list

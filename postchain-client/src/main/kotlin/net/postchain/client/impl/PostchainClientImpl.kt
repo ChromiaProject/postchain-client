@@ -91,7 +91,7 @@ class PostchainClientImpl(
         }
     }
     override val config: PostchainClientConfig = PostchainClientConfig(inputConfig, merkleHashVersion)
-    private val hashCalculator = makeMerkleHashCalculator(this.config.merkleHashVersion.toLong())
+    override val merkleHashCalculator = makeMerkleHashCalculator(this.config.merkleHashVersion.toLong())
 
     private fun autoDetectMerkleHashVersion(): Int {
         var fetchedMerkleHashVersion = MERKLE_HASH_FALLBACK_VERSION
@@ -121,7 +121,7 @@ class PostchainClientImpl(
             this,
             config.blockchainRid,
             signers.map { it.pubKey.data },
-            hashCalculator,
+            merkleHashCalculator,
             signers.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
@@ -131,7 +131,7 @@ class PostchainClientImpl(
             this,
             config.blockchainRid,
             initialSigners.map { it.pubKey.data } + remainingRequiredSigners.map { it.data },
-            hashCalculator,
+            merkleHashCalculator,
             initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
@@ -253,7 +253,7 @@ class PostchainClientImpl(
 
     @Throws(IOException::class)
     override fun postTransaction(tx: Gtx): TransactionResult {
-        val txRid = TxRid(tx.calculateTxRid(hashCalculator).toHex())
+        val txRid = TxRid(tx.calculateTxRid(merkleHashCalculator).toHex())
         return requestStrategy.request({ endpoint ->
             Request(Method.POST, "${endpoint.url}/tx/$blockchainRIDHex")
                     .header(Header.ContentType, ContentType.OCTET_STREAM.value)
