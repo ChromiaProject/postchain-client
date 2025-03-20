@@ -6,6 +6,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import assertk.assertions.messageContains
 import assertk.isContentEqualTo
 import com.google.gson.Gson
@@ -33,6 +34,8 @@ import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.GtvException
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
 import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.InfiniteCircularInputStream
 import org.http4k.core.Body
@@ -583,39 +586,49 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `merkle hash version config`() {
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2))
+        assertThat(client.merkleHashCalculator is GtvMerkleHashCalculatorV2).isTrue()
+        assertThat(client.config.merkleHashVersion).isEqualTo(2)
+    }
+
+    @Test
     fun `auto detect merkle hash version`() {
-        val config = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(BLOCKCHAIN_RID)}/features")
                 assertThat(request.uri.query).isEqualTo("")
                 return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"merkle_hash_version": 2 }""")
             }
-        }).config
-        assertThat(config.merkleHashVersion).isEqualTo(2)
+        })
+        assertThat(client.merkleHashCalculator is GtvMerkleHashCalculatorV2).isTrue()
+        assertThat(client.config.merkleHashVersion).isEqualTo(0)
     }
 
     @Test
     fun `given features does not contain merkle_hash_version then auto detect merkle hash version fallback to version 1`() {
-        val config = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(BLOCKCHAIN_RID)}/features")
                 assertThat(request.uri.query).isEqualTo("")
                 return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{}""")
             }
-        }).config
-        assertThat(config.merkleHashVersion).isEqualTo(1)
+        })
+        assertThat(client.merkleHashCalculator is GtvMerkleHashCalculatorV1).isTrue()
+        assertThat(client.config.merkleHashVersion).isEqualTo(0)
     }
 
     @Test
     fun `failed auto detect merkle hash version fallback to version 1`() {
-        val config = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url)), httpClient = object : HttpHandler {
             override fun invoke(request: Request): Response {
                 assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(BLOCKCHAIN_RID)}/features")
                 assertThat(request.uri.query).isEqualTo("")
                 return Response(Status.NOT_FOUND).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("")
             }
-        }).config
-        assertThat(config.merkleHashVersion).isEqualTo(1)
+        })
+        assertThat(client.merkleHashCalculator is GtvMerkleHashCalculatorV1).isTrue()
+        assertThat(client.config.merkleHashVersion).isEqualTo(0)
     }
 
     @Nested
