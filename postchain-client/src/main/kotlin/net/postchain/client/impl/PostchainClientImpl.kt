@@ -98,7 +98,7 @@ class PostchainClientImpl(
         try {
             fetchedMerkleHashVersion = getFeatures(blockchainRIDHex).merkle_hash_version
         } catch (e: Exception) {
-            logger.warn { "Failed to auto-detect merkleHashVersion with error: ${e.message}, fallback to version: $MERKLE_HASH_FALLBACK_VERSION" }
+            logger.warn { "Failed to retrieve merkleHashVersion from features with error: ${e.message}, fallback to version: $MERKLE_HASH_FALLBACK_VERSION" }
         }
         return if (fetchedMerkleHashVersion < 1) MERKLE_HASH_FALLBACK_VERSION else fetchedMerkleHashVersion
     }
@@ -109,10 +109,8 @@ class PostchainClientImpl(
                         .header(Header.Accept, ContentType.APPLICATION_JSON.value)
             }, { response, endpoint ->
                 parseJson("features", response, endpoint, BlockchainFeatures::class.java)
-            }, { response, _ ->
-                val fallbackFeatures = BlockchainFeatures(MERKLE_HASH_FALLBACK_VERSION)
-                logger.warn { "Failed to retrieve blockchain features with status: ${response.status}, return fallback features: $fallbackFeatures." }
-                fallbackFeatures
+            }, { response, endpoint ->
+                buildExceptionFromErrorResponse("features", response, endpoint)
             }, true)
 
     override fun transactionBuilder() = transactionBuilder(config.signers)
