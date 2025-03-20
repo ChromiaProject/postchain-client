@@ -70,35 +70,36 @@ const val QUERY_ARGS = "~args"
 const val MERKLE_HASH_FALLBACK_VERSION = 1
 
 class PostchainClientImpl(
-        inputConfig: PostchainClientConfig,
-        private val httpClient: HttpHandler = defaultHttpHandler(inputConfig),
+        override val config: PostchainClientConfig,
+        private val httpClient: HttpHandler = defaultHttpHandler(config),
 ) : PostchainClient {
 
     companion object : KLogging()
 
-    private val maxResponseSize = inputConfig.maxResponseSize
-    private val merkleHashVersion: Int
-    private val blockchainRIDHex = inputConfig.blockchainRid.toHex()
-    private val blockchainRIDOrID = inputConfig.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
-    private val cryptoSystem = inputConfig.cryptoSystem
+    private val maxResponseSize = config.maxResponseSize
+    private val blockchainRIDHex = config.blockchainRid.toHex()
+    private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
+    private val cryptoSystem = config.cryptoSystem
     private val gson = Gson()
-    private val requestStrategy = inputConfig.requestStrategy.create(inputConfig, httpClient)
-    init {
-        merkleHashVersion = if (inputConfig.merkleHashVersion == MERKLE_HASH_AUTO_DETECT_VERSION) {
+    private val requestStrategy = config.requestStrategy.create(config, httpClient)
+
+    override val merkleHashCalculator by lazy {
+        val merkleHashVersion = if (config.merkleHashVersion == MERKLE_HASH_AUTO_DETECT_VERSION) {
             autoDetectMerkleHashVersion()
         } else {
-            inputConfig.merkleHashVersion
+            config.merkleHashVersion
         }
+        makeMerkleHashCalculator(merkleHashVersion.toLong())
     }
-    override val config: PostchainClientConfig = PostchainClientConfig(inputConfig, merkleHashVersion)
-    override val merkleHashCalculator = makeMerkleHashCalculator(this.config.merkleHashVersion.toLong())
 
     private fun autoDetectMerkleHashVersion(): Int {
         var fetchedMerkleHashVersion = MERKLE_HASH_FALLBACK_VERSION
         try {
             fetchedMerkleHashVersion = getFeatures(blockchainRIDHex).merkle_hash_version
+        } catch (e: ClientError) {
+            logger.debug { "Failed to retrieve merkleHashVersion from features with error: ${e.message}, fallback to merkleHashVersion: $MERKLE_HASH_FALLBACK_VERSION" }
         } catch (e: Exception) {
-            logger.warn { "Failed to retrieve merkleHashVersion from features with error: ${e.message}, fallback to version: $MERKLE_HASH_FALLBACK_VERSION" }
+            logger.warn(e) { "Merkle hash version auto-detect failed with error: $e, fallback to merkleHashVersion: $MERKLE_HASH_FALLBACK_VERSION" }
         }
         return if (fetchedMerkleHashVersion < 1) MERKLE_HASH_FALLBACK_VERSION else fetchedMerkleHashVersion
     }
