@@ -5,10 +5,14 @@ package net.postchain.client.impl
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.controller.Model
 import net.postchain.client.config.PostchainClientConfig
+import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
@@ -30,6 +34,7 @@ import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.gtvml.GtvMLParser
+import net.postchain.gtv.mapper.toObject
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
 import net.postchain.gtx.GtxQuery
 import org.awaitility.Awaitility.await
@@ -258,7 +263,9 @@ class PostchainClientIT : IntegrationTestSetup() {
         val blockDetail1 = client.blockAtHeight(1)!!
         assertThat(blockDetail1.transactions.size).isEqualTo(1)
         val blockDetail2 = client.blockByRid(BlockRid(blockDetail1.rid.toHex()))!!
-        assertThat(blockDetail2.transactions.size).isEqualTo(1)
+        assertThat(blockDetail2).isEqualTo(blockDetail1)
+        val blockDetail3 = client.genericGetGtv("/blocks/${client.config.blockchainRid}/height/1").toObject<BlockDetail>()
+        assertThat(blockDetail3).isEqualTo(blockDetail1)
     }
 
     @Test
@@ -272,6 +279,9 @@ class PostchainClientIT : IntegrationTestSetup() {
         val info = client.getTransactionsInfo()
         assertEquals(1, info[0].blockHeight)
         assertEquals(result.txRid.rid, info[0].txRID.toHex())
+        val info2 = client.genericGetJson("/transactions/${client.config.blockchainRid}")
+        assertThat(Gson().fromJson(info2, object : TypeToken<ArrayList<TransactionInfo.Json>>() {})
+                .map { TransactionInfo.fromJson(it) }).isEqualTo(info)
     }
 
     @Test

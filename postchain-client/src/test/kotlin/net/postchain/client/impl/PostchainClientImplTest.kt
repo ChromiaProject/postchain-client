@@ -27,6 +27,8 @@ import net.postchain.client.impl.PostchainClientImpl.TxStatus
 import net.postchain.client.request.EndpointPool
 import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.rest.AnchoringChainCheck
+import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
 import net.postchain.gtv.Gtv
@@ -34,6 +36,7 @@ import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.GtvException
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
+import net.postchain.gtv.mapper.toObject
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
 import net.postchain.gtx.GtxQuery
@@ -785,6 +788,40 @@ internal class PostchainClientImplTest {
                 client.getVersion()
             }.isInstanceOf(ClientError::class)
         }
+    }
+
+    @Test
+    fun `generic get GTV request`() {
+        val path = "/blocks/$BLOCKCHAIN_RID/height/1"
+
+        val someBlock = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
+                EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.uri.path).isEqualTo(path)
+                assertThat(request.uri.query).isEqualTo("")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(validBlockDetail(1)).inputStream())
+            }
+        }).genericGetGtv(path).toObject<BlockDetail>()
+        assertThat(someBlock.height).isEqualTo(1L)
+        assertThat(someBlock.rid.data).isContentEqualTo(blockRid)
+        assertThat(someBlock.transactions[0].rid.data).isContentEqualTo("62F71D71BA63D03FA0C6741DE22B116A3A8022893E7977DDC2A9CD981BBADE29".hexStringToByteArray())
+        assertThat(someBlock.transactions[0].data).isNull()
+    }
+
+    @Test
+    fun `generic get JSON request`() {
+        val path = "/highest_block_height_anchoring_check/${BlockchainRid.buildFromHex(BLOCKCHAIN_RID)}"
+        val expected = HighestBlockHeightAnchoringCheck(AnchoringChainCheck(height = 17), AnchoringChainCheck(height = 5, match = true), null)
+
+        val res: String = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
+                EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.uri.path).isEqualTo(path)
+                assertThat(request.uri.query).isEqualTo("")
+                return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(Gson().toJson(expected))
+            }
+        }).genericGetJson(path)
+        assertThat(Gson().fromJson(res, HighestBlockHeightAnchoringCheck::class.java)).isEqualTo(expected)
     }
 
     private fun assertQueryUrlEndsWith(config: PostchainClientConfig, suffix: String) {

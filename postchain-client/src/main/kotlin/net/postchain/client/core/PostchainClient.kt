@@ -72,4 +72,23 @@ interface PostchainClient : PostchainReadClient, PostchainBlockClient, Postchain
      */
     fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
 
+    /**
+     * Make a GET request to any endpoint and receives a GTV response.
+     *
+     * @param path URL path to append to the base URL, must start with '/' and include blockchain RID if needed by the endpoint
+     *
+     * @return The GTV response
+     * @throws ClientError if the response is not successful (200)
+     */
+    fun genericGetGtv(path: String): Gtv
+
+    /**
+     * Make a GET request to any endpoint and receives a JSON response.
+     *
+     * @param path URL path to append to the base URL, must start with '/' and include blockchain RID if needed by the endpoint
+     *
+     * @return The JSON string
+     * @throws ClientError if the response is not successful (200)
+     */
+    fun genericGetJson(path: String): String
 }
