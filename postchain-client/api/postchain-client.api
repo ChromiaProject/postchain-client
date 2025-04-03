@@ -199,6 +199,8 @@ public abstract interface class net/postchain/client/core/PostchainBlockClient :
 public abstract interface class net/postchain/client/core/PostchainClient : java/io/Closeable, net/postchain/client/core/PostchainBlockClient, net/postchain/client/core/PostchainQuery, net/postchain/client/core/PostchainReadClient {
 	public abstract fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun checkTxStatus-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionResult;
+	public abstract fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
+	public abstract fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public abstract fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public abstract fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
@@ -415,6 +417,8 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun close ()V
 	public fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
 	public fun currentBlockHeight (Ljava/lang/String;)J
+	public fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
+	public fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;

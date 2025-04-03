@@ -478,6 +478,26 @@ class PostchainClientImpl(
     },
             true)
 
+    @Throws(IOException::class)
+    override fun genericGetGtv(path: String): Gtv = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}${path}")
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+    }, { response, endpoint ->
+        decodeGtv("generic", response, endpoint)
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("generic", response, endpoint)
+    }, true)
+
+    @Throws(IOException::class)
+    override fun genericGetJson(path: String): String = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}${path}")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        responseStream(response).reader().readText()
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("generic", response, endpoint)
+    }, true)
+
     private fun <T> parsePlainValue(context: String, response: Response, endpoint: Endpoint, converter: (String) -> T): T {
         try {
             return converter(responseStream(response).bufferedReader().readText())

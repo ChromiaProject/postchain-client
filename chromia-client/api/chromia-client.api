@@ -841,6 +841,8 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
 	public fun currentBlockHeight (Ljava/lang/String;)J
 	public final fun decodedConfirmationProof-CTXur5g (Ljava/lang/String;)Lnet/postchain/d1/client/ConfirmationProof;
+	public fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
+	public fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public final fun getAddNop ()Z
 	public fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
