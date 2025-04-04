@@ -205,7 +205,6 @@ public abstract interface class net/postchain/client/core/PostchainClient : java
 	public abstract fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public abstract fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
 	public abstract fun getVersion ()Lnet/postchain/client/core/Version;
-	public abstract fun getWaitingTransactions ()Ljava/util/List;
 	public abstract fun postTransaction (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun transactionBuilder ()Lnet/postchain/client/transaction/TransactionBuilder;
@@ -233,6 +232,7 @@ public abstract interface class net/postchain/client/core/PostchainReadClient : 
 	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
 	public abstract fun getTransactionsCount ()J
 	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
+	public abstract fun getWaitingTransactions ()Ljava/util/List;
 }
 
 public final class net/postchain/client/core/PostchainReadClient$DefaultImpls {

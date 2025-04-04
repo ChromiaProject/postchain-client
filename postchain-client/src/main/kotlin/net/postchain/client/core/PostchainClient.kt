@@ -91,9 +91,4 @@ interface PostchainClient : PostchainReadClient, PostchainBlockClient, Postchain
      * @throws ClientError if the response is not successful (200)
      */
     fun genericGetJson(path: String): String
-
-    /**
-     * Fetch a list of all waiting transaction RIDs.
-     */
-    fun getWaitingTransactions(): List<TxRid>
 }

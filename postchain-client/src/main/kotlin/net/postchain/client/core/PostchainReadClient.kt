@@ -61,4 +61,9 @@ interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
      * Retrieves the features of a blockchain.
      */
     fun getFeatures(): Map<String, Gtv>
+
+    /**
+     * Fetch a list of all waiting transaction RIDs.
+     */
+    fun getWaitingTransactions(): List<TxRid>
 }
