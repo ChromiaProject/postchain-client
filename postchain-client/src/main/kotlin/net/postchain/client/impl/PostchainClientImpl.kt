@@ -75,7 +75,7 @@ class PostchainClientImpl(
 ) : PostchainClient {
 
     companion object : KLogging() {
-        val GSON_REFLECTION_TYPE_STRING_ARRAY: Type = object : TypeToken<ArrayList<String>>() {}.type
+        private val GSON_REFLECTION_TYPE_STRING_ARRAY: Type = object : TypeToken<ArrayList<String>>() {}.type
     }
 
     private val maxResponseSize = config.maxResponseSize
