@@ -730,6 +730,21 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `get waiting transactions`() {
+        val txRids = listOf(
+                TxRid(ByteArray(32) { 1 }.toHex()),
+                TxRid(ByteArray(32) { 2 }.toHex()),
+                TxRid(ByteArray(32) { 3 }.toHex()),
+        )
+        val waitingTxRids = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body(Gson().toJson(txRids.map { it.rid }))
+            }
+        }).getWaitingTransactions()
+        assertThat(waitingTxRids).isEqualTo(txRids)
+    }
+
+    @Test
     fun `Assert trailing slashes are trimmed from endpoint URL`() {
         val defaultEndpointPool = EndpointPool.default(listOf("http://localhost:7740/", "http://localhost:7741/"))
         assertThat(defaultEndpointPool.map { it.url }.toSet()).isEqualTo(setOf("http://localhost:7740", "http://localhost:7741"))

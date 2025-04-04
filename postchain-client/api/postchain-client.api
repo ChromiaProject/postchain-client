@@ -232,6 +232,7 @@ public abstract interface class net/postchain/client/core/PostchainReadClient : 
 	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
 	public abstract fun getTransactionsCount ()J
 	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
+	public abstract fun getWaitingTransactions ()Ljava/util/List;
 }
 
 public final class net/postchain/client/core/PostchainReadClient$DefaultImpls {
@@ -430,6 +431,7 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun getTransactionsCount ()J
 	public fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
 	public fun getVersion ()Lnet/postchain/client/core/Version;
+	public fun getWaitingTransactions ()Ljava/util/List;
 	public fun postTransaction (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun query (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/gtv/Gtv;
@@ -441,6 +443,9 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 }
 
 public final class net/postchain/client/impl/PostchainClientImpl$Companion : mu/KLogging {
+}
+
+public final class net/postchain/client/impl/PostchainClientImpl$Companion$GSON_REFLECTION_TYPE_STRING_ARRAY$1 : com/google/gson/reflect/TypeToken {
 }
 
 public final class net/postchain/client/impl/PostchainClientImpl$CurrentBlockHeight {

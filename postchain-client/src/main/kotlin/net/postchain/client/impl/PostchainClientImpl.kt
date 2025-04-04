@@ -74,7 +74,9 @@ class PostchainClientImpl(
         private val httpClient: HttpHandler = defaultHttpHandler(config),
 ) : PostchainClient {
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        private val GSON_REFLECTION_TYPE_STRING_ARRAY: Type = object : TypeToken<ArrayList<String>>() {}.type
+    }
 
     private val maxResponseSize = config.maxResponseSize
     private val blockchainRIDHex = config.blockchainRid.toHex()
@@ -475,6 +477,19 @@ class PostchainClientImpl(
         parseJson("getHighestBlockHeightAnchoringCheck", response, endpoint, HighestBlockHeightAnchoringCheck::class.java)
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("getHighestBlockHeightAnchoringCheck", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
+    override fun getWaitingTransactions(): List<TxRid> = requestStrategy.request({ endpoint ->
+        Request(Method.GET, "${endpoint.url}/tx/$blockchainRIDOrID/waiting")
+                .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+    }, { response, endpoint ->
+        val txRids: List<String> = parseJsonArray("getWaitingTransactions", response, endpoint,
+                GSON_REFLECTION_TYPE_STRING_ARRAY)
+        txRids.map { TxRid(it) }
+    }, { response, endpoint ->
+        buildExceptionFromErrorResponse("getWaitingTransactions", response, endpoint)
     },
             true)
 
