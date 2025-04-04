@@ -202,9 +202,7 @@ public abstract interface class net/postchain/client/core/PostchainClient : java
 	public abstract fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
 	public abstract fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
-	public abstract fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public abstract fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
-	public abstract fun getVersion ()Lnet/postchain/client/core/Version;
 	public abstract fun postTransaction (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun transactionBuilder ()Lnet/postchain/client/transaction/TransactionBuilder;
@@ -228,10 +226,12 @@ public abstract interface class net/postchain/client/core/PostchainReadClient : 
 	public abstract fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
 	public abstract fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
 	public abstract fun getFeatures ()Ljava/util/Map;
+	public abstract fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public abstract fun getTransaction-CTXur5g (Ljava/lang/String;)[B
 	public abstract fun getTransactionInfo-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionInfo;
 	public abstract fun getTransactionsCount ()J
 	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
+	public abstract fun getVersion ()Lnet/postchain/client/core/Version;
 	public abstract fun getWaitingTransactions ()Ljava/util/List;
 }
 

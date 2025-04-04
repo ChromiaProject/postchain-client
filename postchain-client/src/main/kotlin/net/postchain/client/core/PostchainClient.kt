@@ -3,7 +3,6 @@ package net.postchain.client.core
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
 import net.postchain.client.transaction.TransactionBuilder
-import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
@@ -61,16 +60,6 @@ interface PostchainClient : PostchainReadClient, PostchainBlockClient, Postchain
      * @throws ClientError
      */
     fun validateConfiguration(configuration: Gtv)
-
-    /**
-     * Get node API version.
-     */
-    fun getVersion(): Version
-
-    /**
-     * Check if the highest block of a blockchain matches the block anchored in CAC, SAC and EVM.
-     */
-    fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
 
     /**
      * Make a GET request to any endpoint and receives a GTV response.
