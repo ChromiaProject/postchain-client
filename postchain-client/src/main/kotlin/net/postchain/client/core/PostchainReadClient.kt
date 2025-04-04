@@ -1,6 +1,7 @@
 package net.postchain.client.core
 
 import net.postchain.common.BlockchainRid
+import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.gtv.Gtv
 
 interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
@@ -66,4 +67,14 @@ interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
      * Fetch a list of all waiting transaction RIDs.
      */
     fun getWaitingTransactions(): List<TxRid>
+
+    /**
+     * Get node API version.
+     */
+    fun getVersion(): Version
+
+    /**
+     * Check if the highest block of a blockchain matches the block anchored in CAC, SAC and EVM.
+     */
+    fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
 }
