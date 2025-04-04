@@ -1,6 +1,5 @@
 package net.postchain.client.core
 
-import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.common.BlockchainRid
 import net.postchain.gtv.Gtv
 
@@ -59,10 +58,7 @@ interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
     fun blockByRid(blockRid: BlockRid): BlockDetail?
 
     /**
-     * Retrieves the features of a blockchain identified by the specified blockchain RID in hexadecimal format.
-     *
-     * @param blockchainRIDHex The blockchain RID represented as a hexadecimal string.
-     * @return An object of type [PostchainClientImpl.BlockchainFeatures] that contains the features of the blockchain.
+     * Retrieves the features of a blockchain.
      */
-    fun getFeatures(blockchainRIDHex: String): PostchainClientImpl.BlockchainFeatures
+    fun getFeatures(): Map<String, Gtv>
 }

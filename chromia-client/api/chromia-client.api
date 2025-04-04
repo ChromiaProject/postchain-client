@@ -848,7 +848,7 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	public fun getConfiguration (Ljava/lang/Long;)Lnet/postchain/gtv/Gtv;
 	public final fun getDirectoryChainClient ()Lnet/postchain/client/core/PostchainQuery;
-	public fun getFeatures (Ljava/lang/String;)Lnet/postchain/client/impl/PostchainClientImpl$BlockchainFeatures;
+	public fun getFeatures ()Ljava/util/Map;
 	public fun getHighestBlockHeightAnchoringCheck ()Lnet/postchain/common/rest/HighestBlockHeightAnchoringCheck;
 	public fun getMerkleHashCalculator ()Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;
 	public final fun getQueryClient ()Lnet/postchain/client/core/PostchainClient;

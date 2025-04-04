@@ -58,8 +58,6 @@ class PostchainClientIT : IntegrationTestSetup() {
     private val configFileName = "/net/postchain/client/impl/blockchain_config.xml"
     private val configFileName1 = "/net/postchain/client/impl/blockchain_config_1.xml"
     private val configFileNameMaxTransactions = "/net/postchain/client/impl/blockchain_config_max_transactions.xml"
-    private val blockchainRIDStr = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
-    private val blockchainRID = BlockchainRid.buildFromHex(blockchainRIDStr)
     private val pubKey0 = PubKey(KeyPairHelper.pubKey(0))
     private val privKey0 = PrivKey(KeyPairHelper.privKey(0))
     private val sigMaker0 = cryptoSystem.buildSigMaker(KeyPair(pubKey0, privKey0))
@@ -100,7 +98,6 @@ class PostchainClientIT : IntegrationTestSetup() {
                         bcRid,
                         EndpointPool.singleUrl("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}"),
                         listOf(KeyPair(pubKey0, privKey0)),
-                        merkleHashVersion = 2
                 ))
     }
 
@@ -112,7 +109,7 @@ class PostchainClientIT : IntegrationTestSetup() {
     fun makingAndPostingTransaction_UnsignedTransactionGiven_throws_Exception() {
         // Mock
         createTestNodes(1, configFileName1)
-        val client = createPostChainClient(blockchainRID)
+        val client = createPostChainClient(systemSetup.blockchainMap[1]!!.rid)
         assertThrows<IllegalArgumentException> {
             client.transactionBuilder().finish().build()
         }
@@ -125,7 +122,7 @@ class PostchainClientIT : IntegrationTestSetup() {
     fun makingAndPostingTransaction_SignedTransactionGiven_PostsSuccessfully() {
         // Mock
         createTestNodes(1, configFileName1)
-        val client = spy(createPostChainClient(blockchainRID))
+        val client = spy(createPostChainClient(systemSetup.blockchainMap[1]!!.rid))
         val txBuilder = client.transactionBuilder()
 
         txBuilder.addOperation("nop")
@@ -144,7 +141,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val alice = listOf(aliceKeyPair)
         val bob = listOf(bobKeyPair)
         createTestNodes(1, configFileName1)
-        val client = spy(createPostChainClient(blockchainRID))
+        val client = spy(createPostChainClient(systemSetup.blockchainMap[1]!!.rid))
         val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
 
         val signedTx = signTransaction(partiallySignedTx, bob, hashCalculator)
@@ -159,7 +156,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val alice = listOf(aliceKeyPair)
         val bob = listOf(bobKeyPair)
         createTestNodes(1, configFileName1)
-        val client = spy(createPostChainClient(blockchainRID))
+        val client = spy(createPostChainClient(systemSetup.blockchainMap[1]!!.rid))
         val partiallySignedTx = client.transactionBuilder(alice, listOf(bobKeyPair.pubKey)).addOperation("nop").build()
 
         val signedTx = signTransaction(partiallySignedTx, bob, hashCalculator)
@@ -175,7 +172,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val bob = listOf(bobKeyPair)
         val charlie = listOf(charlieKeyPair)
         createTestNodes(1, configFileName1)
-        val client = spy(createPostChainClient(blockchainRID))
+        val client = spy(createPostChainClient(systemSetup.blockchainMap[1]!!.rid))
         val signerTransactionCharlie = client
                 .transactionBuilder(charlie, listOf(bobKeyPair.pubKey, aliceKeyPair.pubKey))
                 .addOperation("nop")
@@ -354,7 +351,6 @@ class PostchainClientIT : IntegrationTestSetup() {
                         EndpointPool.default(urls),
                         listOf(KeyPair(pubKey0, privKey0)),
                         requestStrategy = QueryMajorityRequestStrategyFactory(),
-                        merkleHashVersion = 2
                 ))
         val rndStr = randomStr()
         val builder = createSignedNopTx(client, blockchainRid, rndStr)
