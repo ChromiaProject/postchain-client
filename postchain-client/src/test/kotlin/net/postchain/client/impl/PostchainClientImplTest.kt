@@ -601,7 +601,7 @@ internal class PostchainClientImplTest {
             override fun invoke(request: Request): Response {
                 assertThat(request.uri.path).isEqualTo("/config/${BlockchainRid.buildFromHex(BLOCKCHAIN_RID)}/features")
                 assertThat(request.uri.query).isEqualTo("")
-                return Response(Status.OK).header(Header.ContentType, ContentType.APPLICATION_JSON.value).body("""{"merkle_hash_version": 2 }""")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(mapOf("merkle_hash_version" to gtv(2)))).inputStream())
             }
         })
         assertThat(client.merkleHashCalculator is GtvMerkleHashCalculatorV2).isTrue()

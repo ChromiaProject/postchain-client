@@ -95,7 +95,7 @@ class PostchainClientImpl(
     private fun autoDetectMerkleHashVersion(): Int {
         var fetchedMerkleHashVersion = MERKLE_HASH_FALLBACK_VERSION
         try {
-            fetchedMerkleHashVersion = getFeatures(blockchainRIDHex).merkle_hash_version
+            fetchedMerkleHashVersion = getFeatures()["merkle_hash_version"]?.asInteger()?.toInt() ?: MERKLE_HASH_FALLBACK_VERSION
         } catch (e: ClientError) {
             logger.debug { "Failed to retrieve merkleHashVersion from features with error: ${e.message}, fallback to merkleHashVersion: $MERKLE_HASH_FALLBACK_VERSION" }
         } catch (e: Exception) {
@@ -104,12 +104,12 @@ class PostchainClientImpl(
         return if (fetchedMerkleHashVersion < 1) MERKLE_HASH_FALLBACK_VERSION else fetchedMerkleHashVersion
     }
 
-    override fun getFeatures(blockchainRIDHex: String) =
+    override fun getFeatures() =
             requestStrategy.request({ endpoint ->
-                Request(Method.GET, "${endpoint.url}/config/${blockchainRIDHex}/features")
-                        .header(Header.Accept, ContentType.APPLICATION_JSON.value)
+                Request(Method.GET, "${endpoint.url}/config/$blockchainRIDOrID/features")
+                        .header(Header.Accept, ContentType.OCTET_STREAM.value)
             }, { response, endpoint ->
-                parseJson("features", response, endpoint, BlockchainFeatures::class.java)
+                decodeGtv("features", response, endpoint).asDict()
             }, { response, endpoint ->
                 buildExceptionFromErrorResponse("features", response, endpoint)
             }, true)
@@ -596,5 +596,4 @@ class PostchainClientImpl(
     data class TxStatus(val status: String?, val rejectReason: String?)
     data class CurrentBlockHeight(val blockHeight: Long)
     data class ErrorResponse(val error: String)
-    data class BlockchainFeatures(val merkle_hash_version: Int)
 }
