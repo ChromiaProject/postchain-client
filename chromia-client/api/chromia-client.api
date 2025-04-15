@@ -72,9 +72,9 @@ public final class net/postchain/chain0/anchoring_chain_common/Anchoring_chain_c
 
 public final class net/postchain/chain0/blockchain_auth/Blockchain_authKt {
 	public static final field ADD_PROVIDER_BLOCKCHAIN_AUTH Ljava/lang/String;
-	public static final field REMOVE_PROVIDER_BLOCKCHAIN_AUTH Ljava/lang/String;
-	public static final fun addProviderBlockchainAuthOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/common/BlockchainRid;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun removeProviderBlockchainAuthOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final field REMOVE_PROVIDER_BLOCKCHAIN_AUTH_ICCF Ljava/lang/String;
+	public static final fun addProviderBlockchainAuthOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun removeProviderBlockchainAuthIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class net/postchain/chain0/cm_api/CmClusterInfo {
@@ -139,12 +139,12 @@ public final class net/postchain/chain0/common/CommonKt {
 	public static final field REMOVE_PROVIDER_KEY Ljava/lang/String;
 	public static final field REVOKE_PROVIDER_KEY Ljava/lang/String;
 	public static final field SET_PROVIDER_KEY_THRESHOLD Ljava/lang/String;
-	public static final fun addProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/provider_auth/model/ProviderKeyRole;Lnet/postchain/crypto/PubKey;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun addProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/provider_auth/model/ProviderKeyRole;Lnet/postchain/crypto/PubKey;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun getProviderByKey (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/crypto/PubKey;)[B
 	public static final fun getProviderKeys (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/crypto/PubKey;)Lnet/postchain/chain0/common/ProviderKeysData;
-	public static final fun removeProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/provider_auth/model/ProviderKeyRole;Lnet/postchain/crypto/PubKey;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun revokeProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/provider_auth/model/ProviderKeyRole;Lnet/postchain/crypto/PubKey;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun setProviderKeyThresholdOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/provider_auth/model/ProviderKeyRole;J)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun removeProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/provider_auth/model/ProviderKeyRole;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun revokeProviderKeyOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/provider_auth/model/ProviderKeyRole;Lnet/postchain/crypto/PubKey;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun setProviderKeyThresholdOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/provider_auth/model/ProviderKeyRole;J)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class net/postchain/chain0/common/ProviderKeysData {
@@ -175,22 +175,22 @@ public final class net/postchain/chain0/common/ProviderRoleKeysData {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class net/postchain/chain0/delay/DelayKt {
+public final class net/postchain/chain0/delay/blockchain_config_delay/Delay_blockchain_config_delayKt {
 	public static final field GET_BLOCKCHAINS_WITH_ACTIVE_DELAYED_PROPOSALS Ljava/lang/String;
 	public static final field LIST_DELAYED_BLOCKCHAIN_CONFIGS Ljava/lang/String;
 	public static final fun getBlockchainsWithActiveDelayedProposals (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/List;
 	public static final fun listDelayedBlockchainConfigs (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/BlockchainRid;)Ljava/util/List;
 }
 
-public final class net/postchain/chain0/delay/DelayedBlockchainProposalData {
+public final class net/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData {
 	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)V
 	public final fun component1 ()Lnet/postchain/common/types/RowId;
 	public final fun component2 ()Lnet/postchain/chain0/proposal/ProposalType;
 	public final fun component3 ()Lnet/postchain/chain0/proposal/ProposalState;
 	public final fun component4 ()Ljava/lang/Long;
 	public final fun component5 ()Ljava/lang/Long;
-	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)Lnet/postchain/chain0/delay/DelayedBlockchainProposalData;
-	public static synthetic fun copy$default (Lnet/postchain/chain0/delay/DelayedBlockchainProposalData;Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/chain0/delay/DelayedBlockchainProposalData;
+	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getApplyAt ()Ljava/lang/Long;
 	public final fun getDelay ()Ljava/lang/Long;
@@ -257,23 +257,25 @@ public final class net/postchain/chain0/proposal/GetRelevantProposalsResult {
 }
 
 public final class net/postchain/chain0/proposal/ProposalData {
-	public fun <init> (Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)V
+	public fun <init> (Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)V
 	public final fun component1 ()Lnet/postchain/common/types/RowId;
+	public final fun component10 ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun component2 ()J
 	public final fun component3 ()Lnet/postchain/chain0/proposal/ProposalType;
 	public final fun component4 ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Lnet/postchain/chain0/proposal/ProposalState;
 	public final fun component7 ()Ljava/lang/Long;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Lnet/postchain/common/types/WrappedByteArray;
-	public final fun copy (Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)Lnet/postchain/chain0/proposal/ProposalData;
-	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal/ProposalData;Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lnet/postchain/chain0/proposal/ProposalData;
+	public final fun component8 ()Ljava/lang/Long;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)Lnet/postchain/chain0/proposal/ProposalData;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal/ProposalData;Lnet/postchain/common/types/RowId;JLnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lnet/postchain/chain0/proposal/ProposalData;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getApplyAt ()Ljava/lang/Long;
 	public final fun getDescription ()Ljava/lang/String;
 	public final fun getId ()Lnet/postchain/common/types/RowId;
 	public final fun getProposedBy ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getScheduledAt ()Ljava/lang/Long;
 	public final fun getState ()Lnet/postchain/chain0/proposal/ProposalState;
 	public final fun getTimestamp ()J
 	public final fun getTxRid ()Lnet/postchain/common/types/WrappedByteArray;
@@ -293,7 +295,6 @@ public final class net/postchain/chain0/proposal/ProposalKt {
 	public static final field GET_PROPOSAL_VOTING_RESULTS Ljava/lang/String;
 	public static final field GET_RELEVANT_PROPOSALS Ljava/lang/String;
 	public static final field REVOKE_PROPOSAL Ljava/lang/String;
-	public static final field REVOKE_PROPOSAL_V65 Ljava/lang/String;
 	public static final fun getBlockchainConfigurationUpdateAttemptStateByProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal/BlockchainConfigurationAttemptData;
 	public static final fun getBlockchainConfigurationUpdateAttemptStateByTxRid (Lnet/postchain/client/core/PostchainQuery;[B)Lnet/postchain/chain0/proposal/BlockchainConfigurationAttemptData;
 	public static final fun getProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal/ProposalData;
@@ -303,11 +304,12 @@ public final class net/postchain/chain0/proposal/ProposalKt {
 	public static final fun getProposalsRange (Lnet/postchain/client/core/PostchainQuery;JJZ)Ljava/util/List;
 	public static final fun getRelevantProposals (Lnet/postchain/client/core/PostchainQuery;JJZ[B)Ljava/util/List;
 	public static final fun revokeProposalOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/types/RowId;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun revokeProposalV65Operation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/common/types/RowId;)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class net/postchain/chain0/proposal/ProposalState : java/lang/Enum, net/postchain/gtv/mapper/ToGtv {
 	public static final field APPROVED Lnet/postchain/chain0/proposal/ProposalState;
+	public static final field DELAYED Lnet/postchain/chain0/proposal/ProposalState;
+	public static final field FAILED Lnet/postchain/chain0/proposal/ProposalState;
 	public static final field PENDING Lnet/postchain/chain0/proposal/ProposalState;
 	public static final field REJECTED Lnet/postchain/chain0/proposal/ProposalState;
 	public static final field REVOKED Lnet/postchain/chain0/proposal/ProposalState;
@@ -346,6 +348,7 @@ public final class net/postchain/chain0/proposal/ProposalType : java/lang/Enum, 
 	public static final field provider_quota Lnet/postchain/chain0/proposal/ProposalType;
 	public static final field provider_state Lnet/postchain/chain0/proposal/ProposalType;
 	public static final field remove_cluster_subnode_image Lnet/postchain/chain0/proposal/ProposalType;
+	public static final field remove_forced_configuration Lnet/postchain/chain0/proposal/ProposalType;
 	public static final field subnode_image Lnet/postchain/chain0/proposal/ProposalType;
 	public static final field subnode_image_state Lnet/postchain/chain0/proposal/ProposalType;
 	public static final field update_subnode_image Lnet/postchain/chain0/proposal/ProposalType;
@@ -413,15 +416,11 @@ public final class net/postchain/chain0/proposal/voting/Proposal_votingKt {
 	public static final field CREATE_VOTER_SET Ljava/lang/String;
 	public static final field GET_PROVIDER_VOTES Ljava/lang/String;
 	public static final field MAKE_VOTE Ljava/lang/String;
-	public static final field MAKE_VOTE_V65 Ljava/lang/String;
 	public static final field RETRACT_VOTE Ljava/lang/String;
-	public static final field RETRACT_VOTE_V65 Ljava/lang/String;
 	public static final fun createVoterSetOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLjava/lang/String;JLjava/util/List;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun getProviderVotes (Lnet/postchain/client/core/PostchainQuery;JJ[B)Ljava/util/List;
 	public static final fun makeVoteOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BJZ)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun makeVoteV65Operation (Lnet/postchain/client/transaction/TransactionBuilder;JZ)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun retractVoteOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BJ)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun retractVoteV65Operation (Lnet/postchain/client/transaction/TransactionBuilder;J)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class net/postchain/chain0/proposal/voting/VotingResult : java/lang/Enum, net/postchain/gtv/mapper/ToGtv {
@@ -670,7 +669,21 @@ public final class net/postchain/chain0/proposal_blockchain/PendingBlockchainRen
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/postchain/chain0/proposal_blockchain/PendingRemoveForcedConfigurationData {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;J)Lnet/postchain/chain0/proposal_blockchain/PendingRemoveForcedConfigurationData;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal_blockchain/PendingRemoveForcedConfigurationData;Lnet/postchain/common/types/WrappedByteArray;JILjava/lang/Object;)Lnet/postchain/chain0/proposal_blockchain/PendingRemoveForcedConfigurationData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getHeight ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class net/postchain/chain0/proposal_blockchain/Proposal_blockchainKt {
+	public static final field APPROVE_PROPOSED_FORCED_CONFIGURATION Ljava/lang/String;
 	public static final field FIND_BLOCKCHAIN_RID Ljava/lang/String;
 	public static final field GET_BLOCKCHAIN_ACTION_PROPOSAL Ljava/lang/String;
 	public static final field GET_BLOCKCHAIN_PROPOSAL Ljava/lang/String;
@@ -682,7 +695,9 @@ public final class net/postchain/chain0/proposal_blockchain/Proposal_blockchainK
 	public static final field GET_CONFIGURATION_PROPOSAL_V64 Ljava/lang/String;
 	public static final field GET_FORCED_CONFIGURATIONS Ljava/lang/String;
 	public static final field GET_FORCED_CONFIGURATION_PROPOSAL_V64 Ljava/lang/String;
+	public static final field GET_FORCED_CONFIGURATION_STAGE2_PROPOSAL Ljava/lang/String;
 	public static final field GET_PROPOSED_FORCED_CONFIGURATION Ljava/lang/String;
+	public static final field GET_REMOVE_FORCED_CONFIGURATION_PROPOSAL Ljava/lang/String;
 	public static final field PROPOSE_BLOCKCHAIN Ljava/lang/String;
 	public static final field PROPOSE_BLOCKCHAIN_ACTION Ljava/lang/String;
 	public static final field PROPOSE_BLOCKCHAIN_ACTION_ICCF Ljava/lang/String;
@@ -695,6 +710,8 @@ public final class net/postchain/chain0/proposal_blockchain/Proposal_blockchainK
 	public static final field PROPOSE_CONFIGURATION_ICCF Ljava/lang/String;
 	public static final field PROPOSE_FORCED_CONFIGURATION Ljava/lang/String;
 	public static final field PROPOSE_FORCED_CONFIGURATION_ICCF Ljava/lang/String;
+	public static final field PROPOSE_REMOVE_FORCED_CONFIGURATION Ljava/lang/String;
+	public static final fun approveProposedForcedConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun findBlockchainRid (Lnet/postchain/client/core/PostchainQuery;[B)[B
 	public static final fun getBlockchainActionProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/GetBlockchainActionProposalResult;
 	public static final fun getBlockchainProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/GetBlockchainProposalResult;
@@ -705,35 +722,57 @@ public final class net/postchain/chain0/proposal_blockchain/Proposal_blockchainK
 	public static final fun getConfigurationProposalAtV64 (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/ConfigurationProposalAtData;
 	public static final fun getConfigurationProposalV64 (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/ConfigurationProposalData;
 	public static final fun getForcedConfigurationProposalV64 (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/ForcedConfigurationProposalData;
+	public static final fun getForcedConfigurationStage2Proposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/BlockchainRid;)Lnet/postchain/chain0/proposal_blockchain/ForcedConfigurationProposalData;
 	public static final fun getForcedConfigurations (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/BlockchainRid;)Ljava/util/List;
 	public static final fun getProposedForcedConfiguration (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/GetProposedForcedConfigurationResult;
-	public static final fun proposeBlockchainActionIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun getRemoveForcedConfigurationProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain/PendingRemoveForcedConfigurationData;
+	public static final fun proposeBlockchainActionIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainActionOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Lnet/postchain/chain0/proposal_blockchain/BlockchainAction;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeBlockchainIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeBlockchainIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B[BLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeBlockchainRenameIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeBlockchainRenameIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainRenameOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainUnarchiveActionOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;JLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeConfigurationAtOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;[BJZLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeConfigurationIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;[BLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeForcedConfigurationIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lnet/postchain/chain0/GtxTransaction;J[B)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeForcedConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;[BJLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeConfigurationIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;[BLjava/lang/String;Ljava/lang/Long;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeForcedConfigurationIccfOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/chain0/GtxTransaction;J)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeForcedConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;[BJLjava/lang/String;Z)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeRemoveForcedConfigurationOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;JLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class net/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData {
-	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;)V
+	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;Z)V
 	public final fun component1 ()Lnet/postchain/common/types/RowId;
 	public final fun component2 ()Lnet/postchain/common/types/RowId;
 	public final fun component3 ()J
 	public final fun component4 ()Lnet/postchain/common/types/WrappedByteArray;
-	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;)Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;
-	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;
+	public final fun component5 ()Z
+	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;Z)Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/RowId;JLnet/postchain/common/types/WrappedByteArray;ZILjava/lang/Object;)Lnet/postchain/chain0/proposal_blockchain/ProposedForcedConfigurationData;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBlockchain ()Lnet/postchain/common/types/RowId;
 	public final fun getConfigData ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun getHeight ()J
 	public final fun getProposal ()Lnet/postchain/common/types/RowId;
+	public final fun getResumeChain ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveCancelProposalResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveCancelProposalResult;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveCancelProposalResult;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveCancelProposalResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockchainName ()Ljava/lang/String;
+	public final fun getBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getCluster ()Ljava/lang/String;
+	public final fun getContainer ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -775,12 +814,16 @@ public final class net/postchain/chain0/proposal_blockchain_move/GetBlockchainMo
 }
 
 public final class net/postchain/chain0/proposal_blockchain_move/Proposal_blockchain_moveKt {
+	public static final field GET_BLOCKCHAIN_MOVE_CANCEL_PROPOSAL Ljava/lang/String;
 	public static final field GET_BLOCKCHAIN_MOVE_FINISH_PROPOSAL Ljava/lang/String;
 	public static final field GET_BLOCKCHAIN_MOVE_PROPOSAL Ljava/lang/String;
 	public static final field PROPOSE_BLOCKCHAIN_MOVE Ljava/lang/String;
+	public static final field PROPOSE_BLOCKCHAIN_MOVE_CANCEL Ljava/lang/String;
 	public static final field PROPOSE_BLOCKCHAIN_MOVE_FINISH Ljava/lang/String;
+	public static final fun getBlockchainMoveCancelProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveCancelProposalResult;
 	public static final fun getBlockchainMoveFinishProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveFinishProposalResult;
 	public static final fun getBlockchainMoveProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveProposalResult;
+	public static final fun proposeBlockchainMoveCancelOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainMoveFinishOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;JLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainMoveOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 }
