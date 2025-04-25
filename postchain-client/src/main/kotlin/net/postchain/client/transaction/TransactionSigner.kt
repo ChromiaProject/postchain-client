@@ -22,6 +22,6 @@ fun signTransaction(
 
     val signBuilder = gtxBuilder.uncheckedSignBuilder()
     signBuilder.addSignatures(gtx.signatures)
-    signers.forEach { signBuilder.signOverEmptySignature(cryptoSystem.buildSigMaker(it)) }
+    signers.forEach { signBuilder.sign(cryptoSystem.buildSigMaker(it)) }
     return signBuilder.buildGtx().encode()
 }

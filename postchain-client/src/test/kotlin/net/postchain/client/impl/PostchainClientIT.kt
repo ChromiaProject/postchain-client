@@ -111,7 +111,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         createTestNodes(1, configFileName1)
         val client = createPostChainClient(systemSetup.blockchainMap[1]!!.rid)
         assertThrows<IllegalArgumentException> {
-            client.transactionBuilder().finish().build()
+            client.transactionBuilder().addNop().finish().build()
         }
 
         // When
@@ -291,7 +291,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val err = assertThrows<ClientError> {
             client.validateConfiguration(loadConfig("blockchain_config_invalid.xml"))
         }
-        assertThat(err.errorMessage).contains("Module class was not found: net.postchain.gtx.NonExistent")
+        assertThat(err.errorMessage).contains("GTX module class not found: net.postchain.gtx.NonExistent")
     }
 
     @Test

@@ -689,6 +689,8 @@ public abstract interface class net/postchain/client/transaction/Postable {
 }
 
 public final class net/postchain/client/transaction/TransactionBuilder : net/postchain/client/transaction/Postable {
+	public fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/common/BlockchainRid;Ljava/util/List;Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;Ljava/util/List;Lnet/postchain/crypto/CryptoSystem;I)V
+	public synthetic fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/common/BlockchainRid;Ljava/util/List;Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;Ljava/util/List;Lnet/postchain/crypto/CryptoSystem;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/common/BlockchainRid;Ljava/util/List;Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;Ljava/util/List;Lnet/postchain/crypto/CryptoSystem;ILjava/util/List;)V
 	public synthetic fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/common/BlockchainRid;Ljava/util/List;Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;Ljava/util/List;Lnet/postchain/crypto/CryptoSystem;ILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addNop ()Lnet/postchain/client/transaction/TransactionBuilder;

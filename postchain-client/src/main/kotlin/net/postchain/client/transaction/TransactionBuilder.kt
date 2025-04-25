@@ -23,8 +23,20 @@ class TransactionBuilder(
         private val defaultSigners: List<SigMaker> = listOf(),
         private val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
         private val maxTxSize: Int = -1,
-        private val remainingRequiredSigners: List<ByteArray> = listOf(),
 ) : Postable {
+
+    @Deprecated("remainingRequiredSigners is not used anymore, should be included in signers.",
+            ReplaceWith("TransactionBuilder(client, blockchainRid, signers, hashCalculator, defaultSigners, cryptoSystem, maxTxSize)"))
+    constructor(
+            client: PostchainClient,
+            blockchainRid: BlockchainRid,
+            signers: List<ByteArray>,
+            hashCalculator: GtvMerkleHashCalculatorBase,
+            defaultSigners: List<SigMaker> = listOf(),
+            cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
+            maxTxSize: Int = -1,
+            @Suppress("unused") remainingRequiredSigners: List<ByteArray>,
+    ) : this(client, blockchainRid, signers, hashCalculator, defaultSigners, cryptoSystem, maxTxSize)
 
     private val gtxBuilder = GtxBuilder(blockchainRid, signers, cryptoSystem, hashCalculator, maxTxSize)
 
@@ -63,7 +75,6 @@ class TransactionBuilder(
     fun build(): ByteArray {
         return gtxBuilder.uncheckedSignBuilder().apply {
             defaultSigners.forEach { sign(it) }
-            remainingRequiredSigners.forEach { emptySign(it) }
         }.buildGtx().encode()
     }
 
@@ -125,6 +136,7 @@ class TransactionBuilder(
          * Build a transaction that can be posted
          */
         fun build(): PostableTransaction {
+            require(signBuilder.isFullySigned()) { "Not all signers have signed" }
             return PostableTransaction(buildGtx())
         }
 
