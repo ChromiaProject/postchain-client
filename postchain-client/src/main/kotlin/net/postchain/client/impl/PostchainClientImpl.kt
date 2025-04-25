@@ -136,7 +136,6 @@ class PostchainClientImpl(
             initialSigners.map { it.sigMaker(cryptoSystem) },
             cryptoSystem,
             config.maxTxSize,
-            remainingRequiredSigners.map { it.data }
     )
 
     @Throws(IOException::class)
