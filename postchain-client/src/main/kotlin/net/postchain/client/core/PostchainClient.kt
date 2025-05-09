@@ -2,10 +2,12 @@ package net.postchain.client.core
 
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
+import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorBase
 import net.postchain.gtx.Gtx
 import java.io.Closeable
@@ -60,6 +62,26 @@ interface PostchainClient : PostchainReadClient, PostchainBlockClient, Postchain
      * @throws ClientError
      */
     fun validateConfiguration(configuration: Gtv)
+
+    /**
+     * Perform an asynchronous query.
+     *
+     * This method will return quickly, and the node will start processing the query asynchronously.
+     * The response of the query needs to be fetched later from the same node with [fetchAsyncQueryResponse].
+     *
+     * @param name name of the query
+     * @param args query arguments, must be provided as a [GtvDictionary]
+     * @return the particular node the query was made to, and query RID.
+     */
+    fun asyncQuery(name: String, args: Gtv): Pair<Endpoint, QueryRid>
+
+    /**
+     * Fetch the result of an asynchronous query which was made with [asyncQuery] to this node.
+     *
+     * @param endpoint the node the query was made to, returned by [asyncQuery]
+     * @param queryRid query RID, returned by [asyncQuery]
+     */
+    fun fetchAsyncQueryResponse(endpoint: Endpoint, queryRid: QueryRid): AsyncQueryResponse
 
     /**
      * Make a GET request to any endpoint and receives a GTV response.

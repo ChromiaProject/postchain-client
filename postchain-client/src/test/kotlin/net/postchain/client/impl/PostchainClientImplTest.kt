@@ -15,8 +15,11 @@ import mu.KLogging
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
+import net.postchain.client.core.AsyncQueryResponse
+import net.postchain.client.core.AsyncQueryResponseStatus
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockRid
+import net.postchain.client.core.QueryRid
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
@@ -24,6 +27,7 @@ import net.postchain.client.exception.NotFoundError
 import net.postchain.client.impl.PostchainClientImpl.CurrentBlockHeight
 import net.postchain.client.impl.PostchainClientImpl.ErrorResponse
 import net.postchain.client.impl.PostchainClientImpl.TxStatus
+import net.postchain.client.request.Endpoint
 import net.postchain.client.request.EndpointPool
 import net.postchain.common.BlockchainRid
 import net.postchain.common.hexStringToByteArray
@@ -31,14 +35,17 @@ import net.postchain.common.rest.AnchoringChainCheck
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
+import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.GtvException
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
+import net.postchain.gtv.mapper.GtvObjectMapper
 import net.postchain.gtv.mapper.toObject
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV1
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
+import net.postchain.gtv.merkleHash
 import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.InfiniteCircularInputStream
 import org.http4k.core.Body
@@ -366,6 +373,42 @@ internal class PostchainClientImplTest {
             }
         }).query("test_query", queryArgs)
         assertThat(queryResponse.asString()).isEqualTo("query_response")
+    }
+
+    @Test
+    fun `async query is sent with POST`() {
+        val queryArgs = gtv(mapOf("arg1" to gtv("value"), "arg2" to gtv("value2")))
+        val query = GtxQuery("test_query", queryArgs)
+        val (endpoint, queryRid) = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.POST)
+                assertThat(request.uri.path).isEqualTo("/query_async/$BLOCKCHAIN_RID")
+                assertThat(request.uri.query).isEmpty()
+                assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(query.encode())
+                return Response(Status.ACCEPTED).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(Body.EMPTY)
+            }
+        }).asyncQuery("test_query", queryArgs)
+        assertThat(endpoint.url).isEqualTo(url)
+        assertThat(queryRid.rid).isEqualTo(query.toGtv().merkleHash(GtvMerkleHashCalculatorV2(::sha256Digest)).toHex())
+    }
+
+    @Test
+    fun `async query response can be fetched`() {
+        val queryRid = QueryRid(ByteArray(32) { it.toByte() }.toHex())
+        val queryResponse = AsyncQueryResponse(
+                status = AsyncQueryResponseStatus.COMPLETED,
+                queryResponse = gtv("foobar"),
+                errorMessage = null)
+        val response: AsyncQueryResponse = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.GET)
+                assertThat(request.uri.path).isEqualTo("/query_async/$BLOCKCHAIN_RID/${queryRid.rid}")
+                return Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .body(encodeGtv(GtvObjectMapper.toGtvDictionary(queryResponse)).inputStream())
+            }
+        }).fetchAsyncQueryResponse(Endpoint(url), queryRid)
+        assertThat(response).isEqualTo(queryResponse)
     }
 
     @Test

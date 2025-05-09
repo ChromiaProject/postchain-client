@@ -59,4 +59,7 @@
             </entry>
         </dict>
     </entry>
+    <entry key="async_query_queue_capacity">
+        <int>1</int>
+    </entry>
 </dict>

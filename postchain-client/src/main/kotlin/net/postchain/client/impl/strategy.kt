@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-fun isSuccess(status: Status) = status == Status.OK
+fun isSuccess(status: Status) = status.successful
 
 fun isClientFailure(status: Status) =
         status == Status.BAD_REQUEST

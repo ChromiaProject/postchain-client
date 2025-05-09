@@ -41,6 +41,9 @@ class QueryMajorityRequestStrategy(
                 singleStrategy.request(createRequest, success, failure, false)
             }
 
+    override fun <R> request(endpoint: Endpoint, request: Request, success: (Response, Endpoint) -> R, failure: (Response, Endpoint) -> R): R =
+            singleStrategy.request(endpoint, request, success, failure)
+
     private fun <R> requestMultiple(createRequest: (Endpoint) -> Request,
                                     success: (Response, Endpoint) -> R,
                                     failure: (Response, Endpoint) -> R): R {

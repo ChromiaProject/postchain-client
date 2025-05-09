@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.controller.Model
 import net.postchain.client.config.PostchainClientConfig
+import net.postchain.client.core.AsyncQueryResponseStatus
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
@@ -96,7 +97,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         return PostchainClientProviderImpl().createClient(
                 PostchainClientConfig(
                         bcRid,
-                        EndpointPool.singleUrl("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}"),
+                        EndpointPool.default(nodes.map { "http://127.0.0.1:${it.getRestApiHttpPort()}" }),
                         listOf(KeyPair(pubKey0, privKey0)),
                 ))
     }
@@ -222,6 +223,18 @@ class PostchainClientIT : IntegrationTestSetup() {
         } matches { resp ->
             resp?.asArray()?.first()?.asString() == rndStr
         }
+
+        val (endpoint, queryRid) = client.asyncQuery("gtx_test_get_value", gtv)
+        await().untilCallTo {
+            client.fetchAsyncQueryResponse(endpoint, queryRid)
+        } matches { resp ->
+            resp?.status == AsyncQueryResponseStatus.COMPLETED
+                    && resp.queryResponse.asArray().first().asString() == rndStr
+        }
+
+        val wrongEndpoint = client.config.endpointPool.filterNot { it.url == endpoint.url }.first()
+        assertThat(client.fetchAsyncQueryResponse(wrongEndpoint, queryRid).status)
+                .isEqualTo(AsyncQueryResponseStatus.NOT_FOUND)
     }
 
     @Test
@@ -259,10 +272,24 @@ class PostchainClientIT : IntegrationTestSetup() {
 
         val blockDetail1 = client.blockAtHeight(1)!!
         assertThat(blockDetail1.transactions.size).isEqualTo(1)
+
+        // we cannot compare witness since it will be different on different nodes
         val blockDetail2 = client.blockByRid(BlockRid(blockDetail1.rid.toHex()))!!
-        assertThat(blockDetail2).isEqualTo(blockDetail1)
+        assertThat(blockDetail2.rid).isEqualTo(blockDetail1.rid)
+        assertThat(blockDetail2.prevBlockRID).isEqualTo(blockDetail1.prevBlockRID)
+        assertThat(blockDetail2.header).isEqualTo(blockDetail1.header)
+        assertThat(blockDetail2.height).isEqualTo(blockDetail1.height)
+        assertThat(blockDetail2.transactions).isEqualTo(blockDetail1.transactions)
+        assertThat(blockDetail2.timestamp).isEqualTo(blockDetail1.timestamp)
+        
+        // we cannot compare witness since it will be different on different nodes
         val blockDetail3 = client.genericGetGtv("/blocks/${client.config.blockchainRid}/height/1").toObject<BlockDetail>()
-        assertThat(blockDetail3).isEqualTo(blockDetail1)
+        assertThat(blockDetail3.rid).isEqualTo(blockDetail1.rid)
+        assertThat(blockDetail3.prevBlockRID).isEqualTo(blockDetail1.prevBlockRID)
+        assertThat(blockDetail3.header).isEqualTo(blockDetail1.header)
+        assertThat(blockDetail3.height).isEqualTo(blockDetail1.height)
+        assertThat(blockDetail3.transactions).isEqualTo(blockDetail1.transactions)
+        assertThat(blockDetail3.timestamp).isEqualTo(blockDetail1.timestamp)
     }
 
     @Test
@@ -273,12 +300,23 @@ class PostchainClientIT : IntegrationTestSetup() {
         val builder = createSignedNopTx(client, blockchainRid)
         val result = builder.postAwaitConfirmation()
         assertEquals(TransactionStatus.CONFIRMED, result.status)
-        val info = client.getTransactionsInfo()
-        assertEquals(1, info[0].blockHeight)
-        assertEquals(result.txRid.rid, info[0].txRID.toHex())
-        val info2 = client.genericGetJson("/transactions/${client.config.blockchainRid}")
-        assertThat(Gson().fromJson(info2, object : TypeToken<ArrayList<TransactionInfo.Json>>() {})
-                .map { TransactionInfo.fromJson(it) }).isEqualTo(info)
+        val txInfo = client.getTransactionsInfo()
+        assertEquals(1, txInfo[0].blockHeight)
+        assertEquals(result.txRid.rid, txInfo[0].txRID.toHex())
+        val rawTxInfo2 = client.genericGetJson("/transactions/${client.config.blockchainRid}")
+        val txInfo2 = Gson().fromJson(rawTxInfo2, object : TypeToken<ArrayList<TransactionInfo.Json>>() {})
+                .map { TransactionInfo.fromJson(it) }
+        assertThat(txInfo2.size).isEqualTo(txInfo.size)
+        txInfo2.forEachIndexed { i, info ->
+            // we cannot compare witness since it will be different on different nodes
+            assertThat(info.blockRID).isEqualTo(txInfo[i].blockRID)
+            assertThat(info.blockHeight).isEqualTo(txInfo[i].blockHeight)
+            assertThat(info.blockHeader).isEqualTo(txInfo[i].blockHeader)
+            assertThat(info.timestamp).isEqualTo(txInfo[i].timestamp)
+            assertThat(info.txRID).isEqualTo(txInfo[i].txRID)
+            assertThat(info.txHash).isEqualTo(txInfo[i].txHash)
+            assertThat(info.txData).isEqualTo(txInfo[i].txData)
+        }
     }
 
     @Test

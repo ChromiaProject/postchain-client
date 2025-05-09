@@ -9,9 +9,8 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 
-class TryNextOnErrorRequestStrategy(
-        private val config: PostchainClientConfig,
-        httpClient: HttpHandler) : SynchronousRequestStrategy(httpClient) {
+class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: HttpHandler)
+    : SynchronousRequestStrategy(config, httpClient) {
     companion object : KLogging()
 
     override fun <R> request(createRequest: (Endpoint) -> Request,

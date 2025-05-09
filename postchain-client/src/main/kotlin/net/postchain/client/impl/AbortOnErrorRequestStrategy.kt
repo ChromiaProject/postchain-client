@@ -8,9 +8,8 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 
-class AbortOnErrorRequestStrategy(
-        private val config: PostchainClientConfig,
-        httpClient: HttpHandler) : SynchronousRequestStrategy(httpClient) {
+class AbortOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: HttpHandler)
+    : SynchronousRequestStrategy(config, httpClient) {
     override fun <R> request(createRequest: (Endpoint) -> Request,
                              success: (Response, Endpoint) -> R,
                              failure: (Response, Endpoint) -> R,
