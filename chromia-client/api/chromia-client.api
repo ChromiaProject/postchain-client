@@ -824,6 +824,7 @@ public final class net/postchain/d1/client/ChromiaClient$DefaultImpls {
 
 public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchain/client/core/PostchainClient {
 	public fun <init> (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/core/PostchainClient;Z)V
+	public fun asyncQuery (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
 	public fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
 	public fun blockAtHeight (J)Lnet/postchain/client/core/BlockDetail;
 	public fun blockByRid-1Mf0NN0 (Ljava/lang/String;)Lnet/postchain/client/core/BlockDetail;
@@ -832,6 +833,7 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
 	public fun currentBlockHeight (Ljava/lang/String;)J
 	public final fun decodedConfirmationProof-CTXur5g (Ljava/lang/String;)Lnet/postchain/d1/client/ConfirmationProof;
+	public fun fetchAsyncQueryResponse-dBRYvnQ (Lnet/postchain/client/request/Endpoint;Ljava/lang/String;)Lnet/postchain/client/core/AsyncQueryResponse;
 	public fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
 	public fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public final fun getAddNop ()Z

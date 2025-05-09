@@ -119,6 +119,31 @@ public final class net/postchain/client/config/RequestStrategies : java/lang/Enu
 	public static fun values ()[Lnet/postchain/client/config/RequestStrategies;
 }
 
+public final class net/postchain/client/core/AsyncQueryResponse {
+	public fun <init> (Lnet/postchain/client/core/AsyncQueryResponseStatus;Lnet/postchain/gtv/Gtv;Ljava/lang/String;)V
+	public final fun component1 ()Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public final fun component2 ()Lnet/postchain/gtv/Gtv;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lnet/postchain/client/core/AsyncQueryResponseStatus;Lnet/postchain/gtv/Gtv;Ljava/lang/String;)Lnet/postchain/client/core/AsyncQueryResponse;
+	public static synthetic fun copy$default (Lnet/postchain/client/core/AsyncQueryResponse;Lnet/postchain/client/core/AsyncQueryResponseStatus;Lnet/postchain/gtv/Gtv;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/core/AsyncQueryResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public final fun getQueryResponse ()Lnet/postchain/gtv/Gtv;
+	public final fun getStatus ()Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/postchain/client/core/AsyncQueryResponseStatus : java/lang/Enum {
+	public static final field COMPLETED Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public static final field FAILED Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public static final field NOT_FOUND Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public static final field PENDING Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/postchain/client/core/AsyncQueryResponseStatus;
+	public static fun values ()[Lnet/postchain/client/core/AsyncQueryResponseStatus;
+}
+
 public final class net/postchain/client/core/BlockDetail {
 	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;JLjava/util/List;Lnet/postchain/common/types/WrappedByteArray;J)V
 	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
@@ -197,8 +222,10 @@ public abstract interface class net/postchain/client/core/PostchainBlockClient :
 }
 
 public abstract interface class net/postchain/client/core/PostchainClient : java/io/Closeable, net/postchain/client/core/PostchainBlockClient, net/postchain/client/core/PostchainQuery, net/postchain/client/core/PostchainReadClient {
+	public abstract fun asyncQuery (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
 	public abstract fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
 	public abstract fun checkTxStatus-CTXur5g (Ljava/lang/String;)Lnet/postchain/client/core/TransactionResult;
+	public abstract fun fetchAsyncQueryResponse-dBRYvnQ (Lnet/postchain/client/request/Endpoint;Ljava/lang/String;)Lnet/postchain/client/core/AsyncQueryResponse;
 	public abstract fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
 	public abstract fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
@@ -239,6 +266,20 @@ public final class net/postchain/client/core/PostchainReadClient$DefaultImpls {
 	public static synthetic fun currentBlockHeight$default (Lnet/postchain/client/core/PostchainReadClient;Ljava/lang/String;ILjava/lang/Object;)J
 	public static synthetic fun getConfiguration$default (Lnet/postchain/client/core/PostchainReadClient;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/gtv/Gtv;
 	public static synthetic fun getTransactionsInfo$default (Lnet/postchain/client/core/PostchainReadClient;JJLjava/lang/String;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class net/postchain/client/core/QueryRid {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lnet/postchain/client/core/QueryRid;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
 }
 
 public final class net/postchain/client/core/TransactionInfo {
@@ -411,6 +452,7 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public static final field Companion Lnet/postchain/client/impl/PostchainClientImpl$Companion;
 	public fun <init> (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun asyncQuery (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
 	public fun awaitConfirmation-5Sd_B2Q (Ljava/lang/String;ILjava/time/Duration;)Lnet/postchain/client/core/TransactionResult;
 	public fun blockAtHeight (J)Lnet/postchain/client/core/BlockDetail;
 	public fun blockByRid-1Mf0NN0 (Ljava/lang/String;)Lnet/postchain/client/core/BlockDetail;
@@ -418,6 +460,7 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun close ()V
 	public fun confirmationProof-CTXur5g (Ljava/lang/String;)[B
 	public fun currentBlockHeight (Ljava/lang/String;)J
+	public fun fetchAsyncQueryResponse-dBRYvnQ (Lnet/postchain/client/request/Endpoint;Ljava/lang/String;)Lnet/postchain/client/core/AsyncQueryResponse;
 	public fun genericGetGtv (Ljava/lang/String;)Lnet/postchain/gtv/Gtv;
 	public fun genericGetJson (Ljava/lang/String;)Ljava/lang/String;
 	public fun getBlockchainRID (J)Lnet/postchain/common/BlockchainRid;
@@ -502,6 +545,7 @@ public final class net/postchain/client/impl/QueryMajorityRequestStrategy : net/
 	public fun <init> (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;Lorg/http4k/client/AsyncHttpHandler;)V
 	public fun close ()V
 	public fun request (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Z)Ljava/lang/Object;
+	public fun request (Lnet/postchain/client/request/Endpoint;Lorg/http4k/core/Request;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 }
 
 public final class net/postchain/client/impl/QueryMajorityRequestStrategy$Companion : mu/KLogging {
@@ -578,9 +622,11 @@ public final class net/postchain/client/impl/StrategyKt {
 }
 
 public abstract class net/postchain/client/impl/SynchronousRequestStrategy : net/postchain/client/request/RequestStrategy {
-	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun <init> (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;)V
+	protected final fun getConfig ()Lnet/postchain/client/config/PostchainClientConfig;
 	protected final fun getHttpClient ()Lkotlin/jvm/functions/Function1;
 	protected final fun makeRequest (Lorg/http4k/core/Request;)Lorg/http4k/core/Response;
+	public fun request (Lnet/postchain/client/request/Endpoint;Lorg/http4k/core/Request;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 }
 
 public final class net/postchain/client/impl/TransactionWrapper {
@@ -664,6 +710,7 @@ public final class net/postchain/client/request/RandomizedEndpointPool : net/pos
 
 public abstract interface class net/postchain/client/request/RequestStrategy : java/io/Closeable {
 	public abstract fun request (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Z)Ljava/lang/Object;
+	public abstract fun request (Lnet/postchain/client/request/Endpoint;Lorg/http4k/core/Request;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 }
 
 public abstract interface class net/postchain/client/request/RequestStrategyFactory {

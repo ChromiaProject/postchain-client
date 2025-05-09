@@ -8,10 +8,12 @@ import com.google.gson.reflect.TypeToken
 import mu.KLogging
 import net.postchain.client.config.MERKLE_HASH_AUTO_DETECT_VERSION
 import net.postchain.client.config.PostchainClientConfig
+import net.postchain.client.core.AsyncQueryResponse
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockHeaderData
 import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.QueryRid
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxRid
@@ -97,7 +99,8 @@ class PostchainClientImpl(
     private fun autoDetectMerkleHashVersion(): Int {
         var fetchedMerkleHashVersion = MERKLE_HASH_FALLBACK_VERSION
         try {
-            fetchedMerkleHashVersion = getFeatures()["merkle_hash_version"]?.asInteger()?.toInt() ?: MERKLE_HASH_FALLBACK_VERSION
+            fetchedMerkleHashVersion = getFeatures()["merkle_hash_version"]?.asInteger()?.toInt()
+                    ?: MERKLE_HASH_FALLBACK_VERSION
         } catch (e: ClientError) {
             logger.debug { "Failed to retrieve merkleHashVersion from features with error: ${e.message}, fallback to merkleHashVersion: $MERKLE_HASH_FALLBACK_VERSION" }
         } catch (e: Exception) {
@@ -169,6 +172,34 @@ class PostchainClientImpl(
     private fun argsSize(args: Map<String, Gtv>): Int = args.entries.sumOf { argSize(it) }
 
     private fun argSize(arg: Map.Entry<String, Gtv>): Int = (arg.key.length + arg.value.nrOfBytes()) * 2
+
+    @Throws(IOException::class)
+    override fun asyncQuery(name: String, args: Gtv): Pair<Endpoint, QueryRid> {
+        val query = GtxQuery(name, args)
+        val queryRid = QueryRid(query.toGtv().merkleHash(merkleHashCalculator).toHex())
+
+        return requestStrategy.request({ endpoint ->
+            Request(Method.POST, "${endpoint.url}/query_async/$blockchainRIDOrID")
+                    .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                    .body(MemoryBody(query.encode()))
+        }, { response, endpoint ->
+            endpoint to queryRid
+        }, { response, endpoint ->
+            buildExceptionFromErrorResponse("asyncQuery", response, endpoint)
+        },
+                false)
+    }
+
+    override fun fetchAsyncQueryResponse(endpoint: Endpoint, queryRid: QueryRid): AsyncQueryResponse = requestStrategy.request(
+            endpoint,
+            Request(Method.GET, "${endpoint.url}/query_async/$blockchainRIDOrID/${queryRid.rid}")
+                    .header(Header.Accept, ContentType.OCTET_STREAM.value),
+            { response, endpoint ->
+                GtvObjectMapper.fromGtv(decodeGtv("fetchAsyncQueryResponse", response, endpoint), AsyncQueryResponse::class)
+            }, { response, endpoint ->
+        buildExceptionFromErrorResponse("fetchAsyncQueryResponse", response, endpoint)
+    })
 
     @Throws(IOException::class)
     override fun currentBlockHeight(container: String?): Long = requestStrategy.request({ endpoint ->
@@ -316,7 +347,7 @@ class PostchainClientImpl(
             true)
 
     @Throws(IOException::class)
-    override fun confirmationProof(txRid: TxRid): ByteArray = requestStrategy.request<ByteArray>({ endpoint ->
+    override fun confirmationProof(txRid: TxRid): ByteArray = requestStrategy.request({ endpoint ->
         Request(Method.GET, "${endpoint.url}/tx/${blockchainRIDOrID}/${txRid.rid}/confirmationProof")
                 .header(Header.Accept, ContentType.OCTET_STREAM.value)
     }, { response, endpoint ->

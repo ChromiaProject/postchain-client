@@ -9,4 +9,9 @@ interface RequestStrategy : Closeable {
                     success: (Response, Endpoint) -> R,
                     failure: (Response, Endpoint) -> R,
                     queryMultiple: Boolean): R
+
+    fun <R> request(endpoint: Endpoint,
+                    request: Request,
+                    success: (Response, Endpoint) -> R,
+                    failure: (Response, Endpoint) -> R): R
 }
