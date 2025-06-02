@@ -2,7 +2,9 @@ package net.postchain.d1.client
 
 import net.postchain.chain0.cm_api.cmGetPeerInfo
 import net.postchain.client.bftMajority
+import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockHeaderData
+import net.postchain.client.core.BlockRid
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.PostchainQuery
 import net.postchain.client.core.TransactionInfo
@@ -58,72 +60,17 @@ class ChromiaPostchainClient(val directoryChainClient: PostchainQuery, val txCli
     }
 
     @Throws(IOException::class)
-    fun decodedConfirmationProof(txRid: TxRid): ConfirmationProof {
-        val proofData = confirmationProof(txRid)
-        val confirmationProofData = GtvDecoder.decodeGtv(proofData).toObject<ConfirmationProofData>()
-        val blockHeaderData = BlockHeaderData.fromBinary(confirmationProofData.blockHeader)
-
-        val proofRootHash = confirmationProofData.merkleProofTree.merkleHash(blockHeaderData.merkleHashCalculator)
-        if (!blockHeaderData.gtvMerkleRootHash.bytearray.contentEquals(proofRootHash)) {
-            throw ClientError("decodedConfirmationProof", null,
-                    "Proof tree root hash mismatch, expected ${blockHeaderData.gtvMerkleRootHash.bytearray.toHex()} but was ${proofRootHash.toHex()}", null)
-        }
-
-        val proofTxHash = try {
-            confirmationProofData.merkleProofTree.toGtvVirtual()[confirmationProofData.txIndex.toInt()].asByteArray()
-        } catch (e: UserMistake) {
-            throw ClientError("decodedConfirmationProof", null, "Invalid conformation proof: ${e.message}", null)
-        }
-        if (!confirmationProofData.hash.contentEquals(proofTxHash)) {
-            throw ClientError("decodedConfirmationProof", null,
-                    "Proof transaction hash mismatch, expected ${confirmationProofData.hash.toHex()} but was ${proofTxHash.toHex()}", null)
-        }
-
-        verifyWitness(blockHeaderData, confirmationProofData)
-
-        return ConfirmationProof(
-                hash = confirmationProofData.hash,
-                blockHeader = confirmationProofData.blockHeader,
-                witness = confirmationProofData.witness,
-                merkleProofTree = confirmationProofData.merkleProofTree,
-                txIndex = confirmationProofData.txIndex,
-                blockHeaderData = blockHeaderData
-        )
+    fun verifiedBlockAtHeight(height: Long): BlockDetail? {
+        val blockDetail = blockAtHeight(height) ?: return null
+        verifyWitness(blockDetail.height, blockDetail.rid.data, blockDetail.witness.data)
+        return blockDetail
     }
 
-    private fun verifyWitness(blockHeaderData: BlockHeaderData, confirmationProofData: ConfirmationProofData) {
-        val peers = directoryChainClient.cmGetPeerInfo(config.blockchainRid.data, blockHeaderData.gtvHeight.integer)
-        val signatures = try {
-            decodeWitness(confirmationProofData.witness)
-        } catch (_: BufferUnderflowException) {
-            throw ClientError("decodedConfirmationProof", null, "Invalid witness: ${confirmationProofData.witness.toHex()}", null)
-        }
-
-        val threshold = bftMajority(peers.size)
-
-        if (signatures.size < threshold) {
-            throw ClientError("decodedConfirmationProof", null, "Insufficient number of witness (needs at least $threshold but got only ${signatures.size})", null)
-        }
-
-        val validSignatures = mutableListOf<Signature>()
-        for (signature in signatures) {
-            if (!peers.any { signature.subjectID.contentEquals(it) }) {
-                throw ClientError("decodedConfirmationProof", null, "Unexpected subject ${signature.subjectID.toHex()} of signature", null)
-            }
-
-            // Do not add two signatures from the same subject!
-            if (validSignatures.any { it.subjectID.contentEquals(signature.subjectID) }) {
-                break
-            }
-            if (!config.cryptoSystem.verifyDigest(blockHeaderData.blockRid(), signature)) {
-                throw ClientError("decodedConfirmationProof", null, "Invalid signature from subject ${signature.subjectID.toHex()}", null)
-            }
-            validSignatures.add(signature)
-        }
-
-        if (validSignatures.size < threshold) {
-            throw ClientError("decodedConfirmationProof", null, "Insufficient number of valid witness signatures", null)
-        }
+    @Throws(IOException::class)
+    fun verifiedBlockByRid(blockRid: BlockRid): BlockDetail? {
+        val blockDetail = blockByRid(blockRid) ?: return null
+        verifyWitness(blockDetail.height, blockDetail.rid.data, blockDetail.witness.data)
+        return blockDetail
     }
 
     @Throws(IOException::class)
@@ -152,5 +99,74 @@ class ChromiaPostchainClient(val directoryChainClient: PostchainQuery, val txCli
                 txHash = derivedTxHash.wrap(),
                 txData = txData.wrap()
         )
+    }
+
+    @Throws(IOException::class)
+    fun decodedConfirmationProof(txRid: TxRid): ConfirmationProof {
+        val proofData = confirmationProof(txRid)
+        val confirmationProofData = GtvDecoder.decodeGtv(proofData).toObject<ConfirmationProofData>()
+        val blockHeaderData = BlockHeaderData.fromBinary(confirmationProofData.blockHeader)
+
+        val proofRootHash = confirmationProofData.merkleProofTree.merkleHash(blockHeaderData.merkleHashCalculator)
+        if (!blockHeaderData.gtvMerkleRootHash.bytearray.contentEquals(proofRootHash)) {
+            throw ClientError("decodedConfirmationProof", null,
+                    "Proof tree root hash mismatch, expected ${blockHeaderData.gtvMerkleRootHash.bytearray.toHex()} but was ${proofRootHash.toHex()}", null)
+        }
+
+        val proofTxHash = try {
+            confirmationProofData.merkleProofTree.toGtvVirtual()[confirmationProofData.txIndex.toInt()].asByteArray()
+        } catch (e: UserMistake) {
+            throw ClientError("decodedConfirmationProof", null, "Invalid conformation proof: ${e.message}", null)
+        }
+        if (!confirmationProofData.hash.contentEquals(proofTxHash)) {
+            throw ClientError("decodedConfirmationProof", null,
+                    "Proof transaction hash mismatch, expected ${confirmationProofData.hash.toHex()} but was ${proofTxHash.toHex()}", null)
+        }
+
+        verifyWitness(blockHeaderData.gtvHeight.integer, blockHeaderData.blockRid(), confirmationProofData.witness)
+
+        return ConfirmationProof(
+                hash = confirmationProofData.hash,
+                blockHeader = confirmationProofData.blockHeader,
+                witness = confirmationProofData.witness,
+                merkleProofTree = confirmationProofData.merkleProofTree,
+                txIndex = confirmationProofData.txIndex,
+                blockHeaderData = blockHeaderData
+        )
+    }
+
+    private fun verifyWitness(blockHeight: Long, blockRid: ByteArray, witness: ByteArray) {
+        val peers = directoryChainClient.cmGetPeerInfo(config.blockchainRid.data, blockHeight)
+        val signatures = try {
+            decodeWitness(witness)
+        } catch (_: BufferUnderflowException) {
+            throw ClientError("verifyWitness", null, "Invalid witness: ${witness.toHex()}", null)
+        }
+
+        val threshold = bftMajority(peers.size)
+
+        if (signatures.size < threshold) {
+            throw ClientError("verifyWitness", null, "Insufficient number of witness (needs at least $threshold but got only ${signatures.size})", null)
+        }
+
+        val validSignatures = mutableListOf<Signature>()
+        for (signature in signatures) {
+            if (!peers.any { signature.subjectID.contentEquals(it) }) {
+                throw ClientError("verifyWitness", null, "Unexpected subject ${signature.subjectID.toHex()} of signature", null)
+            }
+
+            // Do not add two signatures from the same subject!
+            if (validSignatures.any { it.subjectID.contentEquals(signature.subjectID) }) {
+                break
+            }
+            if (!config.cryptoSystem.verifyDigest(blockRid, signature)) {
+                throw ClientError("verifyWitness", null, "Invalid signature from subject ${signature.subjectID.toHex()}", null)
+            }
+            validSignatures.add(signature)
+        }
+
+        if (validSignatures.size < threshold) {
+            throw ClientError("verifyWitness", null, "Insufficient number of valid witness signatures", null)
+        }
     }
 }
