@@ -430,17 +430,6 @@ public final class net/postchain/client/impl/ConfirmationProofData {
 	public final fun getWitness ()[B
 }
 
-public final class net/postchain/client/impl/ConfirmationProofWrapper {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/ConfirmationProofWrapper;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/ConfirmationProofWrapper;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/ConfirmationProofWrapper;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getProof ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class net/postchain/client/impl/Header {
 	public static final field Accept Ljava/lang/String;
 	public static final field ContentType Ljava/lang/String;
@@ -488,9 +477,6 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 public final class net/postchain/client/impl/PostchainClientImpl$Companion : mu/KLogging {
 }
 
-public final class net/postchain/client/impl/PostchainClientImpl$Companion$GSON_REFLECTION_TYPE_STRING_ARRAY$1 : com/google/gson/reflect/TypeToken {
-}
-
 public final class net/postchain/client/impl/PostchainClientImpl$CurrentBlockHeight {
 	public fun <init> (J)V
 	public final fun component1 ()J
@@ -524,9 +510,6 @@ public final class net/postchain/client/impl/PostchainClientImpl$TxStatus {
 	public final fun getStatus ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class net/postchain/client/impl/PostchainClientImpl$getTransactionsInfo$2$listType$1 : com/google/gson/reflect/TypeToken {
 }
 
 public final class net/postchain/client/impl/PostchainClientImplKt {
@@ -581,26 +564,12 @@ public final class net/postchain/client/impl/QueryMajorityRequestStrategyFactory
 	public fun create (Lnet/postchain/client/config/PostchainClientConfig;Lkotlin/jvm/functions/Function1;)Lnet/postchain/client/request/RequestStrategy;
 }
 
-public final class net/postchain/client/impl/QueryMajorityRequestStrategyKt {
-}
-
 public final class net/postchain/client/impl/Responses {
 	public fun <init> (Ljava/util/Collection;)V
 	public final fun majorityResponse ()Ljava/lang/Object;
 	public final fun maxNumberOfEqualResponses ()I
 	public final fun numberOfDistinctResponses ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class net/postchain/client/impl/Responses$special$$inlined$groupingBy$1 : kotlin/collections/Grouping {
-	public fun <init> (Ljava/lang/Iterable;)V
-	public fun keyOf (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun sourceIterator ()Ljava/util/Iterator;
-}
-
-public final class net/postchain/client/impl/Responses$special$$inlined$sortedBy$1 : java/util/Comparator {
-	public fun <init> ()V
-	public final fun compare (Ljava/lang/Object;Ljava/lang/Object;)I
 }
 
 public final class net/postchain/client/impl/SingleEndpointRequestStrategy : net/postchain/client/impl/SynchronousRequestStrategy {
@@ -627,28 +596,6 @@ public abstract class net/postchain/client/impl/SynchronousRequestStrategy : net
 	protected final fun getHttpClient ()Lkotlin/jvm/functions/Function1;
 	protected final fun makeRequest (Lorg/http4k/core/Request;)Lorg/http4k/core/Response;
 	public fun request (Lnet/postchain/client/request/Endpoint;Lorg/http4k/core/Request;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-}
-
-public final class net/postchain/client/impl/TransactionWrapper {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lnet/postchain/client/impl/TransactionWrapper;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/TransactionWrapper;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/impl/TransactionWrapper;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getTx ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class net/postchain/client/impl/TransactionsCountWrapper {
-	public fun <init> (J)V
-	public final fun component1 ()J
-	public final fun copy (J)Lnet/postchain/client/impl/TransactionsCountWrapper;
-	public static synthetic fun copy$default (Lnet/postchain/client/impl/TransactionsCountWrapper;JILjava/lang/Object;)Lnet/postchain/client/impl/TransactionsCountWrapper;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getTransactionsCount ()J
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class net/postchain/client/impl/TryNextOnErrorRequestStrategy : net/postchain/client/impl/SynchronousRequestStrategy {
