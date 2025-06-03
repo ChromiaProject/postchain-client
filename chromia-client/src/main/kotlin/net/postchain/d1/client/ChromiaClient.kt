@@ -1,7 +1,6 @@
 package net.postchain.d1.client
 
 import net.postchain.client.config.PostchainClientConfig
-import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TxRid
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.request.RequestStrategyFactory
@@ -29,10 +28,10 @@ interface ChromiaClient {
     )
 
     /** Create a postchain client for the chain anchoring the given dapp chain */
-    fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): PostchainClient
+    fun getClusterAnchoringClient(dappBlockchainRid: BlockchainRid): ChromiaPostchainClient
 
     /** Create a postchain client for the chain anchoring the given cluster */
-    fun getClusterAnchoringClient(cluster: String): PostchainClient
+    fun getClusterAnchoringClient(cluster: String): ChromiaPostchainClient
 
     fun isTxSystemAnchored(blockchainRid: BlockchainRid, txRid: TxRid): Boolean
 
@@ -47,7 +46,7 @@ interface ChromiaClient {
     )
 
     /** Create a postchain client for the system anchoring chain */
-    fun getSystemAnchoringClient(): PostchainClient
+    fun getSystemAnchoringClient(): ChromiaPostchainClient
 
     /**
      * Create a postchain client for the directory chain.
@@ -60,7 +59,7 @@ interface ChromiaClient {
     fun getDirectoryChainClient(
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the directory chain.
@@ -76,7 +75,7 @@ interface ChromiaClient {
             queryNodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the directory chain.
@@ -92,7 +91,7 @@ interface ChromiaClient {
             nodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified system blockchain and based on the implementation configuration.
@@ -107,7 +106,7 @@ interface ChromiaClient {
             blockchainRid: BlockchainRid,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified system blockchain and based on the implementation configuration.
@@ -125,7 +124,7 @@ interface ChromiaClient {
             queryNodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified system blockchain and based on the implementation configuration.
@@ -143,7 +142,7 @@ interface ChromiaClient {
             nodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified blockchain and based on the implementation configuration.
@@ -158,7 +157,7 @@ interface ChromiaClient {
             blockchainRid: BlockchainRid,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified blockchain and based on the implementation configuration.
@@ -176,7 +175,7 @@ interface ChromiaClient {
             queryNodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 
     /**
      * Get a postchain client for the specified blockchain and based on the implementation configuration.
@@ -194,5 +193,5 @@ interface ChromiaClient {
             nodes: EndpointPool = config.endpointPool,
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
-    ): PostchainClient
+    ): ChromiaPostchainClient
 }
