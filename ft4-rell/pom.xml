@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>postchain-clients</artifactId>
+        <groupId>net.postchain</groupId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+
+    <artifactId>ft4-rell</artifactId>
+    <name>FT4 Rell</name>
+    <description>Wrapper project for retrieving the FT4 Rell code</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-scm-plugin</artifactId>
+                  <version>1.11.2</version>
+                  <configuration>
+                      <connectionUrl>scm:git:https://gitlab.com/chromaway/ft4-lib.git</connectionUrl>
+                      <scmVersion>${ft4.version}</scmVersion>
+                      <scmVersionType>tag</scmVersionType>
+                  </configuration>
+                  <executions>
+                      <execution>
+                          <id>d1-resources-checkout</id>
+                          <phase>generate-resources</phase>
+                          <goals>
+                              <goal>checkout</goal>
+                          </goals>
+                          <configuration>
+                              <checkoutDirectory>${project.build.directory}/ft4</checkoutDirectory>
+                              <skipCheckoutIfExists>true</skipCheckoutIfExists>
+                          </configuration>
+                      </execution>
+                      <execution>
+                          <id>d1-resources-update</id>
+                          <phase>generate-resources</phase>
+                          <goals>
+                              <goal>update</goal>
+                          </goals>
+                          <configuration>
+                              <workingDirectory>${project.build.directory}/ft4</workingDirectory>
+                          </configuration>
+                      </execution>
+                  </executions>
+            </plugin>
+            <plugin>
+                <groupId>net.postchain.rell</groupId>
+                <artifactId>rell-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>install-libs</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>rell-install</goal>
+                        </goals>
+                        <configuration>
+                            <source>${project.build.directory}/ft4/rell/src</source>
+                            <configPath>${project.build.directory}/ft4/chromia.yml</configPath>
+                            <target>${project.build.directory}/ft4/rell/src</target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

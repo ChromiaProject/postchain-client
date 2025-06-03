@@ -16,18 +16,21 @@
 
     <modules>
         <module>directory-chain</module>
+        <module>ft4-rell</module>
         <module>postchain-client</module>
         <module>chromia-client</module>
+        <module>ft4-client</module>
         <module>coverage-report-aggregate</module>
     </modules>
 
     <name>Postchain Clients</name>
-    <description>Parent of postchain-client and chromia-client</description>
+    <description>Parent of postchain-client, chromia-client and ft4-client</description>
 
     <properties>
         <revision>dev</revision>
         <postchain.version>3.37.3</postchain.version>
         <directory.chain.version>1.89.0</directory.chain.version>
+        <ft4.version>v1.1.0r</ft4.version>
         <rell.maven.plugin.version>0.14.0</rell.maven.plugin.version>
         <kotlin.version>2.0.0</kotlin.version>
 
@@ -64,8 +67,21 @@
             </dependency>
 
             <dependency>
+                <groupId>net.postchain.client</groupId>
+                <artifactId>ft4-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>net.postchain</groupId>
                 <artifactId>directory-chain</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>net.postchain</groupId>
+                <artifactId>ft4-rell</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
             </dependency>

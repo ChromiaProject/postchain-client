@@ -1,0 +1,783 @@
+public final class com/chromia/ft4/AssetsKt {
+	public static final fun getAssetBalance (Lnet/postchain/client/core/PostchainQuery;[B[B)Ljava/math/BigInteger;
+}
+
+public final class com/chromia/ft4/AuthDescriptorKt {
+	public static final fun flags (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)Ljava/util/List;
+	public static final fun getMultiSigners (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)Ljava/util/List;
+	public static final fun getSingleSigner (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)[B
+	public static final fun numberOfSigners (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)J
+}
+
+public final class com/chromia/ft4/AuthKt {
+	public static final fun addEvmAuthenticationOp (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Ljava/util/List;[B[B[BLcom/chromia/ft4/EvmSigner;)V
+	public static synthetic fun addEvmAuthenticationOp$default (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Ljava/util/List;[B[B[BLcom/chromia/ft4/EvmSigner;ILjava/lang/Object;)V
+	public static final fun addEvmSignaturesOp (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Ljava/util/List;[B[B[BLcom/chromia/ft4/EvmSigner;)V
+	public static synthetic fun addEvmSignaturesOp$default (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Ljava/util/List;[B[B[BLcom/chromia/ft4/EvmSigner;ILjava/lang/Object;)V
+	public static final fun addFtAuthenticationOp (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[B[B[B)V
+	public static synthetic fun addFtAuthenticationOp$default (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[B[B[BILjava/lang/Object;)V
+	public static final fun fetchEvmAuthMessage (Lnet/postchain/client/core/PostchainClient;[B[BLjava/lang/String;Ljava/util/List;Z)Ljava/lang/String;
+}
+
+public abstract interface class com/chromia/ft4/EvmSigner {
+	public abstract fun sign ([BLjava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/auth/Signature;
+}
+
+public final class com/chromia/ft4/GtxOperation {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/Account {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/accounts/Account;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/Account;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/Account;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor {
+	public fun <init> (Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Ljava/util/List;Lnet/postchain/gtv/Gtv;)V
+	public final fun component1 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lnet/postchain/gtv/Gtv;
+	public final fun copy (Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Ljava/util/List;Lnet/postchain/gtv/Gtv;)Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Ljava/util/List;Lnet/postchain/gtv/Gtv;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getAuthType ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig {
+	public fun <init> (JJ)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun copy (JJ)Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;JJILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxNumberPerAccount ()J
+	public final fun getMaxRules ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/AuthType : java/lang/Enum, net/postchain/gtv/mapper/ToGtv {
+	public static final field M Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public static final field S Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun toGtv ()Lnet/postchain/gtv/Gtv;
+	public static fun valueOf (Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public static fun values ()[Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig {
+	public fun <init> (ZJJJ)V
+	public final fun component1 ()Z
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun copy (ZJJJ)Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;ZJJJILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Z
+	public final fun getMaxPoints ()J
+	public final fun getPointsAtAccountCreation ()J
+	public final fun getRecoveryTime ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist {
+	public fun <init> (ZLjava/util/List;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (ZLjava/util/List;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowAll ()Z
+	public final fun getAllowedValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/AssetLimit {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/math/BigInteger;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/AssetLimit;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/AssetLimit;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/AssetLimit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getIssuingBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getMinAmount ()Ljava/math/BigInteger;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Ft4GetAllowedAssetsResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Ljava/math/BigInteger;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Ft4GetAllowedAssetsResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Ft4GetAllowedAssetsResult;Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Ft4GetAllowedAssetsResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAssetId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getMinAmount ()Ljava/math/BigInteger;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Lib_ft4_core_accounts_strategies_transferKt {
+	public static final field GET_ALLOWED_ASSETS Ljava/lang/String;
+	public static final field GET_PENDING_TRANSFER_STRATEGIES Ljava/lang/String;
+	public static final field GET_TRANSFER_RULES Ljava/lang/String;
+	public static final field HAS_PENDING_CREATE_ACCOUNT_TRANSFER_FOR_STRATEGY Ljava/lang/String;
+	public static final fun getAllowedAssets (Lnet/postchain/client/core/PostchainQuery;[B[B[B)Ljava/util/List;
+	public static final fun getPendingTransferStrategies (Lnet/postchain/client/core/PostchainQuery;[BLcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;)Ljava/util/Set;
+	public static final fun getTransferRules (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/List;
+	public static final fun hasPendingCreateAccountTransferForStrategy (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;[B[B[B[BLjava/math/BigInteger;)Z
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferExpirationState : java/lang/Enum, net/postchain/gtv/mapper/ToGtv {
+	public static final field expired Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferExpirationState;
+	public static final field valid Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferExpirationState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun toGtv ()Lnet/postchain/gtv/Gtv;
+	public static fun valueOf (Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferExpirationState;
+	public static fun values ()[Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferExpirationState;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;Ljava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getState ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Rule {
+	public fun <init> (JLjava/util/List;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun component4 ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun component5 ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/util/List;
+	public final fun copy (JLjava/util/List;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Rule;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Rule;JLjava/util/List;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Rule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowAllAssets ()Z
+	public final fun getAssetLimits ()Ljava/util/List;
+	public final fun getBlockchains ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun getRecipients ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun getRequireSameAddress ()Z
+	public final fun getSenders ()Lcom/chromia/ft4/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun getStrategies ()Ljava/util/List;
+	public final fun getTimeoutDays ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/AssetFilter {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/assets/AssetFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/AssetFilter;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/AssetFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIds ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSymbol ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/BalanceFilter {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Lcom/chromia/ft4/lib/ft4/core/assets/BalanceFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/BalanceFilter;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/BalanceFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountIds ()Ljava/util/List;
+	public final fun getAssetIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/CrosschainTransferHistoryEntryFilter {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;)Lcom/chromia/ft4/lib/ft4/core/assets/CrosschainTransferHistoryEntryFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/CrosschainTransferHistoryEntryFilter;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/CrosschainTransferHistoryEntryFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountIds ()Ljava/util/List;
+	public final fun getAssetIds ()Ljava/util/List;
+	public final fun getOpIndex ()Ljava/lang/Long;
+	public final fun getTransactionRids ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/Filter {
+	public fun <init> (Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;)V
+	public final fun component1 ()Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+	public final fun copy (Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;)Lcom/chromia/ft4/lib/ft4/core/assets/Filter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/Filter;Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/Filter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTransferType ()Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/TransferDetail {
+	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;ZJLnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Lnet/postchain/common/types/RowId;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component4 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component5 ()Ljava/math/BigInteger;
+	public final fun component6 ()Z
+	public final fun component7 ()J
+	public final fun component8 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;ZJLnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/core/assets/TransferDetail;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/TransferDetail;Lnet/postchain/common/types/RowId;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/math/BigInteger;ZJLnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/TransferDetail;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getAssetId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getDelta ()Ljava/math/BigInteger;
+	public final fun getOpIndex ()J
+	public final fun getRowid ()Lnet/postchain/common/types/RowId;
+	public final fun getTransactionRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public fun hashCode ()I
+	public final fun isInput ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/TransferHistoryEntryFilter {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;)Lcom/chromia/ft4/lib/ft4/core/assets/TransferHistoryEntryFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/assets/TransferHistoryEntryFilter;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/assets/TransferHistoryEntryFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountIds ()Ljava/util/List;
+	public final fun getAssetIds ()Ljava/util/List;
+	public final fun getOpIndex ()Ljava/lang/Long;
+	public final fun getTransactionRids ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/assets/TransferType : java/lang/Enum, net/postchain/gtv/mapper/ToGtv {
+	public static final field received Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+	public static final field sent Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun toGtv ()Lnet/postchain/gtv/Gtv;
+	public static fun valueOf (Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+	public static fun values ()[Lcom/chromia/ft4/lib/ft4/core/assets/TransferType;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/auth/LoginConfig {
+	public fun <init> (Ljava/util/List;Lnet/postchain/gtv/Gtv;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lnet/postchain/gtv/Gtv;
+	public final fun copy (Ljava/util/List;Lnet/postchain/gtv/Gtv;)Lcom/chromia/ft4/lib/ft4/core/auth/LoginConfig;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/auth/LoginConfig;Ljava/util/List;Lnet/postchain/gtv/Gtv;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/auth/LoginConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFlags ()Ljava/util/List;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/core/auth/Signature {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;J)Lcom/chromia/ft4/lib/ft4/core/auth/Signature;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/core/auth/Signature;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;JILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/core/auth/Signature;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getR ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getS ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getV ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/AccountAuthDescriptorFilter {
+	public fun <init> (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/external/accounts/AccountAuthDescriptorFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/AccountAuthDescriptorFilter;Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/AccountAuthDescriptorFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/AccountFilter {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/external/accounts/AccountFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/AccountFilter;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/AccountFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIds ()Ljava/util/List;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/AuthDescriptorSignerFilter {
+	public fun <init> (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/external/accounts/AuthDescriptorSignerFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/AuthDescriptorSignerFilter;Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/AuthDescriptorSignerFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthDescriptorId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorByIdResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun component5 ()Lnet/postchain/gtv/Gtv;
+	public final fun component6 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorByIdResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorByIdResult;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;JILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorByIdResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getArgs ()Lnet/postchain/gtv/Gtv;
+	public final fun getAuthType ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun getCreated ()J
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun component5 ()Lnet/postchain/gtv/Gtv;
+	public final fun component6 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;JILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getArgs ()Lnet/postchain/gtv/Gtv;
+	public final fun getAuthType ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun getCreated ()J
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun component5 ()Lnet/postchain/gtv/Gtv;
+	public final fun component6 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsResult;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;JILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getArgs ()Lnet/postchain/gtv/Gtv;
+	public final fun getAuthType ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun getCreated ()J
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountMainAuthDescriptorResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun component5 ()Lnet/postchain/gtv/Gtv;
+	public final fun component6 ()J
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;J)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountMainAuthDescriptorResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountMainAuthDescriptorResult;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;Lnet/postchain/gtv/Gtv;Lnet/postchain/gtv/Gtv;JILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountMainAuthDescriptorResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getArgs ()Lnet/postchain/gtv/Gtv;
+	public final fun getAuthType ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthType;
+	public final fun getCreated ()J
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getRules ()Lnet/postchain/gtv/Gtv;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountRateLimitLastUpdateResult {
+	public fun <init> (JJ)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun copy (JJ)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountRateLimitLastUpdateResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountRateLimitLastUpdateResult;JJILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountRateLimitLastUpdateResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLastUpdate ()J
+	public final fun getPoints ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Ft4GetConfigResult {
+	public fun <init> (Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;)V
+	public final fun component1 ()Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;
+	public final fun component2 ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;
+	public final fun copy (Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetConfigResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetConfigResult;Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetConfigResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthDescriptor ()Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptorConfig;
+	public final fun getRateLimit ()Lcom/chromia/ft4/lib/ft4/core/accounts/RateLimitConfig;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/Lib_ft4_external_accountsKt {
+	public static final field ADD_AUTH_DESCRIPTOR Ljava/lang/String;
+	public static final field DELETE_ALL_AUTH_DESCRIPTORS_EXCEPT_MAIN Ljava/lang/String;
+	public static final field DELETE_AUTH_DESCRIPTOR Ljava/lang/String;
+	public static final field DELETE_AUTH_DESCRIPTORS_FOR_SIGNER Ljava/lang/String;
+	public static final field GET_ACCOUNTS_BY_AUTH_DESCRIPTOR_ID Ljava/lang/String;
+	public static final field GET_ACCOUNTS_BY_SIGNER Ljava/lang/String;
+	public static final field GET_ACCOUNTS_BY_TYPE Ljava/lang/String;
+	public static final field GET_ACCOUNTS_FILTERED Ljava/lang/String;
+	public static final field GET_ACCOUNT_AUTH_DESCRIPTORS Ljava/lang/String;
+	public static final field GET_ACCOUNT_AUTH_DESCRIPTORS_BY_SIGNER Ljava/lang/String;
+	public static final field GET_ACCOUNT_AUTH_DESCRIPTORS_FILTERED Ljava/lang/String;
+	public static final field GET_ACCOUNT_AUTH_DESCRIPTOR_BY_ID Ljava/lang/String;
+	public static final field GET_ACCOUNT_BY_ID Ljava/lang/String;
+	public static final field GET_ACCOUNT_MAIN_AUTH_DESCRIPTOR Ljava/lang/String;
+	public static final field GET_ACCOUNT_RATE_LIMIT_LAST_UPDATE Ljava/lang/String;
+	public static final field GET_AUTH_DESCRIPTOR_COUNTER Ljava/lang/String;
+	public static final field GET_AUTH_DESCRIPTOR_SIGNERS_FILTERED Ljava/lang/String;
+	public static final field GET_CONFIG Ljava/lang/String;
+	public static final field GET_MAIN_AUTH_DESCRIPTORS_FILTERED Ljava/lang/String;
+	public static final field GET_RL_STATES_FILTERED Ljava/lang/String;
+	public static final field IS_AUTH_DESCRIPTOR_VALID Ljava/lang/String;
+	public static final field UPDATE_MAIN_AUTH_DESCRIPTOR Ljava/lang/String;
+	public static final fun addAuthDescriptorOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun deleteAllAuthDescriptorsExceptMainOperation (Lnet/postchain/client/transaction/TransactionBuilder;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun deleteAuthDescriptorOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun deleteAuthDescriptorsForSignerOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun getAccountAuthDescriptorById (Lnet/postchain/client/core/PostchainQuery;[B[B)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorByIdResult;
+	public static final fun getAccountAuthDescriptors (Lnet/postchain/client/core/PostchainQuery;[B)Ljava/util/List;
+	public static final fun getAccountAuthDescriptorsBySigner (Lnet/postchain/client/core/PostchainQuery;[B[B)Ljava/util/List;
+	public static final fun getAccountAuthDescriptorsFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/AccountAuthDescriptorFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAccountById (Lnet/postchain/client/core/PostchainQuery;[B)Lcom/chromia/ft4/lib/ft4/core/accounts/Account;
+	public static final fun getAccountMainAuthDescriptor (Lnet/postchain/client/core/PostchainQuery;[B)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountMainAuthDescriptorResult;
+	public static final fun getAccountRateLimitLastUpdate (Lnet/postchain/client/core/PostchainQuery;[B)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetAccountRateLimitLastUpdateResult;
+	public static final fun getAccountsByAuthDescriptorId (Lnet/postchain/client/core/PostchainQuery;[BLjava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAccountsBySigner (Lnet/postchain/client/core/PostchainQuery;[BLjava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAccountsByType (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;JLjava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAccountsFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/AccountFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAuthDescriptorCounter (Lnet/postchain/client/core/PostchainQuery;[B[B)Ljava/lang/Long;
+	public static final fun getAuthDescriptorSignersFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/AuthDescriptorSignerFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getConfig (Lnet/postchain/client/core/PostchainQuery;)Lcom/chromia/ft4/lib/ft4/external/accounts/Ft4GetConfigResult;
+	public static final fun getMainAuthDescriptorsFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/MainAccountAuthDescriptorFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getRlStatesFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/RlStateFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun isAuthDescriptorValid (Lnet/postchain/client/core/PostchainQuery;[B[B)Z
+	public static final fun updateMainAuthDescriptorOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lcom/chromia/ft4/lib/ft4/core/accounts/AuthDescriptor;)Lnet/postchain/client/transaction/TransactionBuilder;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/MainAccountAuthDescriptorFilter {
+	public fun <init> (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/external/accounts/MainAccountAuthDescriptorFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/MainAccountAuthDescriptorFilter;Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/MainAccountAuthDescriptorFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountAuthDescriptorId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getAccountIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/RlStateFilter {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/chromia/ft4/lib/ft4/external/accounts/RlStateFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/RlStateFilter;Ljava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/RlStateFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccountIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/strategies/AccountCreationTransferFilter {
+	public fun <init> (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/Long;Lnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/Long;Lnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/external/accounts/strategies/AccountCreationTransferFilter;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/accounts/strategies/AccountCreationTransferFilter;Ljava/util/List;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/Long;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/accounts/strategies/AccountCreationTransferFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOpIndex ()Ljava/lang/Long;
+	public final fun getRecipientId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getRowids ()Ljava/util/List;
+	public final fun getTransactionTxRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/accounts/strategies/Lib_ft4_external_accounts_strategiesKt {
+	public static final field GET_ACCOUNT_CREATION_TRANSFERS_FILTERED Ljava/lang/String;
+	public static final field GET_ACCOUNT_ID_FOR_STRATEGY Ljava/lang/String;
+	public static final field GET_ENABLED_REGISTRATION_STRATEGIES Ljava/lang/String;
+	public static final field GET_REGISTER_ACCOUNT_MESSAGE Ljava/lang/String;
+	public static final field REGISTER_ACCOUNT Ljava/lang/String;
+	public static final fun getAccountCreationTransfersFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/external/accounts/strategies/AccountCreationTransferFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAccountIdForStrategy (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/GtxOperation;)[B
+	public static final fun getEnabledRegistrationStrategies (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/Set;
+	public static final fun getRegisterAccountMessage (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/GtxOperation;Lcom/chromia/ft4/GtxOperation;)Ljava/lang/String;
+	public static final fun registerAccountOperation (Lnet/postchain/client/transaction/TransactionBuilder;)Lnet/postchain/client/transaction/TransactionBuilder;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetBalanceResult {
+	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/gtv/Gtv;Ljava/math/BigInteger;)V
+	public final fun component1 ()Lnet/postchain/common/types/RowId;
+	public final fun component2 ()Lnet/postchain/gtv/Gtv;
+	public final fun component3 ()Ljava/math/BigInteger;
+	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/gtv/Gtv;Ljava/math/BigInteger;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetBalanceResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetBalanceResult;Lnet/postchain/common/types/RowId;Lnet/postchain/gtv/Gtv;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetBalanceResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()Ljava/math/BigInteger;
+	public final fun getAsset ()Lnet/postchain/gtv/Gtv;
+	public final fun getRowid ()Lnet/postchain/common/types/RowId;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetByIdResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/math/BigInteger;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun component5 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/math/BigInteger;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/math/BigInteger;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetByIdResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetByIdResult;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetByIdResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getDecimals ()J
+	public final fun getIconUrl ()Ljava/lang/String;
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSupply ()Ljava/math/BigInteger;
+	public final fun getSymbol ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetDetailsForCrosschainRegistrationResult {
+	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)V
+	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun component5 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetDetailsForCrosschainRegistrationResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetDetailsForCrosschainRegistrationResult;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;JLnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/lang/String;Lnet/postchain/common/types/WrappedByteArray;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetDetailsForCrosschainRegistrationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getDecimals ()J
+	public final fun getIconUrl ()Ljava/lang/String;
+	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSymbol ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getUniquenessResolver ()Lnet/postchain/common/types/WrappedByteArray;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/assets/Ft4GetTransferHistoryEntryResult {
+	public fun <init> (Lnet/postchain/common/types/RowId;Ljava/math/BigInteger;JLnet/postchain/gtv/Gtv;ZJJLnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;JZ)V
+	public final fun component1 ()Lnet/postchain/common/types/RowId;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()J
+	public final fun component12 ()Z
+	public final fun component2 ()Ljava/math/BigInteger;
+	public final fun component3 ()J
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun component5 ()Z
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun component8 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun component9 ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun copy (Lnet/postchain/common/types/RowId;Ljava/math/BigInteger;JLnet/postchain/gtv/Gtv;ZJJLnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;JZ)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetTransferHistoryEntryResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetTransferHistoryEntryResult;Lnet/postchain/common/types/RowId;Ljava/math/BigInteger;JLnet/postchain/gtv/Gtv;ZJJLnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;JZILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetTransferHistoryEntryResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAsset ()Lnet/postchain/gtv/Gtv;
+	public final fun getBlockHeight ()J
+	public final fun getDecimals ()J
+	public final fun getDelta ()Ljava/math/BigInteger;
+	public final fun getId ()Lnet/postchain/common/types/RowId;
+	public final fun getOpIndex ()J
+	public final fun getOperationName ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public final fun getTxData ()Lnet/postchain/common/types/WrappedByteArray;
+	public final fun getTxRid ()Lnet/postchain/common/types/WrappedByteArray;
+	public fun hashCode ()I
+	public final fun isCrosschain ()Z
+	public final fun isInput ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/assets/Lib_ft4_external_assetsKt {
+	public static final field BURN Ljava/lang/String;
+	public static final field GET_ALL_ASSETS Ljava/lang/String;
+	public static final field GET_ASSETS_BY_NAME Ljava/lang/String;
+	public static final field GET_ASSETS_BY_SYMBOL Ljava/lang/String;
+	public static final field GET_ASSETS_BY_TYPE Ljava/lang/String;
+	public static final field GET_ASSETS_FILTERED Ljava/lang/String;
+	public static final field GET_ASSET_BALANCE Ljava/lang/String;
+	public static final field GET_ASSET_BALANCES Ljava/lang/String;
+	public static final field GET_ASSET_BY_ID Ljava/lang/String;
+	public static final field GET_ASSET_DETAILS_FOR_CROSSCHAIN_REGISTRATION Ljava/lang/String;
+	public static final field GET_BALANCES_FILTERED Ljava/lang/String;
+	public static final field GET_CROSSCHAIN_TRANSFER_HISTORY_ENTRIES_FILTERED Ljava/lang/String;
+	public static final field GET_TRANSFER_DETAILS Ljava/lang/String;
+	public static final field GET_TRANSFER_DETAILS_BY_ASSET Ljava/lang/String;
+	public static final field GET_TRANSFER_HISTORY Ljava/lang/String;
+	public static final field GET_TRANSFER_HISTORY_ENTRIES_FILTERED Ljava/lang/String;
+	public static final field GET_TRANSFER_HISTORY_ENTRY Ljava/lang/String;
+	public static final field GET_TRANSFER_HISTORY_FROM_HEIGHT Ljava/lang/String;
+	public static final field RECALL_UNCLAIMED_TRANSFER Ljava/lang/String;
+	public static final field TRANSFER Ljava/lang/String;
+	public static final fun burnOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLjava/math/BigInteger;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun getAllAssets (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAssetBalance (Lnet/postchain/client/core/PostchainQuery;[B[B)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetBalanceResult;
+	public static final fun getAssetBalances (Lnet/postchain/client/core/PostchainQuery;[BLjava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAssetById (Lnet/postchain/client/core/PostchainQuery;[B)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetByIdResult;
+	public static final fun getAssetDetailsForCrosschainRegistration (Lnet/postchain/client/core/PostchainQuery;[B)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetAssetDetailsForCrosschainRegistrationResult;
+	public static final fun getAssetsByName (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAssetsBySymbol (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAssetsByType (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getAssetsFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/core/assets/AssetFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getBalancesFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/core/assets/BalanceFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getCrosschainTransferHistoryEntriesFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/core/assets/CrosschainTransferHistoryEntryFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getTransferDetails (Lnet/postchain/client/core/PostchainQuery;[BJ)Ljava/util/List;
+	public static final fun getTransferDetailsByAsset (Lnet/postchain/client/core/PostchainQuery;[BJ[B)Ljava/util/List;
+	public static final fun getTransferHistory (Lnet/postchain/client/core/PostchainQuery;[BLcom/chromia/ft4/lib/ft4/core/assets/Filter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getTransferHistoryEntriesFiltered (Lnet/postchain/client/core/PostchainQuery;Lcom/chromia/ft4/lib/ft4/core/assets/TransferHistoryEntryFilter;Ljava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun getTransferHistoryEntry (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lcom/chromia/ft4/lib/ft4/external/assets/Ft4GetTransferHistoryEntryResult;
+	public static final fun getTransferHistoryFromHeight (Lnet/postchain/client/core/PostchainQuery;J[BLjava/lang/Long;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static final fun recallUnclaimedTransferOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BJ)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun transferOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B[BLjava/math/BigInteger;)Lnet/postchain/client/transaction/TransactionBuilder;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/auth/AuthHandlerClient {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Z)Lcom/chromia/ft4/lib/ft4/external/auth/AuthHandlerClient;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/external/auth/AuthHandlerClient;Ljava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/external/auth/AuthHandlerClient;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDynamic ()Z
+	public final fun getFlags ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/external/auth/Lib_ft4_external_authKt {
+	public static final field EVM_AUTH Ljava/lang/String;
+	public static final field EVM_SIGNATURES Ljava/lang/String;
+	public static final field FT_AUTH Ljava/lang/String;
+	public static final field GET_ALL_AUTH_HANDLERS Ljava/lang/String;
+	public static final field GET_AUTH_FLAGS Ljava/lang/String;
+	public static final field GET_AUTH_HANDLER_FOR_OPERATION Ljava/lang/String;
+	public static final field GET_AUTH_MESSAGE_TEMPLATE Ljava/lang/String;
+	public static final field GET_FIRST_ALLOWED_AUTH_DESCRIPTOR Ljava/lang/String;
+	public static final field GET_FIRST_ALLOWED_AUTH_DESCRIPTOR_BY_SIGNERS Ljava/lang/String;
+	public static final field GET_LOGIN_CONFIG Ljava/lang/String;
+	public static final fun evmAuthOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B[BLjava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun evmSignaturesOperation (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/util/List;Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun ftAuthOperation (Lnet/postchain/client/transaction/TransactionBuilder;[B[B)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun getAllAuthHandlers (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/List;
+	public static final fun getAuthFlags (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;)Ljava/util/List;
+	public static final fun getAuthHandlerForOperation (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/external/auth/AuthHandlerClient;
+	public static final fun getAuthMessageTemplate (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Ljava/lang/String;
+	public static final fun getFirstAllowedAuthDescriptor (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Lnet/postchain/gtv/Gtv;[BLjava/util/List;)[B
+	public static final fun getFirstAllowedAuthDescriptorBySigners (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;Lnet/postchain/gtv/Gtv;[BLjava/util/List;)[B
+	public static final fun getLoginConfig (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;)Lcom/chromia/ft4/lib/ft4/core/auth/LoginConfig;
+}
+
+public final class com/chromia/ft4/lib/ft4/utils/PagedResult {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public static synthetic fun copy$default (Lcom/chromia/ft4/lib/ft4/utils/PagedResult;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/chromia/ft4/lib/ft4/utils/PagedResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/util/List;
+	public final fun getNextCursor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/ft4/lib/ft4/version/Lib_ft4_versionKt {
+	public static final field GET_API_VERSION Ljava/lang/String;
+	public static final field GET_VERSION Ljava/lang/String;
+	public static final fun getApiVersion (Lnet/postchain/client/core/PostchainQuery;)J
+	public static final fun getVersion (Lnet/postchain/client/core/PostchainQuery;)Ljava/lang/String;
+}
+
