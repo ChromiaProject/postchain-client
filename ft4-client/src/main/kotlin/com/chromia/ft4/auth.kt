@@ -1,15 +1,15 @@
 package com.chromia.ft4
 
-import com.chromia.ft4.lib.ft4.core.accounts.AuthType
-import com.chromia.ft4.lib.ft4.core.auth.Signature
-import com.chromia.ft4.lib.ft4.external.accounts.Ft4GetAccountAuthDescriptorsBySignerResult
-import com.chromia.ft4.lib.ft4.external.accounts.getAccountAuthDescriptorsBySigner
-import com.chromia.ft4.lib.ft4.external.accounts.getAuthDescriptorCounter
-import com.chromia.ft4.lib.ft4.external.auth.evmAuthOperation
-import com.chromia.ft4.lib.ft4.external.auth.evmSignaturesOperation
-import com.chromia.ft4.lib.ft4.external.auth.ftAuthOperation
-import com.chromia.ft4.lib.ft4.external.auth.getAuthFlags
-import com.chromia.ft4.lib.ft4.external.auth.getAuthMessageTemplate
+import com.chromia.lib.ft4.core.accounts.AuthType
+import com.chromia.lib.ft4.core.auth.Signature
+import com.chromia.lib.ft4.external.accounts.Ft4GetAccountAuthDescriptorsBySignerResult
+import com.chromia.lib.ft4.external.accounts.getAccountAuthDescriptorsBySigner
+import com.chromia.lib.ft4.external.accounts.getAuthDescriptorCounter
+import com.chromia.lib.ft4.external.auth.evmAuthOperation
+import com.chromia.lib.ft4.external.auth.evmSignaturesOperation
+import com.chromia.lib.ft4.external.auth.ftAuthOperation
+import com.chromia.lib.ft4.external.auth.getAuthFlags
+import com.chromia.lib.ft4.external.auth.getAuthMessageTemplate
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.PostchainQuery
 import net.postchain.client.transaction.TransactionBuilder

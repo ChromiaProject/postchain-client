@@ -1,6 +1,6 @@
 package com.chromia.ft4
 
-import com.chromia.ft4.lib.ft4.external.assets.getAssetBalance
+import com.chromia.lib.ft4.external.assets.getAssetBalance
 import net.postchain.client.core.PostchainQuery
 import java.math.BigInteger
 

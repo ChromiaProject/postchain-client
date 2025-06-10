@@ -92,11 +92,20 @@
                         </goals>
                         <configuration>
                             <source>${maven.multiModuleProjectDirectory}/ft4-rell/target/ft4/rell/src</source>
-                            <packageName>com.chromia.ft4</packageName>
+                            <packageName>com.chromia</packageName>
                             <mainModules>
+                                <mainModule>lib.ft4</mainModule>
                                 <mainModule>lib.ft4.auth</mainModule>
                                 <mainModule>lib.ft4.accounts</mainModule>
+                                <mainModule>lib.ft4.accounts.linking</mainModule>
+                                <mainModule>lib.ft4.accounts.strategies</mainModule>
+                                <mainModule>lib.ft4.accounts.strategies.open</mainModule>
+                                <mainModule>lib.ft4.accounts.strategies.transfer.open</mainModule>
+                                <mainModule>lib.ft4.accounts.strategies.transfer.fee</mainModule>
+                                <mainModule>lib.ft4.accounts.strategies.transfer.subscription</mainModule>
                                 <mainModule>lib.ft4.assets</mainModule>
+                                <mainModule>lib.ft4.assets.locking</mainModule>
+                                <mainModule>lib.ft4.crosschain</mainModule>
                             </mainModules>
                         </configuration>
                     </execution>
