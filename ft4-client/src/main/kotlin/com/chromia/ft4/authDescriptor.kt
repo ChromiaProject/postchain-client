@@ -1,7 +1,7 @@
 package com.chromia.ft4
 
-import com.chromia.ft4.lib.ft4.core.accounts.AuthType
-import com.chromia.ft4.lib.ft4.external.accounts.Ft4GetAccountAuthDescriptorsBySignerResult
+import com.chromia.lib.ft4.core.accounts.AuthType
+import com.chromia.lib.ft4.external.accounts.Ft4GetAccountAuthDescriptorsBySignerResult
 
 fun Ft4GetAccountAuthDescriptorsBySignerResult.flags() = this.args.asArray().first().asArray().map { it.asString() }
 
