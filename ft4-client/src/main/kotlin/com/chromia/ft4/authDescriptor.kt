@@ -3,6 +3,8 @@ package com.chromia.ft4
 import com.chromia.lib.ft4.core.accounts.AuthType
 import com.chromia.lib.ft4.external.accounts.Ft4GetAccountAuthDescriptorsBySignerResult
 
+fun Ft4GetAccountAuthDescriptorsBySignerResult.isValid(requiredFlags: List<String>): Boolean = flags().containsAll(requiredFlags)
+
 fun Ft4GetAccountAuthDescriptorsBySignerResult.flags() = this.args.asArray().first().asArray().map { it.asString() }
 
 fun Ft4GetAccountAuthDescriptorsBySignerResult.numberOfSigners(): Long = if (this.authType == AuthType.S) {
