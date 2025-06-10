@@ -147,7 +147,7 @@ fun addEvmSignaturesOp(
     transactionBuilder.evmSignaturesOperation(listOf(evmAddress), listOf(signature))
 }
 
-private fun findValidAuthDescriptorIdForOperation(
+fun findValidAuthDescriptorIdForOperation(
         client: PostchainQuery,
         opName: String,
         accountId: ByteArray,
@@ -166,7 +166,7 @@ private fun findValidAuthDescriptorIdForOperation(
         throw UserMistake("Multiple account descriptors (${authDescriptorsCandidates.size}) found. Need to specify one.")
     }
 
-    if (!isValid(flags, authDescriptor)) {
+    if (!authDescriptor.isValid(flags)) {
         throw UserMistake(
                 """No valid account descriptor found. 
                     |Operation $opName requires the flag(s): $flags, 
@@ -176,7 +176,7 @@ private fun findValidAuthDescriptorIdForOperation(
     return authDescriptor.id.data
 }
 
-private fun findAuthDescriptors(
+fun findAuthDescriptors(
         descriptors: List<Ft4GetAccountAuthDescriptorsBySignerResult>,
         optionalAuthDescriptorId: ByteArray?,
         signer: ByteArray
@@ -202,11 +202,6 @@ private fun findAuthDescriptors(
             }
         }
     }
-}
-
-private fun isValid(requiredFlags: List<String>, authDescriptor: Ft4GetAccountAuthDescriptorsBySignerResult): Boolean {
-    val flags = authDescriptor.flags()
-    return flags.containsAll(requiredFlags)
 }
 
 fun fetchEvmAuthMessage(

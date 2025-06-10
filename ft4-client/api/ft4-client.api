@@ -25,6 +25,7 @@ public final class com/chromia/ft4/AuthDescriptorKt {
 	public static final fun flags (Lcom/chromia/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)Ljava/util/List;
 	public static final fun getMultiSigners (Lcom/chromia/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)Ljava/util/List;
 	public static final fun getSingleSigner (Lcom/chromia/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)[B
+	public static final fun isValid (Lcom/chromia/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;Ljava/util/List;)Z
 	public static final fun numberOfSigners (Lcom/chromia/lib/ft4/external/accounts/Ft4GetAccountAuthDescriptorsBySignerResult;)J
 }
 
@@ -36,6 +37,8 @@ public final class com/chromia/ft4/AuthKt {
 	public static final fun addFtAuthenticationOp (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[B[B[B)V
 	public static synthetic fun addFtAuthenticationOp$default (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[B[B[BILjava/lang/Object;)V
 	public static final fun fetchEvmAuthMessage (Lnet/postchain/client/core/PostchainClient;[B[BLjava/lang/String;Ljava/util/List;Z)Ljava/lang/String;
+	public static final fun findAuthDescriptors (Ljava/util/List;[B[B)Ljava/util/List;
+	public static final fun findValidAuthDescriptorIdForOperation (Lnet/postchain/client/core/PostchainQuery;Ljava/lang/String;[B[B[B)[B
 }
 
 public abstract interface class com/chromia/ft4/EvmSigner {
