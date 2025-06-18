@@ -18,6 +18,24 @@ include:
       --tmpfs=/pgtmpfs:size=1000m
       --publish 5432:5432
       postgres:14.9-alpine3.18
+      - mkdir -p ~/.gnupg
+      - echo "$GPG_PRIVATE_KEY_B64" | base64 -d | gpg --batch --import
+      - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+      - gpg --list-secret-keys
+      - export GPG_TTY=$(tty)
+      - mkdir -p ~/.m2
+      - |
+      cat > ~/.m2/settings.xml <<EOF
+      <settings>
+        <servers>
+          <server>
+            <id>ossrh</id>
+            <username>$OSSRH_USERNAME</username>
+            <password>$OSSRH_PASSWORD</password>
+          </server>
+        </servers>
+      </settings>
+      EOF
   # Necessary to be able to launch PostgreSQL in Docker manually. PostgreSQL is
   # launched in Docker manually (and not as a service, here) because then we can
   # use a tmpfs (in-memory disk) for the data, making it faster.
