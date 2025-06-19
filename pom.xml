@@ -28,15 +28,16 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.37.3</postchain.version>
+        <postchain.version>3.39.0</postchain.version>
         <directory.chain.version>1.89.0</directory.chain.version>
         <ft4.version>v1.1.0r</ft4.version>
         <rell.maven.plugin.version>0.14.0</rell.maven.plugin.version>
         <kotlin.version>2.0.0</kotlin.version>
 
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
 
         <kotlin.code.style>obsolete</kotlin.code.style> <!-- Kotlin obsolete IntelliJ IDEA codestyle -->
 
@@ -199,6 +200,27 @@
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <version>1.24</version>
+                <configuration>
+                    <signature>
+                        <groupId>org.codehaus.mojo.signature</groupId>
+                        <artifactId>java18</artifactId> <!-- Java 1.8 -->
+                        <version>1.0</version>
+                    </signature>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-java-api</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
