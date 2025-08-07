@@ -9,6 +9,7 @@ import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.PostchainQuery
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TransactionResult
+import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
 import net.postchain.client.impl.ConfirmationProofData
@@ -45,6 +46,9 @@ class ChromiaPostchainClient(val directoryChainClient: PostchainQuery, val txCli
 
     override fun postTransactionAwaitConfirmation(tx: Gtx): TransactionResult =
             txClient.postTransactionAwaitConfirmation(tx)
+
+    override fun postTransactionAwaitConfirmation(tx: Gtx, listener: TxEventListener): TransactionResult =
+            txClient.postTransactionAwaitConfirmation(tx, listener)
 
     override fun awaitConfirmation(txRid: TxRid, retries: Int, pollInterval: Duration): TransactionResult =
             txClient.awaitConfirmation(txRid, retries, pollInterval)

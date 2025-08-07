@@ -12,10 +12,19 @@ import net.postchain.client.core.AsyncQueryResponse
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockHeaderData
 import net.postchain.client.core.BlockRid
+import net.postchain.client.core.NullTxEventListener
+import net.postchain.client.core.PollingTransactionStatus
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.PostingTransaction
 import net.postchain.client.core.QueryRid
+import net.postchain.client.core.TransactionConfirmed
 import net.postchain.client.core.TransactionInfo
+import net.postchain.client.core.TransactionPollingRejected
+import net.postchain.client.core.TransactionPollingTimeout
+import net.postchain.client.core.TransactionPostedRejected
+import net.postchain.client.core.TransactionPostedSuccessfully
 import net.postchain.client.core.TransactionResult
+import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
 import net.postchain.client.defaultHttpHandler
@@ -283,39 +292,60 @@ class PostchainClientImpl(
     }
 
     @Throws(IOException::class)
-    override fun postTransaction(tx: Gtx): TransactionResult {
+    override fun postTransaction(tx: Gtx): TransactionResult = postTransaction(tx, NullTxEventListener)
+
+    @Throws(IOException::class)
+    fun postTransaction(tx: Gtx, txEventListener: TxEventListener): TransactionResult {
         val txRid = TxRid(tx.calculateTxRid(merkleHashCalculator).toHex())
+        txEventListener.onTxEvent(PostingTransaction(txRid))
         return requestStrategy.request({ endpoint ->
             Request(Method.POST, "${endpoint.url}/tx/$blockchainRIDHex")
                     .header(Header.ContentType, ContentType.OCTET_STREAM.value)
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
                     .body(MemoryBody(tx.encode()))
         }, { response, _ ->
+            txEventListener.onTxEvent(TransactionPostedSuccessfully(txRid))
             TransactionResult(txRid, WAITING, response.status.code, response.status.description)
         }, { response, _ ->
             val rejectReason = parseErrorResponse(response)
+            txEventListener.onTxEvent(TransactionPostedRejected(txRid, rejectReason))
             TransactionResult(txRid, REJECTED, response.status.code, rejectReason)
         }, false)
     }
 
     @Throws(IOException::class)
-    override fun postTransactionAwaitConfirmation(tx: Gtx): TransactionResult {
-        val result = postTransaction(tx)
+    override fun postTransactionAwaitConfirmation(tx: Gtx) = postTransactionAwaitConfirmation(tx, NullTxEventListener)
+
+    @Throws(IOException::class)
+    override fun postTransactionAwaitConfirmation(tx: Gtx, listener: TxEventListener): TransactionResult {
+        val result = postTransaction(tx, listener)
         if (result.status == REJECTED) {
             return result
         }
-        return awaitConfirmation(result.txRid, config.statusPollCount, config.statusPollInterval)
+        return awaitConfirmation(result.txRid, config.statusPollCount, config.statusPollInterval, listener)
     }
 
     @Throws(IOException::class)
-    override fun awaitConfirmation(txRid: TxRid, retries: Int, pollInterval: Duration): TransactionResult {
+    override fun awaitConfirmation(txRid: TxRid, retries: Int, pollInterval: Duration): TransactionResult =
+            awaitConfirmation(txRid, retries, pollInterval, NullTxEventListener)
+
+    @Throws(IOException::class)
+    fun awaitConfirmation(txRid: TxRid, retries: Int, pollInterval: Duration, listener: TxEventListener): TransactionResult {
         var lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
         // keep polling till getting Confirmed or Rejected
         run poll@{
             repeat(retries) {
                 try {
+                    listener.onTxEvent(PollingTransactionStatus(txRid))
                     lastKnownTxResult = checkTxStatus(txRid)
-                    if (lastKnownTxResult.status == CONFIRMED || lastKnownTxResult.status == REJECTED) return@poll
+                    if (lastKnownTxResult.status == CONFIRMED) {
+                        listener.onTxEvent(TransactionConfirmed(txRid))
+                        return@poll
+                    }
+                    if (lastKnownTxResult.status == REJECTED) {
+                        listener.onTxEvent(TransactionPollingRejected(txRid, lastKnownTxResult.rejectReason ?: "Unknown reason"))
+                        return@poll
+                    }
                 } catch (e: ClientError) {
                     logger.warn { "Unable to poll for new block: ${e.errorMessage}" }
                     lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
@@ -325,6 +355,7 @@ class PostchainClientImpl(
                 }
                 sleep(pollInterval.toMillis())
             }
+            listener.onTxEvent(TransactionPollingTimeout(txRid))
         }
         return lastKnownTxResult
     }

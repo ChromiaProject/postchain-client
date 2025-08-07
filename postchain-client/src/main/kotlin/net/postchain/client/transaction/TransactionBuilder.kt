@@ -2,6 +2,7 @@ package net.postchain.client.transaction
 
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.TransactionResult
+import net.postchain.client.core.TxEventListener
 import net.postchain.common.BlockchainRid
 import net.postchain.crypto.CryptoSystem
 import net.postchain.crypto.Secp256K1CryptoSystem
@@ -63,6 +64,11 @@ class TransactionBuilder(
      * Sign this transaction with default signers and [PostchainClient.postTransactionAwaitConfirmation]
      */
     override fun postAwaitConfirmation() = sign().postAwaitConfirmation()
+
+    /**
+     * Sign this transaction with default signers and [PostchainClient.postTransactionAwaitConfirmation]
+     */
+    override fun postAwaitConfirmation(listener: TxEventListener) = sign().postAwaitConfirmation(listener)
 
     /**
      * Sign this transaction with the [defaultSigners] and prepare it to be posted
@@ -157,6 +163,11 @@ class TransactionBuilder(
          * [PostchainClient.postTransactionAwaitConfirmation]
          */
         override fun postAwaitConfirmation() = client.postTransactionAwaitConfirmation(tx)
+
+        /**
+         * [PostchainClient.postTransactionAwaitConfirmation]
+         */
+        override fun postAwaitConfirmation(listener: TxEventListener) = client.postTransactionAwaitConfirmation(tx, listener)
 
     }
 }
