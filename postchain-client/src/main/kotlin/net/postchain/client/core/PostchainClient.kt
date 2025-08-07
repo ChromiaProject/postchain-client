@@ -42,9 +42,15 @@ interface PostchainClient : PostchainReadClient, PostchainBlockClient, Postchain
     fun postTransaction(tx: Gtx): TransactionResult
 
     /**
-     * Post a [Gtx] transaction and wait until it is included in a block
+     * Post a [Gtx] transaction and wait until it is included in a block.
      */
     fun postTransactionAwaitConfirmation(tx: Gtx): TransactionResult
+
+    /**
+     * Post a [Gtx] transaction and wait until it is included in a block,
+     * returning events to indicate progress.
+     */
+    fun postTransactionAwaitConfirmation(tx: Gtx, listener: TxEventListener): TransactionResult
 
     /**
      * Wait until the given [TxRid] is included in a block

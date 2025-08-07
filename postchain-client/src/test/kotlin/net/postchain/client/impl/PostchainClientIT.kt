@@ -12,8 +12,15 @@ import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.AsyncQueryResponseStatus
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockRid
+import net.postchain.client.core.PollingTransactionStatus
 import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.PostingTransaction
+import net.postchain.client.core.TransactionConfirmed
 import net.postchain.client.core.TransactionInfo
+import net.postchain.client.core.TransactionPollingRejected
+import net.postchain.client.core.TransactionPostedRejected
+import net.postchain.client.core.TransactionPostedSuccessfully
+import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
@@ -48,8 +55,11 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.kotlin.any
+import org.mockito.kotlin.atLeast
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoMoreInteractions
 import java.io.File
 import java.time.Instant
 import java.util.Random
@@ -87,9 +97,21 @@ class PostchainClientIT : IntegrationTestSetup() {
         return nodes.toTypedArray()
     }
 
-    private fun createSignedNopTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
+    private fun createSignedValidTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
         return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
                 .addOperation("gtx_test", gtv(1L), gtv(randomStr))
+                .sign(sigMaker0)
+    }
+
+    private fun createIncorrectTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
+        return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addOperation("gtx_test", gtv(randomStr))
+                .sign(sigMaker0)
+    }
+
+    private fun createInvalidTx(client: PostchainClient, bcRid: BlockchainRid): TransactionBuilder.PostableTransaction {
+        return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addOperation("gtx_test", gtv(1L), gtv("rejectMe"))
                 .sign(sigMaker0)
     }
 
@@ -189,23 +211,68 @@ class PostchainClientIT : IntegrationTestSetup() {
     }
 
     @Test
-    fun testPostTransactionApiConfirmLevelNoWait() {
+    fun testPostTransaction() {
         createTestNodes(1, configFileName1)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
+        val builder = createSignedValidTx(client, blockchainRid)
         val result = builder.post()
         assertEquals(TransactionStatus.WAITING, result.status)
     }
 
     @Test
-    fun testPostTransactionApiConfirmLevelUnverified() {
+    fun `postAwaitConfirmation confirmed`() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
-        val result = builder.postAwaitConfirmation()
+        val builder = createSignedValidTx(client, blockchainRid)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
         assertEquals(TransactionStatus.CONFIRMED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedSuccessfully(result.txRid))
+        verify(listener, atLeast(1)).onTxEvent(PollingTransactionStatus(result.txRid))
+        verify(listener).onTxEvent(TransactionConfirmed(result.txRid))
+        verifyNoMoreInteractions(listener)
+    }
+
+    @Test
+    fun `postAwaitConfirmation rejected immediately`() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = createIncorrectTx(client, blockchainRid)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
+        assertEquals(TransactionStatus.REJECTED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedRejected(result.txRid, result.rejectReason!!))
+        verifyNoMoreInteractions(listener)
+    }
+
+    @Test
+    fun `postAwaitConfirmation rejected after polling`() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = createInvalidTx(client, blockchainRid)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
+        assertEquals(TransactionStatus.REJECTED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedSuccessfully(result.txRid))
+        verify(listener, atLeast(1)).onTxEvent(PollingTransactionStatus(result.txRid))
+        verify(listener).onTxEvent(TransactionPollingRejected(result.txRid, result.rejectReason!!))
+        verifyNoMoreInteractions(listener)
     }
 
     @Test
@@ -214,7 +281,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
         val rndStr = randomStr()
-        val builder = createSignedNopTx(client, blockchainRid, rndStr)
+        val builder = createSignedValidTx(client, blockchainRid, rndStr)
         val result = builder.postAwaitConfirmation()
         val gtv = gtv("txRID" to gtv(result.txRid.rid))
 
@@ -242,7 +309,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
+        val builder = createSignedValidTx(client, blockchainRid)
         val result = builder.postAwaitConfirmation()
         assertEquals(TransactionStatus.CONFIRMED, result.status)
         assertEquals(1, client.getTransactionsCount())
@@ -253,7 +320,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
+        val builder = createSignedValidTx(client, blockchainRid)
         val result = builder.postAwaitConfirmation()
         assertEquals(TransactionStatus.CONFIRMED, result.status)
         val info = client.getTransactionInfo(result.txRid)
@@ -266,7 +333,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
+        val builder = createSignedValidTx(client, blockchainRid)
         val result = builder.postAwaitConfirmation()
         assertEquals(TransactionStatus.CONFIRMED, result.status)
 
@@ -297,7 +364,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
-        val builder = createSignedNopTx(client, blockchainRid)
+        val builder = createSignedValidTx(client, blockchainRid)
         val result = builder.postAwaitConfirmation()
         assertEquals(TransactionStatus.CONFIRMED, result.status)
         val txInfo = client.getTransactionsInfo()
@@ -361,7 +428,7 @@ class PostchainClientIT : IntegrationTestSetup() {
     private fun addTransactions(client: PostchainClient, blockchainRid: BlockchainRid, txCount: Int): List<TxRid> {
         val txRids = mutableListOf<TxRid>()
         (0 until txCount).forEach { i ->
-            val builder = createSignedNopTx(client, blockchainRid)
+            val builder = createSignedValidTx(client, blockchainRid)
             val post = builder.post()
             txRids.add(post.txRid)
             assertEquals(TransactionStatus.WAITING, post.status)
@@ -391,7 +458,7 @@ class PostchainClientIT : IntegrationTestSetup() {
                         requestStrategy = QueryMajorityRequestStrategyFactory(),
                 ))
         val rndStr = randomStr()
-        val builder = createSignedNopTx(client, blockchainRid, rndStr)
+        val builder = createSignedValidTx(client, blockchainRid, rndStr)
         val result = builder.postAwaitConfirmation()
         val gtv = gtv("txRID" to gtv(result.txRid.rid))
 
