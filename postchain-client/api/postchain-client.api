@@ -788,6 +788,7 @@ public final class net/postchain/client/transaction/TransactionBuilder : net/pos
 	public synthetic fun <init> (Lnet/postchain/client/core/PostchainClient;Lnet/postchain/common/BlockchainRid;Ljava/util/List;Lnet/postchain/gtv/merkle/GtvMerkleHashCalculatorBase;Ljava/util/List;Lnet/postchain/crypto/CryptoSystem;ILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addNop ()Lnet/postchain/client/transaction/TransactionBuilder;
 	public final fun addOperation (Ljava/lang/String;[Lnet/postchain/gtv/Gtv;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public final fun addTimeBound (JLjava/lang/Long;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public final fun build ()[B
 	public final fun finish ()Lnet/postchain/client/transaction/TransactionBuilder$SignatureBuilder;
 	public fun post ()Lnet/postchain/client/core/TransactionResult;

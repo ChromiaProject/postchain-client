@@ -3,6 +3,9 @@ package net.postchain.client.core
 import net.postchain.common.hexStringToWrappedByteArray
 import net.postchain.common.types.WrappedByteArray
 
+/**
+ * @param timestamp  milliseconds since epoch
+ */
 data class TransactionInfo(
         val blockRID: WrappedByteArray,
         val blockHeight: Long,

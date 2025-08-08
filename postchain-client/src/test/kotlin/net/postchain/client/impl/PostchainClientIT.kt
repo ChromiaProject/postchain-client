@@ -103,9 +103,9 @@ class PostchainClientIT : IntegrationTestSetup() {
                 .sign(sigMaker0)
     }
 
-    private fun createIncorrectTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
+    private fun createIncorrectTx(client: PostchainClient, bcRid: BlockchainRid): TransactionBuilder.PostableTransaction {
         return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
-                .addOperation("gtx_test", gtv(randomStr))
+                .addTimeBound(1000, 100)
                 .sign(sigMaker0)
     }
 
@@ -276,6 +276,50 @@ class PostchainClientIT : IntegrationTestSetup() {
     }
 
     @Test
+    fun `transaction with time bound is rejected if posted too early`() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = TransactionBuilder(client, blockchainRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addTimeBound(Long.MAX_VALUE - 1000, null)
+                .addOperation("gtx_test", gtv(1L), gtv(randomStr()))
+                .sign(sigMaker0)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
+        assertEquals(TransactionStatus.REJECTED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedSuccessfully(result.txRid))
+        verify(listener, atLeast(1)).onTxEvent(PollingTransactionStatus(result.txRid))
+        verify(listener).onTxEvent(TransactionPollingRejected(result.txRid, result.rejectReason!!))
+        verifyNoMoreInteractions(listener)
+    }
+
+    @Test
+    fun `transaction with time bound is rejected if posted too late`() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = TransactionBuilder(client, blockchainRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addTimeBound(1000, 2000)
+                .addOperation("gtx_test", gtv(1L), gtv(randomStr()))
+                .sign(sigMaker0)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
+        assertEquals(TransactionStatus.REJECTED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedSuccessfully(result.txRid))
+        verify(listener, atLeast(1)).onTxEvent(PollingTransactionStatus(result.txRid))
+        verify(listener).onTxEvent(TransactionPollingRejected(result.txRid, result.rejectReason!!))
+        verifyNoMoreInteractions(listener)
+    }
+
+    @Test
     fun testQueryGtxClientApi() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
@@ -401,7 +445,7 @@ class PostchainClientIT : IntegrationTestSetup() {
 
     @Test
     fun testTransactionsInfoPagination() {
-        // setup 5 transactions in 2 blocks (3 + 2)
+        // set up 5 transactions in 2 blocks (3 + 2)
         createTestNodes(4, configFileNameMaxTransactions)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val client = createPostChainClient(blockchainRid)
