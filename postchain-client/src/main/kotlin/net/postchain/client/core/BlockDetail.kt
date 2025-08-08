@@ -3,6 +3,9 @@ package net.postchain.client.core
 import net.postchain.common.types.WrappedByteArray
 import net.postchain.gtv.mapper.Name
 
+/**
+ * @param timestamp  milliseconds since epoch
+ */
 data class BlockDetail(
         @Name("rid") val rid: WrappedByteArray,
         @Name("prevBlockRID") val prevBlockRID: WrappedByteArray,

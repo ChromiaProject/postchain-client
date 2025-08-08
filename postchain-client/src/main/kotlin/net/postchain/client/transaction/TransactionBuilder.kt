@@ -9,6 +9,8 @@ import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.SigMaker
 import net.postchain.crypto.Signature
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 import net.postchain.gtv.merkle.GtvMerkleHashCalculatorBase
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxBuilder
@@ -51,9 +53,23 @@ class TransactionBuilder(
     }
 
     /**
-     * Adds a nop operation to make the transaction unique
+     * Adds a "nop" operation to make the transaction unique.
      */
     fun addNop() = apply { gtxBuilder.addNop() }
+
+    /**
+     * Adds a "timeb" operation to only accept the transaction in a specified time window.
+     *
+     * @param from   the earliest time to accept the transaction (milliseconds since epoch)
+     * @param until  the latest time to accept the transaction (milliseconds since epoch), or `null` to not set the latest bound
+     */
+    fun addTimeBound(from: Long, until: Long?) = apply {
+        if (until == null) {
+            gtxBuilder.addOperation("timeb", gtv(from), GtvNull)
+        } else {
+            gtxBuilder.addOperation("timeb", gtv(from), gtv(until))
+        }
+    }
 
     /**
      * Sign this transaction with default signers and [PostchainClient.postTransaction]
