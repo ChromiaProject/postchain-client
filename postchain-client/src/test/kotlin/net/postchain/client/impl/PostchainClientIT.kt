@@ -99,6 +99,7 @@ class PostchainClientIT : IntegrationTestSetup() {
 
     private fun createSignedValidTx(client: PostchainClient, bcRid: BlockchainRid, randomStr: String = randomStr()): TransactionBuilder.PostableTransaction {
         return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addTimeBound(1000, Long.MAX_VALUE - 1000)
                 .addOperation("gtx_test", gtv(1L), gtv(randomStr))
                 .sign(sigMaker0)
     }
@@ -392,7 +393,7 @@ class PostchainClientIT : IntegrationTestSetup() {
         assertThat(blockDetail2.height).isEqualTo(blockDetail1.height)
         assertThat(blockDetail2.transactions).isEqualTo(blockDetail1.transactions)
         assertThat(blockDetail2.timestamp).isEqualTo(blockDetail1.timestamp)
-        
+
         // we cannot compare witness since it will be different on different nodes
         val blockDetail3 = client.genericGetGtv("/blocks/${client.config.blockchainRid}/height/1").toObject<BlockDetail>()
         assertThat(blockDetail3.rid).isEqualTo(blockDetail1.rid)
