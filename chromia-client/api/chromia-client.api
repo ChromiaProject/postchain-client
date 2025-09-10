@@ -786,6 +786,8 @@ public final class net/postchain/chain0/proposal_blockchain_move/Proposal_blockc
 }
 
 public abstract interface class net/postchain/d1/client/ChromiaClient {
+	public abstract fun addIccfProof-SyyshaE (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Lnet/postchain/common/BlockchainRid;Z)Lnet/postchain/gtv/Gtv;
+	public abstract fun addIccfProof-yRBiEQw (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[BLnet/postchain/common/BlockchainRid;Z)Lnet/postchain/gtv/Gtv;
 	public abstract fun awaitClusterAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public abstract fun awaitSystemAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public abstract fun getClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/d1/client/ChromiaPostchainClient;
@@ -809,6 +811,8 @@ public abstract interface class net/postchain/d1/client/ChromiaClient {
 }
 
 public final class net/postchain/d1/client/ChromiaClient$DefaultImpls {
+	public static synthetic fun addIccfProof-SyyshaE$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Lnet/postchain/common/BlockchainRid;ZILjava/lang/Object;)Lnet/postchain/gtv/Gtv;
+	public static synthetic fun addIccfProof-yRBiEQw$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[BLnet/postchain/common/BlockchainRid;ZILjava/lang/Object;)Lnet/postchain/gtv/Gtv;
 	public static synthetic fun awaitClusterAnchoredTx-SyyshaE$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;ILjava/lang/Object;)V
 	public static synthetic fun awaitSystemAnchoredTx-SyyshaE$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;ILjava/lang/Object;)V
 	public static synthetic fun getClient$default (Lnet/postchain/d1/client/ChromiaClient;Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;ZILjava/lang/Object;)Lnet/postchain/d1/client/ChromiaPostchainClient;
@@ -875,9 +879,21 @@ public final class net/postchain/d1/client/ConfirmationProof {
 	public final fun getWitness ()[B
 }
 
+public final class net/postchain/d1/client/IccfBuilder {
+	public static final field Companion Lnet/postchain/d1/client/IccfBuilder$Companion;
+	public static final field ICCF_OP_NAME Ljava/lang/String;
+	public fun <init> (Lnet/postchain/d1/client/ChromiaClient;)V
+	public final fun addIccfProof-yRBiEQw (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[BLnet/postchain/common/BlockchainRid;Z)Lnet/postchain/gtv/Gtv;
+}
+
+public final class net/postchain/d1/client/IccfBuilder$Companion {
+}
+
 public final class net/postchain/d1/client/StandardChromiaClient : net/postchain/d1/client/ChromiaClient {
 	public fun <init> (Lnet/postchain/client/config/PostchainClientConfig;)V
 	public fun <init> (Lnet/postchain/client/request/EndpointPool;)V
+	public fun addIccfProof-SyyshaE (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;Lnet/postchain/common/BlockchainRid;Z)Lnet/postchain/gtv/Gtv;
+	public fun addIccfProof-yRBiEQw (Lnet/postchain/client/transaction/TransactionBuilder;Ljava/lang/String;[BLnet/postchain/common/BlockchainRid;Z)Lnet/postchain/gtv/Gtv;
 	public fun awaitClusterAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public fun awaitSystemAnchoredTx-SyyshaE (Lnet/postchain/common/BlockchainRid;Ljava/lang/String;ILjava/time/Duration;)V
 	public fun getClient (Lnet/postchain/common/BlockchainRid;Lnet/postchain/client/request/RequestStrategyFactory;Z)Lnet/postchain/d1/client/ChromiaPostchainClient;

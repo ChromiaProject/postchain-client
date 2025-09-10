@@ -791,6 +791,7 @@ public final class net/postchain/client/transaction/TransactionBuilder : net/pos
 	public final fun addTimeBound (JLjava/lang/Long;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public final fun build ()[B
 	public final fun finish ()Lnet/postchain/client/transaction/TransactionBuilder$SignatureBuilder;
+	public final fun getBlockchainRid ()Lnet/postchain/common/BlockchainRid;
 	public fun post ()Lnet/postchain/client/core/TransactionResult;
 	public fun postAwaitConfirmation ()Lnet/postchain/client/core/TransactionResult;
 	public fun postAwaitConfirmation (Lnet/postchain/client/core/TxEventListener;)Lnet/postchain/client/core/TransactionResult;
