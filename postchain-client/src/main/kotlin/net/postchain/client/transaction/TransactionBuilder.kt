@@ -20,7 +20,7 @@ import net.postchain.gtx.GtxBuilder
  */
 class TransactionBuilder(
         private val client: PostchainClient,
-        blockchainRid: BlockchainRid,
+        val blockchainRid: BlockchainRid,
         signers: List<ByteArray>,
         private val hashCalculator: GtvMerkleHashCalculatorBase,
         private val defaultSigners: List<SigMaker> = listOf(),

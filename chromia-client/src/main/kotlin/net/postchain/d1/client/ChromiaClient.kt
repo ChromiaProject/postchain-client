@@ -2,14 +2,18 @@ package net.postchain.d1.client
 
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.TxRid
+import net.postchain.client.exception.ClientError
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.request.RequestStrategyFactory
+import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
+import net.postchain.common.data.Hash
+import net.postchain.gtv.Gtv
 import java.time.Duration
 
 interface ChromiaClient {
 
-    /** Configuration used to configure new subsequent created postchain clients */
+    /** Configuration used to configure new subsequently created postchain clients */
     val config: PostchainClientConfig
 
     /** Directory chain blockchain RID, as specified or looked up. */
@@ -194,4 +198,41 @@ interface ChromiaClient {
             requestStrategy: RequestStrategyFactory = config.requestStrategy,
             addNop: Boolean = false,
     ): ChromiaPostchainClient
+
+
+    /**
+     * Adds an ICCF proof to the given transaction builder.
+     *
+     * @param transactionBuilder The transaction builder to which the ICCF proof should be added.
+     * @param txToProveRID The transaction RID of the transaction to be proved.
+     * @param sourceBlockchainRid The RID of the source blockchain where the transaction to be proved resides.
+     * @param forceIntraNetworkIccfOperation A flag to indicate if the operation should be forced as intra-network; defaults to false.
+     * @return The proven transaction
+     * @throws ClientError If the transaction proof cannot be verified due to mismatched hashes or other validation failures.
+     */
+    fun addIccfProof(
+            transactionBuilder: TransactionBuilder,
+            txToProveRID: TxRid,
+            sourceBlockchainRid: BlockchainRid,
+            forceIntraNetworkIccfOperation: Boolean = false,
+    ): Gtv
+
+    /**
+     * Adds an ICCF proof to the given transaction builder.
+     *
+     * @param transactionBuilder The transaction builder to which the ICCF proof should be added.
+     * @param txToProveRID The transaction RID of the transaction to be proved.
+     * @param txToProveHash The transaction hash of the transaction to be proved.
+     * @param sourceBlockchainRid The RID of the source blockchain where the transaction to be proved resides.
+     * @param forceIntraNetworkIccfOperation A flag to indicate if the operation should be forced as intra-network; defaults to false.
+     * @return The proven transaction
+     * @throws ClientError If the transaction proof cannot be verified due to mismatched hashes or other validation failures.
+     */
+    fun addIccfProof(
+            transactionBuilder: TransactionBuilder,
+            txToProveRID: TxRid,
+            txToProveHash: Hash,
+            sourceBlockchainRid: BlockchainRid,
+            forceIntraNetworkIccfOperation: Boolean = false,
+    ): Gtv
 }

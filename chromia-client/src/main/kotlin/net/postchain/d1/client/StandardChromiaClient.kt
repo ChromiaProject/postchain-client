@@ -13,7 +13,10 @@ import net.postchain.client.impl.PostchainClientImpl
 import net.postchain.client.impl.TryNextOnErrorRequestStrategyFactory
 import net.postchain.client.request.EndpointPool
 import net.postchain.client.request.RequestStrategyFactory
+import net.postchain.client.transaction.TransactionBuilder
 import net.postchain.common.BlockchainRid
+import net.postchain.common.data.Hash
+import net.postchain.gtv.Gtv
 import java.lang.Thread.sleep
 import java.time.Duration
 import java.util.concurrent.TimeoutException
@@ -282,4 +285,19 @@ class StandardChromiaClient(
         }
         return EndpointPool.default(apiUrls)
     }
+
+    override fun addIccfProof(
+            transactionBuilder: TransactionBuilder,
+            txToProveRID: TxRid,
+            sourceBlockchainRid: BlockchainRid,
+            forceIntraNetworkIccfOperation: Boolean,
+    ): Gtv = IccfBuilder(this).addIccfProof(transactionBuilder, txToProveRID, null, sourceBlockchainRid, forceIntraNetworkIccfOperation)
+
+    override fun addIccfProof(
+            transactionBuilder: TransactionBuilder,
+            txToProveRID: TxRid,
+            txToProveHash: Hash,
+            sourceBlockchainRid: BlockchainRid,
+            forceIntraNetworkIccfOperation: Boolean,
+    ): Gtv =  IccfBuilder(this).addIccfProof(transactionBuilder, txToProveRID, txToProveHash, sourceBlockchainRid, forceIntraNetworkIccfOperation)
 }
