@@ -49,6 +49,7 @@ import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.GtvType
 import net.postchain.gtv.mapper.GtvObjectMapper
 import net.postchain.gtv.merkle.makeMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -343,7 +344,8 @@ class PostchainClientImpl(
                         return@poll
                     }
                     if (lastKnownTxResult.status == REJECTED) {
-                        listener.onTxEvent(TransactionPollingRejected(txRid, lastKnownTxResult.rejectReason ?: "Unknown reason"))
+                        listener.onTxEvent(TransactionPollingRejected(txRid, lastKnownTxResult.rejectReason
+                                ?: "Unknown reason"))
                         return@poll
                     }
                 } catch (e: ClientError) {
@@ -614,7 +616,10 @@ class PostchainClientImpl(
                     ?: response.status.description
 
             contentType == ContentType.OCTET_STREAM.value ->
-                decodeGtv(responseStream)?.asString() ?: response.status.description
+                decodeGtv(responseStream)?.let {
+                    if (it.type == GtvType.STRING) it.asString()
+                    else it.asDict()["error"]?.asString()
+                } ?: response.status.description
 
             else -> {
                 val responseBody = responseStream(response).use { it.readAllBytes() }

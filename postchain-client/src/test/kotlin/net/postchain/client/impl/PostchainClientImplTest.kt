@@ -432,11 +432,23 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    fun `binary GTV error will be parsed`() {
+    fun `binary GTV error will be parsed as string`() {
         assertFailure {
             PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), maxResponseSize = 1024, merkleHashVersion = 2), httpClient = object : HttpHandler {
                 override fun invoke(request: Request) =
                         Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv("the error")).inputStream())
+            }).query("test_query", gtv(mapOf()))
+        }.isInstanceOf(ClientError::class)
+    }
+
+    @Test
+    fun `binary GTV error will be parsed as dict`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), maxResponseSize = 1024, merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) =
+                        Response(Status.BAD_REQUEST).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(
+                                encodeGtv(gtv(mapOf("code" to gtv("QUERY_NOT_FOUND"), "error" to gtv("the error")))).inputStream()
+                        )
             }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(ClientError::class)
     }

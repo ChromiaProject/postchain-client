@@ -116,6 +116,12 @@ class PostchainClientIT : IntegrationTestSetup() {
                 .sign(sigMaker0)
     }
 
+    private fun createUnknownOp(client: PostchainClient, bcRid: BlockchainRid): TransactionBuilder.PostableTransaction {
+        return TransactionBuilder(client, bcRid, listOf(pubKey0.data), hashCalculator, listOf(), cryptoSystem)
+                .addOperation("bogus_op", gtv(1L))
+                .sign(sigMaker0)
+    }
+
     private fun createPostChainClient(bcRid: BlockchainRid): PostchainClient {
         return PostchainClientProviderImpl().createClient(
                 PostchainClientConfig(
@@ -258,6 +264,23 @@ class PostchainClientIT : IntegrationTestSetup() {
     }
 
     @Test
+    fun `postAwaitConfirmation rejected immediately with unknown operation`() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+        val builder = createUnknownOp(client, blockchainRid)
+
+        val listener: TxEventListener = mock()
+
+        val result = builder.postAwaitConfirmation(listener)
+        assertEquals(TransactionStatus.REJECTED, result.status)
+
+        verify(listener).onTxEvent(PostingTransaction(result.txRid))
+        verify(listener).onTxEvent(TransactionPostedRejected(result.txRid, result.rejectReason!!))
+        verifyNoMoreInteractions(listener)
+    }
+
+    @Test
     fun `postAwaitConfirmation rejected after polling`() {
         createTestNodes(4, configFileName)
         val blockchainRid = systemSetup.blockchainMap[1]!!.rid
@@ -347,6 +370,17 @@ class PostchainClientIT : IntegrationTestSetup() {
         val wrongEndpoint = client.config.endpointPool.filterNot { it.url == endpoint.url }.first()
         assertThat(client.fetchAsyncQueryResponse(wrongEndpoint, queryRid).status)
                 .isEqualTo(AsyncQueryResponseStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun testQueryNotFound() {
+        createTestNodes(4, configFileName)
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
+        val client = createPostChainClient(blockchainRid)
+
+        assertThrows<ClientError> {
+            client.query("bogus_query", gtv(mapOf()))
+        }
     }
 
     @Test
