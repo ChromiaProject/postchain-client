@@ -11,7 +11,7 @@ fun interface PostchainQuery {
      * Perform a query.
      *
      * @param name name of the query
-     * @param args query arguments, must be provided as a [GtvDictionary]
+     * @param args query arguments must be provided as a [GtvDictionary]
      * @return query result
      */
     fun query(name: String, args: Gtv): Gtv

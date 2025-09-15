@@ -860,6 +860,8 @@ public final class net/postchain/d1/client/ChromiaPostchainClient : net/postchai
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;Lnet/postchain/client/core/TxEventListener;)Lnet/postchain/client/core/TransactionResult;
 	public fun query (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/gtv/Gtv;
+	public fun queryWithHeight (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
+	public fun queryWithHeightAndSignature (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/client/core/QueryResponse;
 	public fun transactionBuilder ()Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;
