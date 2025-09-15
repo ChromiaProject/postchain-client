@@ -564,5 +564,6 @@ class PostchainClientIT : IntegrationTestSetup() {
 
     class MockModel(delegate: Model) : Model by delegate {
         override fun query(query: GtxQuery): Gtv = gtv("bogus")
+        override fun queryWithHeight(query: GtxQuery): Pair<Gtv, Long> = gtv("bogus") to 1
     }
 }

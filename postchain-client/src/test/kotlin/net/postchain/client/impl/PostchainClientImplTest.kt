@@ -19,6 +19,7 @@ import net.postchain.client.core.AsyncQueryResponse
 import net.postchain.client.core.AsyncQueryResponseStatus
 import net.postchain.client.core.BlockDetail
 import net.postchain.client.core.BlockRid
+import net.postchain.client.core.QueryResponse
 import net.postchain.client.core.QueryRid
 import net.postchain.client.core.TransactionInfo
 import net.postchain.client.core.TxRid
@@ -35,6 +36,7 @@ import net.postchain.common.rest.AnchoringChainCheck
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.common.toHex
 import net.postchain.common.tx.TransactionStatus
+import net.postchain.crypto.Signature
 import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
@@ -373,6 +375,162 @@ internal class PostchainClientImplTest {
             }
         }).query("test_query", queryArgs)
         assertThat(queryResponse.asString()).isEqualTo("query_response")
+    }
+
+    @Test
+    fun `queryWithHeight with height`() {
+        val queryResponse = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.GET)
+                assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                assertThat(request.uri.query).isEqualTo("type=test_query")
+                return Response(Status.OK)
+                        .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .header(Header.XBlockHeight, "17")
+                        .body(encodeGtv(gtv("query_response")).inputStream())
+            }
+        }).queryWithHeight("test_query", gtv(mapOf()))
+        assertThat(queryResponse).isEqualTo(gtv("query_response") to 17L)
+    }
+
+    @Test
+    fun `queryWithHeight without height`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.method).isEqualTo(Method.GET)
+                    assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                    assertThat(request.uri.query).isEqualTo("type=test_query")
+                    return Response(Status.OK)
+                            .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                            .body(encodeGtv(gtv("query_response")).inputStream())
+                }
+            }).queryWithHeight("test_query", gtv(mapOf()))
+        }.isInstanceOf(ClientError::class).messageContains("No ${Header.XBlockHeight} header in response")
+    }
+
+    @Test
+    fun `queryWithHeightAndSignature success`() {
+        val queryName = "test_query"
+        val queryArgs = gtv(mapOf("type" to gtv("value")))
+        val answer = gtv("answer")
+        val queryResponse = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request): Response {
+                assertThat(request.method).isEqualTo(Method.POST)
+                assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                assertThat(request.uri.query).isEmpty()
+                assertThat(request.header(Header.XAcceptQueryResponseSignature)).isEqualTo("true")
+                assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery(queryName, queryArgs).encode())
+                return Response(Status.OK)
+                        .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .header(Header.XBlockHeight, "5")
+                        .header(Header.XQueryResponseSignature,
+                                """alg="secp256k1", subject=:A6MBaXvfzXBDE7pI5R1WdUPyoYIDHv1pFd3Ae7zE4WBw:, sig=:QCZVnPLGwzkKw+BZHb22vxNcroxfb6FPeWkW7z/xr01hul2EdUSsCRUm6M+LpsxTc781OK3i9Vgb72wbmJXI7A==:""")
+                        .body(encodeGtv(answer).inputStream())
+            }
+        }).queryWithHeightAndSignature(queryName, queryArgs)
+        assertThat(queryResponse).isEqualTo(QueryResponse(5, answer, Signature(
+                "03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070".hexStringToByteArray(),
+                "4026559CF2C6C3390AC3E0591DBDB6BF135CAE8C5F6FA14F796916EF3FF1AF4D61BA5D847544AC091526E8CF8BA6CC5373BF3538ADE2F5581BEF6C1B9895C8EC".hexStringToByteArray()
+        )))
+    }
+
+    @Test
+    fun `queryWithHeightAndSignature without signature`() {
+        val queryName = "test_query"
+        val queryArgs = gtv(mapOf("type" to gtv("value")))
+        val answer = gtv("answer")
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.method).isEqualTo(Method.POST)
+                    assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                    assertThat(request.uri.query).isEmpty()
+                    assertThat(request.header(Header.XAcceptQueryResponseSignature)).isEqualTo("true")
+                    assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                    assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery(queryName, queryArgs).encode())
+                    return Response(Status.OK)
+                            .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                            .header(Header.XBlockHeight, "5")
+                            .body(encodeGtv(answer).inputStream())
+                }
+            }).queryWithHeightAndSignature(queryName, queryArgs)
+        }.isInstanceOf(ClientError::class).messageContains("No ${Header.XQueryResponseSignature} header in response")
+    }
+
+    @Test
+    fun `queryWithHeightAndSignature malformed signature header`() {
+        val queryName = "test_query"
+        val queryArgs = gtv(mapOf("type" to gtv("value")))
+        val answer = gtv("answer")
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.method).isEqualTo(Method.POST)
+                    assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                    assertThat(request.uri.query).isEmpty()
+                    assertThat(request.header(Header.XAcceptQueryResponseSignature)).isEqualTo("true")
+                    assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                    assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery(queryName, queryArgs).encode())
+                    return Response(Status.OK)
+                            .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                            .header(Header.XBlockHeight, "5")
+                            .header(Header.XQueryResponseSignature, "%&%&%&%")
+                            .body(encodeGtv(answer).inputStream())
+                }
+            }).queryWithHeightAndSignature(queryName, queryArgs)
+        }.isInstanceOf(ClientError::class).messageContains("Malformed ${Header.XQueryResponseSignature} header in response")
+    }
+
+    @Test
+    fun `queryWithHeightAndSignature insufficient signature header`() {
+        val queryName = "test_query"
+        val queryArgs = gtv(mapOf("type" to gtv("value")))
+        val answer = gtv("answer")
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.method).isEqualTo(Method.POST)
+                    assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                    assertThat(request.uri.query).isEmpty()
+                    assertThat(request.header(Header.XAcceptQueryResponseSignature)).isEqualTo("true")
+                    assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                    assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery(queryName, queryArgs).encode())
+                    return Response(Status.OK)
+                            .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                            .header(Header.XBlockHeight, "5")
+                            .header(Header.XQueryResponseSignature,
+                                    """alg="secp256k1", sig=:QCZVnPLGwzkKw+BZHb22vxNcroxfb6FPeWkW7z/xr01hul2EdUSsCRUm6M+LpsxTc781OK3i9Vgb72wbmJXI7A==:""")
+                            .body(encodeGtv(answer).inputStream())
+                }
+            }).queryWithHeightAndSignature(queryName, queryArgs)
+        }.isInstanceOf(ClientError::class).messageContains("Malformed ${Header.XQueryResponseSignature} header in response")
+    }
+
+    @Test
+    fun `queryWithHeightAndSignature invalid signature`() {
+        val queryName = "test_query"
+        val queryArgs = gtv(mapOf("type" to gtv("value")))
+        val answer = gtv("answer")
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request): Response {
+                    assertThat(request.method).isEqualTo(Method.POST)
+                    assertThat(request.uri.path).isEqualTo("/query_gtv/$BLOCKCHAIN_RID")
+                    assertThat(request.uri.query).isEmpty()
+                    assertThat(request.header(Header.XAcceptQueryResponseSignature)).isEqualTo("true")
+                    assertThat(request.header(Header.ContentType)).isEqualTo(ContentType.OCTET_STREAM.value)
+                    assertThat(request.body.stream.use { it.readAllBytes() }).isContentEqualTo(GtxQuery(queryName, queryArgs).encode())
+                    return Response(Status.OK)
+                            .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                            .header(Header.XBlockHeight, "5")
+                            .header(Header.XQueryResponseSignature,
+                                    """alg="secp256k1", subject=:A6MBaXvfzXBDE7pI5R1WdUPyoYIDHv1pFd3Ae7zE4WBw:, sig=:QDZVnPLGwzkKw+BZHb22vxNcroxfb6FPeWkW7z/xr01hul2EdUSsCRUm6M+LpsxTc781OK3i9Vgb72wbmJXI7A==:""")
+                            .body(encodeGtv(answer).inputStream())
+                }
+            }).queryWithHeightAndSignature(queryName, queryArgs)
+        }.isInstanceOf(ClientError::class).messageContains("Invalid signature from subject")
     }
 
     @Test

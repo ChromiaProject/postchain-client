@@ -277,6 +277,8 @@ public abstract interface class net/postchain/client/core/PostchainReadClient : 
 	public abstract fun getTransactionsInfo (JJLjava/lang/String;)Ljava/util/List;
 	public abstract fun getVersion ()Lnet/postchain/client/core/Version;
 	public abstract fun getWaitingTransactions ()Ljava/util/List;
+	public abstract fun queryWithHeight (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
+	public abstract fun queryWithHeightAndSignature (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/client/core/QueryResponse;
 }
 
 public final class net/postchain/client/core/PostchainReadClient$DefaultImpls {
@@ -292,6 +294,38 @@ public final class net/postchain/client/core/PostingTransaction : net/postchain/
 	public static synthetic fun copy-CTXur5g$default (Lnet/postchain/client/core/PostingTransaction;Ljava/lang/String;ILjava/lang/Object;)Lnet/postchain/client/core/PostingTransaction;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getTxRid-14Yrzmo ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/postchain/client/core/QueryResponse {
+	public fun <init> (JLnet/postchain/gtv/Gtv;Lnet/postchain/crypto/Signature;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lnet/postchain/gtv/Gtv;
+	public final fun component3 ()Lnet/postchain/crypto/Signature;
+	public final fun copy (JLnet/postchain/gtv/Gtv;Lnet/postchain/crypto/Signature;)Lnet/postchain/client/core/QueryResponse;
+	public static synthetic fun copy$default (Lnet/postchain/client/core/QueryResponse;JLnet/postchain/gtv/Gtv;Lnet/postchain/crypto/Signature;ILjava/lang/Object;)Lnet/postchain/client/core/QueryResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()J
+	public final fun getResponse ()Lnet/postchain/gtv/Gtv;
+	public final fun getSignature ()Lnet/postchain/crypto/Signature;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/postchain/client/core/QueryResponseSignatureData {
+	public fun <init> (Ljava/lang/String;Lnet/postchain/gtv/Gtv;JLnet/postchain/gtv/Gtv;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lnet/postchain/gtv/Gtv;
+	public final fun component3 ()J
+	public final fun component4 ()Lnet/postchain/gtv/Gtv;
+	public final fun copy (Ljava/lang/String;Lnet/postchain/gtv/Gtv;JLnet/postchain/gtv/Gtv;)Lnet/postchain/client/core/QueryResponseSignatureData;
+	public static synthetic fun copy$default (Lnet/postchain/client/core/QueryResponseSignatureData;Ljava/lang/String;Lnet/postchain/gtv/Gtv;JLnet/postchain/gtv/Gtv;ILjava/lang/Object;)Lnet/postchain/client/core/QueryResponseSignatureData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgs ()Lnet/postchain/gtv/Gtv;
+	public final fun getHeight ()J
+	public final fun getName ()Ljava/lang/String;
+	public final fun getResponse ()Lnet/postchain/gtv/Gtv;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -529,7 +563,10 @@ public final class net/postchain/client/impl/Header {
 	public static final field Accept Ljava/lang/String;
 	public static final field ContentType Ljava/lang/String;
 	public static final field INSTANCE Lnet/postchain/client/impl/Header;
+	public static final field XAcceptQueryResponseSignature Ljava/lang/String;
+	public static final field XBlockHeight Ljava/lang/String;
 	public static final field XPostchainSignature Ljava/lang/String;
+	public static final field XQueryResponseSignature Ljava/lang/String;
 }
 
 public final class net/postchain/client/impl/PostchainClientImpl : net/postchain/client/core/PostchainClient {
@@ -565,6 +602,8 @@ public final class net/postchain/client/impl/PostchainClientImpl : net/postchain
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;)Lnet/postchain/client/core/TransactionResult;
 	public fun postTransactionAwaitConfirmation (Lnet/postchain/gtx/Gtx;Lnet/postchain/client/core/TxEventListener;)Lnet/postchain/client/core/TransactionResult;
 	public fun query (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/gtv/Gtv;
+	public fun queryWithHeight (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lkotlin/Pair;
+	public fun queryWithHeightAndSignature (Ljava/lang/String;Lnet/postchain/gtv/Gtv;)Lnet/postchain/client/core/QueryResponse;
 	public final fun reconfigure (Lnet/postchain/client/config/PostchainClientConfig;)Lnet/postchain/client/impl/PostchainClientImpl;
 	public fun transactionBuilder ()Lnet/postchain/client/transaction/TransactionBuilder;
 	public fun transactionBuilder (Ljava/util/List;)Lnet/postchain/client/transaction/TransactionBuilder;

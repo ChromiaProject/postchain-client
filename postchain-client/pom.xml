@@ -65,6 +65,11 @@
             <artifactId>gson</artifactId>
         </dependency>
         <dependency>
+          <groupId>org.greenbytes.http</groupId>
+          <artifactId>structured-fields</artifactId>
+          <version>0.4</version>
+        </dependency>
+        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <scope>runtime</scope>

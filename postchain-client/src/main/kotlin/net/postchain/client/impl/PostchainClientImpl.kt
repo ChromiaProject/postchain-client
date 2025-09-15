@@ -16,6 +16,8 @@ import net.postchain.client.core.NullTxEventListener
 import net.postchain.client.core.PollingTransactionStatus
 import net.postchain.client.core.PostchainClient
 import net.postchain.client.core.PostingTransaction
+import net.postchain.client.core.QueryResponse
+import net.postchain.client.core.QueryResponseSignatureData
 import net.postchain.client.core.QueryRid
 import net.postchain.client.core.TransactionConfirmed
 import net.postchain.client.core.TransactionInfo
@@ -29,6 +31,7 @@ import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
 import net.postchain.client.defaultHttpHandler
 import net.postchain.client.exception.ClientError
+import net.postchain.client.exception.NodesDisagree
 import net.postchain.client.exception.NotFoundError
 import net.postchain.client.request.Endpoint
 import net.postchain.client.transaction.TransactionBuilder
@@ -45,18 +48,25 @@ import net.postchain.common.tx.TransactionStatus.WAITING
 import net.postchain.common.wrap
 import net.postchain.crypto.KeyPair
 import net.postchain.crypto.PubKey
+import net.postchain.crypto.Signature
+import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvType
 import net.postchain.gtv.mapper.GtvObjectMapper
+import net.postchain.gtv.merkle.GtvMerkleHashCalculatorV2
 import net.postchain.gtv.merkle.makeMerkleHashCalculator
 import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
 import org.apache.commons.io.input.BoundedInputStream
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.greenbytes.http.sfv.ByteSequenceItem
+import org.greenbytes.http.sfv.ParseException
+import org.greenbytes.http.sfv.Parser
+import org.greenbytes.http.sfv.StringItem
 import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.MemoryBody
@@ -74,7 +84,10 @@ import java.util.zip.GZIPInputStream
 object Header {
     const val ContentType = "Content-Type"
     const val Accept = "Accept"
+    const val XAcceptQueryResponseSignature = "X-Accept-Query-Response-Signature"
     const val XPostchainSignature = "X-Postchain-Signature"
+    const val XBlockHeight = "X-Block-Height"
+    const val XQueryResponseSignature = "X-Query-Response-Signature"
 }
 
 const val QUERY_TYPE = "type"
@@ -152,7 +165,16 @@ class PostchainClientImpl(
     )
 
     @Throws(IOException::class)
-    override fun query(name: String, args: Gtv): Gtv = requestStrategy.request({ endpoint ->
+    override fun query(name: String, args: Gtv): Gtv = queryInternal(name, args) { response, endpoint ->
+        decodeGtv("query", response, endpoint)
+    }
+
+    @Throws(IOException::class)
+    override fun queryWithHeight(name: String, args: Gtv): Pair<Gtv, Long> = queryInternal(name, args) { response, endpoint ->
+        decodeGtv("query", response, endpoint) to extractBlockHeightHeader(response, endpoint)
+    }
+
+    private fun <R> queryInternal(name: String, args: Gtv, success: (Response, Endpoint) -> R): R = requestStrategy.request({ endpoint ->
         if (args is GtvDictionary && args.dict.isEmpty()) {
             Request(Method.GET, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
                     .query(QUERY_TYPE, name)
@@ -168,12 +190,61 @@ class PostchainClientImpl(
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
                     .body(MemoryBody(GtxQuery(name, args).encode()))
         }
+    }, success, { response, endpoint ->
+        buildExceptionFromErrorResponse("query", response, endpoint)
+    },
+            true)
+
+    @Throws(IOException::class)
+    override fun queryWithHeightAndSignature(name: String, args: Gtv): QueryResponse = requestStrategy.request({ endpoint ->
+        Request(Method.POST, "${endpoint.url}/query_gtv/$blockchainRIDOrID")
+                .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                .header(Header.Accept, ContentType.OCTET_STREAM.value)
+                .header(Header.XAcceptQueryResponseSignature, "true")
+                .body(MemoryBody(GtxQuery(name, args).encode()))
     }, { response, endpoint ->
-        decodeGtv("query", response, endpoint)
+        val height = extractBlockHeightHeader(response, endpoint)
+        val queryResponse = decodeGtv("query", response, endpoint)
+
+        val signatureHeader = response.header(Header.XQueryResponseSignature)
+                ?: throw ClientError("query", response.status, "No ${Header.XQueryResponseSignature} header in response", endpoint)
+        val signatureDict = try {
+            Parser(signatureHeader).parseDictionary()
+        } catch (e: ParseException) {
+            throw ClientError("query", response.status, "Malformed ${Header.XQueryResponseSignature} header in response: ${e.message}", endpoint)
+        }
+        val alg = (signatureDict.get()["alg"] as? StringItem)?.get()
+                ?: throw ClientError("query", response.status, "Malformed ${Header.XQueryResponseSignature} header in response: missing 'alg'", endpoint)
+        val subject = (signatureDict.get()["subject"] as? ByteSequenceItem)?.get()?.array()
+                ?: throw ClientError("query", response.status, "Malformed ${Header.XQueryResponseSignature} header in response: missing 'subject'", endpoint)
+        val sig = (signatureDict.get()["sig"] as? ByteSequenceItem)?.get()?.array()
+                ?: throw ClientError("query", response.status, "Malformed ${Header.XQueryResponseSignature} header in response: missing 'sig'", endpoint)
+
+        if (alg != cryptoSystem.id)
+            throw ClientError("query", response.status, "Unsupported signature algorithm '$alg', expected '${cryptoSystem.id}'", endpoint)
+
+        val queryResponseSignatureData = QueryResponseSignatureData(
+                name = name,
+                args = args,
+                height = height,
+                response = queryResponse)
+        val hash = GtvObjectMapper.toGtvDictionary(queryResponseSignatureData).merkleHash(GtvMerkleHashCalculatorV2(::sha256Digest))
+        val signature = Signature(subject, sig)
+        if (!cryptoSystem.verifyDigest(hash, signature)) {
+            throw ClientError("query", response.status, "Invalid signature from subject ${signature.subjectID.toHex()}", endpoint)
+        }
+        QueryResponse(height, queryResponse, signature)
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("query", response, endpoint)
     },
             true)
+
+    private fun extractBlockHeightHeader(response: Response, endpoint: Endpoint): Long = try {
+        response.header(Header.XBlockHeight)?.toLong()
+                ?: throw ClientError("query", response.status, "No ${Header.XBlockHeight} header in response", endpoint)
+    } catch (e: NumberFormatException) {
+        throw ClientError("query", response.status, "Invalid ${Header.XBlockHeight} header in response: ${e.message}", endpoint)
+    }
 
     // Max safe length for URL:s is 2000
     // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
@@ -193,7 +264,7 @@ class PostchainClientImpl(
                     .header(Header.ContentType, ContentType.OCTET_STREAM.value)
                     .header(Header.Accept, ContentType.OCTET_STREAM.value)
                     .body(MemoryBody(query.encode()))
-        }, { response, endpoint ->
+        }, { _, endpoint ->
             endpoint to queryRid
         }, { response, endpoint ->
             buildExceptionFromErrorResponse("asyncQuery", response, endpoint)
@@ -236,7 +307,7 @@ class PostchainClientImpl(
         else {
             val blockDetail = decodeAndValidateBlockDetail(gtv, "blockAtHeight", endpoint)
             if (blockDetail.height != height) {
-                throw ClientError("blockAtHeight", null, "Block height mismatch, got ${blockDetail.height} but expected $height", endpoint)
+                throw ClientError("blockAtHeight", response.status, "Block height mismatch, got ${blockDetail.height} but expected $height", endpoint)
             }
             blockDetail
         }
@@ -257,7 +328,7 @@ class PostchainClientImpl(
             val blockDetail = decodeAndValidateBlockDetail(gtv, "blockByRid", endpoint)
             val expectedBlockRid = blockRid.rid.hexStringToByteArray().wrap()
             if (blockDetail.rid != expectedBlockRid) {
-                throw ClientError("blockByRid", null, "Block RID mismatch, got ${blockDetail.rid} but expected $expectedBlockRid", endpoint)
+                throw ClientError("blockByRid", response.status, "Block RID mismatch, got ${blockDetail.rid} but expected $expectedBlockRid", endpoint)
             }
             blockDetail
         }
@@ -348,6 +419,8 @@ class PostchainClientImpl(
                                 ?: "Unknown reason"))
                         return@poll
                     }
+                } catch (_: NodesDisagree) {
+                    lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
                 } catch (e: ClientError) {
                     logger.warn { "Unable to poll for new block: ${e.errorMessage}" }
                     lastKnownTxResult = TransactionResult(txRid, UNKNOWN, null, null)
@@ -431,8 +504,8 @@ class PostchainClientImpl(
                 parseJson("getTransactionInfo", response, endpoint, TransactionInfo.Json::class.java)
         )
         if (!transactionInfo.txRID.data.contentEquals(txRid.rid.hexStringToByteArray())) {
-            throw ClientError("getTransactionInfo", null,
-                    "Transaction RID mismatch, expected ${txRid.rid} but was ${transactionInfo.txRID}", null)
+            throw ClientError("getTransactionInfo", response.status,
+                    "Transaction RID mismatch, expected ${txRid.rid} but was ${transactionInfo.txRID}", endpoint)
         }
         transactionInfo
 
@@ -570,7 +643,7 @@ class PostchainClientImpl(
     override fun genericGetJson(path: String): String = requestStrategy.request({ endpoint ->
         Request(Method.GET, "${endpoint.url}${path}")
                 .header(Header.Accept, ContentType.APPLICATION_JSON.value)
-    }, { response, endpoint ->
+    }, { response, _ ->
         responseStream(response).reader().readText()
     }, { response, endpoint ->
         buildExceptionFromErrorResponse("generic", response, endpoint)

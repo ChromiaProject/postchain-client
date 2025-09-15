@@ -3,6 +3,7 @@ package net.postchain.client.core
 import net.postchain.common.BlockchainRid
 import net.postchain.common.rest.HighestBlockHeightAnchoringCheck
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDictionary
 
 interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
     /**
@@ -77,4 +78,22 @@ interface PostchainReadClient : PostchainBlockClient, PostchainQuery {
      * Check if the highest block of a blockchain matches the block anchored in CAC, SAC and EVM.
      */
     fun getHighestBlockHeightAnchoringCheck(): HighestBlockHeightAnchoringCheck
+
+    /**
+     * Perform a query.
+     *
+     * @param name name of the query
+     * @param args query arguments must be provided as a [GtvDictionary]
+     * @return query result with height
+     */
+    fun queryWithHeight(name: String, args: Gtv): Pair<Gtv, Long>
+
+    /**
+     * Perform a query with a signed response.
+     *
+     * @param name name of the query
+     * @param args query arguments must be provided as a [GtvDictionary]
+     * @return query result with height and signature
+     */
+    fun queryWithHeightAndSignature(name: String, args: Gtv): QueryResponse
 }
