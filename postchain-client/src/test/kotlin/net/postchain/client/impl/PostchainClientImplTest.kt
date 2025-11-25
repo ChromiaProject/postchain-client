@@ -58,7 +58,6 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -977,12 +976,12 @@ internal class PostchainClientImplTest {
     }
 
     @Test
-    @Disabled // for manual testing
     @Timeout(5)
     fun `connect timeout`() {
+        val unroutableInternetUrl = "http://10.255.255.1:1"
         val client = PostchainClientImpl(PostchainClientConfig(
                 BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
-                EndpointPool.singleUrl("http://example.com:1234"),
+                EndpointPool.singleUrl(unroutableInternetUrl),
                 failOverConfig = FailOverConfig(1),
                 connectTimeout = Duration.ofSeconds(1),
                 merkleHashVersion = 2
