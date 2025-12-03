@@ -2,6 +2,8 @@ package net.postchain.d1.client
 
 import net.postchain.chain0.anchoring_chain_common.getAnchoringTransactionForBlockRid
 import net.postchain.chain0.anchoring_chain_common.isBlockAnchored
+import net.postchain.chain0.cm_api.cmApiVersion
+import net.postchain.chain0.cm_api.cmGetActiveBlockchainApiUrls
 import net.postchain.chain0.cm_api.cmGetBlockchainApiUrls
 import net.postchain.chain0.cm_api.cmGetBlockchainCluster
 import net.postchain.chain0.cm_api.cmGetClusterInfo
@@ -46,6 +48,8 @@ class StandardChromiaClient(
         ChromiaPostchainClient(directoryChainClient = directoryChainClient, txClient = client, queryClient = client, addNop = false)
     }
 
+    private val cmApiVersion: Long
+
     init {
         val initialClient = PostchainClientImpl(config.copy(requestStrategy = TryNextOnErrorRequestStrategyFactory()))
 
@@ -57,10 +61,8 @@ class StandardChromiaClient(
             initialClient.reconfigure(initialClient.config.copy(blockchainRid = directoryChainRid))
         }
 
-        val apiUrls = dcBridClient.cmGetBlockchainApiUrls(directoryChainRid)
-        if (apiUrls.isEmpty()) {
-            throw ClientError("chromia", null, "No signer nodes for directory chain $directoryChainRid", null)
-        }
+        cmApiVersion = dcBridClient.cmApiVersion()
+        val apiUrls = getBlockchainApiUrls(dcBridClient, directoryChainRid)
         directoryChainClient = dcBridClient.reconfigure(dcBridClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
     }
 
@@ -279,11 +281,20 @@ class StandardChromiaClient(
     }
 
     private fun getSignerNodes(blockchainRid: BlockchainRid): EndpointPool {
-        val apiUrls = directoryChainClient.cmGetBlockchainApiUrls(blockchainRid)
+        val apiUrls = getBlockchainApiUrls(directoryChainClient, blockchainRid)
+        return EndpointPool.default(apiUrls)
+    }
+
+    private fun getBlockchainApiUrls(dcClient: PostchainClientImpl, blockchainRid: BlockchainRid): List<String> {
+        val apiUrls = if (cmApiVersion >= 3) {
+            dcClient.cmGetActiveBlockchainApiUrls(blockchainRid)
+        } else {
+            dcClient.cmGetBlockchainApiUrls(blockchainRid)
+        }
         if (apiUrls.isEmpty()) {
             throw ClientError("chromia", null, "No signer nodes for blockchain $blockchainRid", null)
         }
-        return EndpointPool.default(apiUrls)
+        return apiUrls
     }
 
     override fun addIccfProof(

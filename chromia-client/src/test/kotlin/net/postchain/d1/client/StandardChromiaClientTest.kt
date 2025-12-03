@@ -29,7 +29,6 @@ import net.postchain.crypto.Secp256K1CryptoSystem
 import net.postchain.crypto.Signature
 import net.postchain.crypto.sha256Digest
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
@@ -260,8 +259,9 @@ class StandardChromiaClientTest {
 
     @Test
     fun `specify directory chain RID`() {
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
-                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         val cc = StandardChromiaClient(PostchainClientConfig(
                 blockchainRid = directoryChainBrid,
@@ -273,9 +273,10 @@ class StandardChromiaClientTest {
     @Test
     fun `lookup directory chain RID`() {
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
-                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         val cc = StandardChromiaClient(PostchainClientConfig(
                 blockchainRid = BlockchainRid.ZERO_RID,
@@ -289,9 +290,10 @@ class StandardChromiaClientTest {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
-                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         stubQuery(baseUrl = "", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
@@ -315,9 +317,10 @@ class StandardChromiaClientTest {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
-                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         stubQuery(baseUrl = "/replica", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
@@ -341,9 +344,10 @@ class StandardChromiaClientTest {
         val tx = Gtx(GtxBody(directoryChainBrid, listOf(GtxOp("my_op")), listOf()), listOf())
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
-                mapOf<String, GtvByteArray>("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
         stubQuery(baseUrl = "/replica", directoryChainBrid, "my_query", mapOf("param" to gtv(17)), gtv("foobar"))
 
@@ -431,6 +435,21 @@ class StandardChromiaClientTest {
                         TransactionStatus.WAITING, 200, "OK"))
     }
 
+    @Test
+    fun `CM API legacy lookup`() {
+        stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(2))
+
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
+                mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
+
+        val cc = StandardChromiaClient(PostchainClientConfig(
+                blockchainRid = BlockchainRid.ZERO_RID,
+                endpointPool = EndpointPool.singleUrl("http://localhost:${server.port()}"))
+        )
+        assertThat(cc.directoryChainRid).isEqualTo(directoryChainBrid)
+    }
+
     fun stubConfirmationProof(
             blockchainRid: BlockchainRid,
             txRid: TxRid,
@@ -476,13 +495,14 @@ class StandardChromiaClientTest {
     fun setupStubs(cluster: String, brid: BlockchainRid) {
 
         stubFor(get("/brid/iid_0").willReturn(ok(directoryChainBrid.toHex())))
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_api_version", gtv(3))
 
         stubQuery(baseUrl = "", directoryChainBrid, "cm_get_system_anchoring_chain", gtv(systemAnchorChainBrid))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
                 mapOf("blockchain_rid" to gtv(directoryChainBrid)), gtv(gtv("http://localhost:${server.port()}")))
 
-        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_api_urls",
+        stubQuery(baseUrl = "", directoryChainBrid, "cm_get_active_blockchain_api_urls",
                 mapOf("blockchain_rid" to gtv(brid)), gtv(gtv("http://localhost:${server.port()}")))
 
         stubQuery(baseUrl = "", directoryChainBrid, "cm_get_blockchain_cluster",
