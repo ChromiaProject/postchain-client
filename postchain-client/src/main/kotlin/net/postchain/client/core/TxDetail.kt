@@ -5,7 +5,7 @@ import net.postchain.gtv.mapper.Name
 import net.postchain.gtv.mapper.Nullable
 
 data class TxDetail(
-        @Name("rid") val rid: WrappedByteArray,
-        @Name("hash") val hash: WrappedByteArray,
-        @Name("data") @Nullable val data: WrappedByteArray?
+        @param:Name("rid") val rid: WrappedByteArray,
+        @param:Name("hash") val hash: WrappedByteArray,
+        @param:Name("data") @param:Nullable val data: WrappedByteArray?
 )

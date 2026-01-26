@@ -11,7 +11,7 @@ enum class AsyncQueryResponseStatus {
 }
 
 data class AsyncQueryResponse(
-        @Name("status") val status: AsyncQueryResponseStatus,
-        @Name("response") val queryResponse: Gtv,
-        @Name("error") val errorMessage: String?,
+        @param:Name("status") val status: AsyncQueryResponseStatus,
+        @param:Name("response") val queryResponse: Gtv,
+        @param:Name("error") val errorMessage: String?,
 )
