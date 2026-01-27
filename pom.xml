@@ -27,11 +27,11 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.43.0</postchain.version>
+        <postchain.version>3.47.3</postchain.version>
         <directory.chain.version>1.104.6</directory.chain.version>
         <ft4.version>v1.1.0r</ft4.version>
         <rell.maven.plugin.version>0.16.5</rell.maven.plugin.version>
-        <kotlin.version>2.0.0</kotlin.version>
+        <kotlin.version>2.3.0</kotlin.version>
 
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.source>17</maven.compiler.source>
@@ -89,7 +89,7 @@
             <dependency>
               <groupId>org.wiremock</groupId>
               <artifactId>wiremock</artifactId>
-              <version>3.12.0</version>
+              <version>3.13.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
