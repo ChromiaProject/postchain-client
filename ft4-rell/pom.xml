@@ -61,7 +61,7 @@
                         </goals>
                         <configuration>
                             <source>${project.build.directory}/ft4/rell/src</source>
-                            <configPath>${project.build.directory}/ft4/chromia.yml</configPath>
+                            <configFile>${project.build.directory}/ft4/chromia.yml</configFile>
                             <target>${project.build.directory}/ft4/rell/src</target>
                         </configuration>
                     </execution>

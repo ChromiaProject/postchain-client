@@ -61,7 +61,7 @@
                         </goals>
                         <configuration>
                             <source>${project.build.directory}/directory1/src</source>
-                            <configPath>${project.build.directory}/directory1/chromia.yml</configPath>
+                            <configFile>${project.build.directory}/directory1/chromia.yml</configFile>
                             <target>${project.build.directory}/directory1</target>
                         </configuration>
                     </execution>
@@ -101,7 +101,7 @@
                                 <id>install-libs</id>
                                 <configuration>
                                     <source>${project.parent.basedir}/../directory-chain/src</source>
-                                    <configPath>${project.parent.basedir}/../directory-chain/chromia.yml</configPath>
+                                    <configFile>${project.parent.basedir}/../directory-chain/chromia.yml</configFile>
                                     <target>${project.parent.basedir}/../directory-chain</target>
                                 </configuration>
                             </execution>
