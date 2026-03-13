@@ -26,7 +26,12 @@ class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: H
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
                 response = makeRequest(request)
                 when {
-                    isSuccess(response.status) -> return success(response, endpoint)
+                    isSuccess(response.status) -> try {
+                        return success(response, endpoint)
+                    } catch (e: Exception) {
+                        logger.debug { "Got exception processing response from ${endpoint.url}, trying next: ${e.message}" }
+                        break@endpoint
+                    }
 
                     isClientFailure(response.status) -> {
                         logger.debug { "Got ${response.status} response from ${endpoint.url}, trying next" }
