@@ -27,10 +27,10 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.47.3</postchain.version>
-        <directory.chain.version>1.104.6</directory.chain.version>
-        <ft4.version>v1.1.0r</ft4.version>
-        <rell.maven.plugin.version>1.0.0</rell.maven.plugin.version>
+        <postchain.version>3.49.4</postchain.version>
+        <directory.chain.version>1.110.0</directory.chain.version>
+        <ft4.version>v1.2.0r</ft4.version>
+        <rell.maven.plugin.version>1.2.1</rell.maven.plugin.version>
         <kotlin.version>2.3.0</kotlin.version>
 
         <maven.compiler.release>17</maven.compiler.release>
@@ -157,6 +157,10 @@
                     <version>${rell.maven.plugin.version}</version>
                     <configuration>
                         <source>${maven.multiModuleProjectDirectory}/${directory.source}</source>
+                        <postchainClientConfig>
+                            <failover.attempts>2</failover.attempts>
+                            <connect.timeout>10000</connect.timeout>
+                        </postchainClientConfig>
                     </configuration>
                 </plugin>
                 <plugin>

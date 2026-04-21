@@ -34,7 +34,7 @@ class StandardChromiaClient(
         override val config: PostchainClientConfig
 ) : ChromiaClient {
     constructor(nodes: EndpointPool) : this(PostchainClientConfig(
-            blockchainRid = BlockchainRid.ZERO_RID,
+            blockchainRid = BlockchainRid.ZERO_RID, // Automatically look up directory chain if not provided
             endpointPool = nodes,
             requestStrategy = TryNextOnErrorRequestStrategyFactory()))
 
@@ -51,19 +51,19 @@ class StandardChromiaClient(
     private val cmApiVersion: Long
 
     init {
-        val initialClient = PostchainClientImpl(config.copy(requestStrategy = TryNextOnErrorRequestStrategyFactory()))
+        val discoveryClient = PostchainClientImpl(config.copy(requestStrategy = TryNextOnErrorRequestStrategyFactory()))
 
-        val dcBridClient = if (initialClient.config.blockchainRid != BlockchainRid.ZERO_RID) {
-            directoryChainRid = initialClient.config.blockchainRid
-            initialClient
+        val dcDiscoveryClient = if (discoveryClient.config.blockchainRid != BlockchainRid.ZERO_RID) {
+            directoryChainRid = discoveryClient.config.blockchainRid
+            discoveryClient
         } else {
-            directoryChainRid = initialClient.getBlockchainRID(0)
-            initialClient.reconfigure(initialClient.config.copy(blockchainRid = directoryChainRid))
+            directoryChainRid = discoveryClient.getBlockchainRID(0)
+            discoveryClient.reconfigure(discoveryClient.config.copy(blockchainRid = directoryChainRid))
         }
 
-        cmApiVersion = dcBridClient.cmApiVersion()
-        val apiUrls = getBlockchainApiUrls(dcBridClient, directoryChainRid)
-        directoryChainClient = dcBridClient.reconfigure(dcBridClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
+        cmApiVersion = dcDiscoveryClient.cmApiVersion()
+        val apiUrls = getBlockchainApiUrls(dcDiscoveryClient, directoryChainRid)
+        directoryChainClient = dcDiscoveryClient.reconfigure(dcDiscoveryClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
     }
 
     override fun awaitClusterAnchoredTx(
