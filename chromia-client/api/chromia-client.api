@@ -138,22 +138,22 @@ public final class net/postchain/chain0/cm_api/Cm_apiKt {
 	public static final fun cmGetSystemChains (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/List;
 }
 
-public final class net/postchain/chain0/delay/blockchain_config_delay/Delay_blockchain_config_delayKt {
+public final class net/postchain/chain0/common/blockchain_config_delay/Common_blockchain_config_delayKt {
 	public static final field GET_BLOCKCHAINS_WITH_ACTIVE_DELAYED_PROPOSALS Ljava/lang/String;
 	public static final field LIST_DELAYED_BLOCKCHAIN_CONFIGS Ljava/lang/String;
 	public static final fun getBlockchainsWithActiveDelayedProposals (Lnet/postchain/client/core/PostchainQuery;)Ljava/util/List;
 	public static final fun listDelayedBlockchainConfigs (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/BlockchainRid;)Ljava/util/List;
 }
 
-public final class net/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData {
+public final class net/postchain/chain0/common/blockchain_config_delay/DelayedBlockchainProposalData {
 	public fun <init> (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)V
 	public final fun component1 ()Lnet/postchain/common/types/RowId;
 	public final fun component2 ()Lnet/postchain/chain0/proposal/ProposalType;
 	public final fun component3 ()Lnet/postchain/chain0/proposal/ProposalState;
 	public final fun component4 ()Ljava/lang/Long;
 	public final fun component5 ()Ljava/lang/Long;
-	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;
-	public static synthetic fun copy$default (Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/chain0/delay/blockchain_config_delay/DelayedBlockchainProposalData;
+	public final fun copy (Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;)Lnet/postchain/chain0/common/blockchain_config_delay/DelayedBlockchainProposalData;
+	public static synthetic fun copy$default (Lnet/postchain/chain0/common/blockchain_config_delay/DelayedBlockchainProposalData;Lnet/postchain/common/types/RowId;Lnet/postchain/chain0/proposal/ProposalType;Lnet/postchain/chain0/proposal/ProposalState;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lnet/postchain/chain0/common/blockchain_config_delay/DelayedBlockchainProposalData;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getApplyAt ()Ljava/lang/Long;
 	public final fun getDelay ()Ljava/lang/Long;
@@ -788,7 +788,7 @@ public final class net/postchain/chain0/proposal_blockchain_move/Proposal_blockc
 	public static final fun getBlockchainMoveProposal (Lnet/postchain/client/core/PostchainQuery;Lnet/postchain/common/types/RowId;)Lnet/postchain/chain0/proposal_blockchain_move/GetBlockchainMoveProposalResult;
 	public static final fun proposeBlockchainMoveCancelOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
 	public static final fun proposeBlockchainMoveFinishOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;JLjava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
-	public static final fun proposeBlockchainMoveOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;Ljava/lang/String;)Lnet/postchain/client/transaction/TransactionBuilder;
+	public static final fun proposeBlockchainMoveOperation (Lnet/postchain/client/transaction/TransactionBuilder;[BLnet/postchain/common/BlockchainRid;Ljava/lang/String;Ljava/lang/String;Z)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public abstract interface class net/postchain/d1/client/ChromiaClient {

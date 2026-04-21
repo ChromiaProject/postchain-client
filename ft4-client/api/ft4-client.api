@@ -112,17 +112,12 @@ public final class com/chromia/lib/ft4/core/accounts/RateLimitConfig {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/chromia/lib/ft4/core/accounts/strategies/open/Lib_ft4_core_accounts_strategies_openKt {
-	public static final field RAS_OPEN Ljava/lang/String;
-	public static final fun rasOpenOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lcom/chromia/lib/ft4/core/accounts/AuthDescriptor;Lcom/chromia/lib/ft4/core/accounts/AuthDescriptor;)Lnet/postchain/client/transaction/TransactionBuilder;
-}
-
-public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist {
+public final class com/chromia/lib/ft4/core/accounts/strategies/Allowlist {
 	public fun <init> (ZLjava/util/List;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Ljava/util/List;
-	public final fun copy (ZLjava/util/List;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
+	public final fun copy (ZLjava/util/List;)Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;ZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAllowAll ()Z
 	public final fun getAllowedValues ()Ljava/util/List;
@@ -130,14 +125,14 @@ public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/Allowli
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/AssetLimit {
+public final class com/chromia/lib/ft4/core/accounts/strategies/AssetLimit {
 	public fun <init> (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;)V
 	public final fun component1 ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun component2 ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/math/BigInteger;
-	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/AssetLimit;
-	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/AssetLimit;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/AssetLimit;
+	public final fun copy (Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;)Lcom/chromia/lib/ft4/core/accounts/strategies/AssetLimit;
+	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/AssetLimit;Lnet/postchain/common/types/WrappedByteArray;Lnet/postchain/common/types/WrappedByteArray;Ljava/lang/String;Ljava/math/BigInteger;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/AssetLimit;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Lnet/postchain/common/types/WrappedByteArray;
 	public final fun getIssuingBlockchainRid ()Lnet/postchain/common/types/WrappedByteArray;
@@ -145,6 +140,36 @@ public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/AssetLi
 	public final fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/lib/ft4/core/accounts/strategies/Rule {
+	public fun <init> (JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;ZZLjava/util/List;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun component4 ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun component5 ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/util/List;
+	public final fun copy (JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;ZZLjava/util/List;)Lcom/chromia/lib/ft4/core/accounts/strategies/Rule;
+	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/Rule;JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;ZZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/Rule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowAllAssets ()Z
+	public final fun getAssetLimits ()Ljava/util/List;
+	public final fun getBlockchains ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun getRecipients ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun getRequireSameAddress ()Z
+	public final fun getSenders ()Lcom/chromia/lib/ft4/core/accounts/strategies/Allowlist;
+	public final fun getStrategies ()Ljava/util/List;
+	public final fun getTimeoutDays ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/chromia/lib/ft4/core/accounts/strategies/open/Lib_ft4_core_accounts_strategies_openKt {
+	public static final field RAS_OPEN Ljava/lang/String;
+	public static final fun rasOpenOperation (Lnet/postchain/client/transaction/TransactionBuilder;Lcom/chromia/lib/ft4/core/accounts/AuthDescriptor;Lcom/chromia/lib/ft4/core/accounts/AuthDescriptor;)Lnet/postchain/client/transaction/TransactionBuilder;
 }
 
 public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/Ft4GetAllowedAssetsResult {
@@ -187,31 +212,6 @@ public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/Pending
 	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;Ljava/util/List;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/PendingTransferFilter;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getState ()Ljava/util/List;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class com/chromia/lib/ft4/core/accounts/strategies/transfer/Rule {
-	public fun <init> (JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;)V
-	public final fun component1 ()J
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun component4 ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun component5 ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun component6 ()Z
-	public final fun component7 ()Z
-	public final fun component8 ()Ljava/util/List;
-	public final fun copy (JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Rule;
-	public static synthetic fun copy$default (Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Rule;JLjava/util/List;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;ZZLjava/util/List;ILjava/lang/Object;)Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Rule;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAllowAllAssets ()Z
-	public final fun getAssetLimits ()Ljava/util/List;
-	public final fun getBlockchains ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun getRecipients ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun getRequireSameAddress ()Z
-	public final fun getSenders ()Lcom/chromia/lib/ft4/core/accounts/strategies/transfer/Allowlist;
-	public final fun getStrategies ()Ljava/util/List;
-	public final fun getTimeoutDays ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
