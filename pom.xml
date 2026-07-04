@@ -27,7 +27,7 @@
 
     <properties>
         <revision>dev</revision>
-        <postchain.version>3.49.16</postchain.version>
+        <postchain.version>3.49.17</postchain.version>
         <directory.chain.version>1.110.5</directory.chain.version>
         <ft4.version>v1.2.0r</ft4.version>
         <rell.maven.plugin.version>1.2.3</rell.maven.plugin.version>
