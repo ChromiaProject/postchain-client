@@ -16,17 +16,14 @@ import org.http4k.client.ApacheAsyncClient
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.then
-import org.http4k.filter.ClientFilters
 import org.http4k.filter.GzipCompressionMode
+import org.http4k.filter.RequestFilters
 
 fun bftMajority(n: Int) = n - (n - 1) / 3
 
 fun defaultHttpHandler(config: PostchainClientConfig): HttpHandler {
-    val compressionFilter = if (config.compressRequestBodies) {
-        ClientFilters.GZip(GzipCompressionMode.Streaming())
-    } else ClientFilters.AcceptGZip(GzipCompressionMode.Streaming())
-
-    return compressionFilter.then(ApacheClient(HttpClients.custom()
+    val httpClient = ApacheClient(HttpClients.custom()
+            .setDefaultHeaders(listOf(BasicHeader("accept-encoding", "gzip")))
             .setRetryStrategy(DefaultHttpRequestRetryStrategy(0, TimeValue.ZERO_MILLISECONDS)) // no retries
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                     .setDefaultConnectionConfig(ConnectionConfig.custom()
@@ -38,7 +35,11 @@ fun defaultHttpHandler(config: PostchainClientConfig): HttpHandler {
                     .setCookieSpec(StandardCookieSpec.IGNORE)
                     .setResponseTimeout(Timeout.ofMilliseconds(config.responseTimeout.toMillis()))
                     .build())
-            .build()))
+            .build())
+
+    return if (config.compressRequestBodies) {
+        RequestFilters.GZip(GzipCompressionMode.Streaming()).then(httpClient)
+    } else httpClient
 }
 
 fun defaultAsyncHttpHandler(config: PostchainClientConfig) =

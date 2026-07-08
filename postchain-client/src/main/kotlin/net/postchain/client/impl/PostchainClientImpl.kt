@@ -79,7 +79,6 @@ import java.io.IOException
 import java.lang.Thread.sleep
 import java.lang.reflect.Type
 import java.time.Duration
-import java.util.zip.GZIPInputStream
 
 object Header {
     const val ContentType = "Content-Type"
@@ -721,13 +720,10 @@ class PostchainClientImpl(
     }
 
     private fun responseStream(response: Response): BoundedInputStream {
-        val originalStream = if (response.header("content-encoding") == "gzip") {
-            GZIPInputStream(response.body.stream)
-        } else {
-            response.body.stream
-        }
+        // The body is already decoded by httpclient5's transparent decompression; do not decode
+        // again (httpclient5 5.5+ leaves the Content-Encoding header in place after decoding).
         return BoundedInputStream.builder()
-                .setInputStream(originalStream)
+                .setInputStream(response.body.stream)
                 .setMaxCount(maxResponseSize.toLong())
                 .setPropagateClose(true)
                 .get()
