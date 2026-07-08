@@ -23,7 +23,6 @@ fun bftMajority(n: Int) = n - (n - 1) / 3
 
 fun defaultHttpHandler(config: PostchainClientConfig): HttpHandler {
     val httpClient = ApacheClient(HttpClients.custom()
-            .disableContentCompression() // response decompression is handled manually, since httpclient5 5.5+ no longer removes the content-encoding header when decompressing
             .setDefaultHeaders(listOf(BasicHeader("accept-encoding", "gzip")))
             .setRetryStrategy(DefaultHttpRequestRetryStrategy(0, TimeValue.ZERO_MILLISECONDS)) // no retries
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
@@ -45,7 +44,6 @@ fun defaultHttpHandler(config: PostchainClientConfig): HttpHandler {
 
 fun defaultAsyncHttpHandler(config: PostchainClientConfig) =
         ApacheAsyncClient(HttpAsyncClients.custom()
-                .disableContentCompression() // response decompression is handled manually, since httpclient5 5.5+ no longer removes the content-encoding header when decompressing
                 .setDefaultHeaders(listOf(BasicHeader("accept-encoding", "gzip")))
                 .setRetryStrategy(DefaultHttpRequestRetryStrategy(0, TimeValue.ZERO_MILLISECONDS)) // no retries
                 .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
