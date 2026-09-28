@@ -13,3 +13,6 @@ postchain/logs
 *.jar
 
 .flattened-pom.xml
+
+# CI Maven cache
+.m2/
