@@ -18,17 +18,21 @@ class AbortOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: Htt
         var endpoint: Endpoint? = null
         val iterator = config.endpointPool.iterator()
         while (iterator.hasNext()) {
+            response?.close()
+            response = null
             endpoint = iterator.next()
             val request = createRequest(endpoint)
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
-                response = makeRequest(request)
+                response?.close()
+                val currentResponse = makeRequest(request)
+                response = currentResponse
                 when {
-                    isSuccess(response.status) -> return success(response, endpoint)
+                    isSuccess(currentResponse.status) -> return currentResponse.use { success(it, endpoint) }
 
-                    isClientFailure(response.status) -> return failure(response, endpoint)
+                    isClientFailure(currentResponse.status) -> return currentResponse.use { failure(it, endpoint) }
 
-                    isServerFailure(response.status) -> {
-                        endpoint.setUnreachable(unreachableDuration(response.status))
+                    isServerFailure(currentResponse.status) -> {
+                        endpoint.setUnreachable(unreachableDuration(currentResponse.status))
                         break@endpoint
                     }
 
@@ -37,7 +41,7 @@ class AbortOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: Htt
                 Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
             }
         }
-        return failure(response!!, endpoint!!)
+        return response!!.use { failure(it, endpoint!!) }
     }
 
     override fun close() {}

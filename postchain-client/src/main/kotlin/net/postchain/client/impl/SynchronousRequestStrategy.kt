@@ -16,23 +16,25 @@ abstract class SynchronousRequestStrategy(
 
     override fun <R> request(endpoint: Endpoint, request: Request, success: (Response, Endpoint) -> R, failure: (Response, Endpoint) -> R): R {
         var response: Response? = null
-        (1..config.failOverConfig.attemptsPerEndpoint).forEach { i ->
-            response = makeRequest(request)
+        (1..config.failOverConfig.attemptsPerEndpoint).forEach {
+            response?.close()
+            val currentResponse = makeRequest(request)
+            response = currentResponse
             when {
-                isSuccess(response.status) -> return success(response, endpoint)
+                isSuccess(currentResponse.status) -> return currentResponse.use { success(it, endpoint) }
 
-                isClientFailure(response.status) -> return failure(response, endpoint)
+                isClientFailure(currentResponse.status) -> return currentResponse.use { failure(it, endpoint) }
 
-                isServerFailure(response.status) -> {
-                    endpoint.setUnreachable(unreachableDuration(response.status))
-                    return failure(response, endpoint)
+                isServerFailure(currentResponse.status) -> {
+                    endpoint.setUnreachable(unreachableDuration(currentResponse.status))
+                    return currentResponse.use { failure(it, endpoint) }
                 }
 
                 // else retry the same endpoint
             }
             Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
         }
-        return failure(response!!, endpoint)
+        return response!!.use { failure(it, endpoint) }
     }
 
     protected fun makeRequest(request: Request) = try {

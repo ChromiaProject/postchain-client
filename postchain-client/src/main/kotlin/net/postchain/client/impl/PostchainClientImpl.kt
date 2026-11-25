@@ -61,7 +61,6 @@ import net.postchain.gtv.merkle.makeMerkleHashCalculator
 import net.postchain.gtv.merkleHash
 import net.postchain.gtx.Gtx
 import net.postchain.gtx.GtxQuery
-import org.apache.commons.io.input.BoundedInputStream
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.greenbytes.http.sfv.ByteSequenceItem
 import org.greenbytes.http.sfv.ParseException
@@ -74,8 +73,11 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.util.SizeLimitExceededException
+import java.io.Closeable
 import java.io.EOFException
 import java.io.IOException
+import java.io.InputStream
 import java.lang.Thread.sleep
 import java.lang.reflect.Type
 import java.time.Duration
@@ -93,10 +95,38 @@ const val QUERY_TYPE = "type"
 const val QUERY_ARGS = "~args"
 const val MERKLE_HASH_FALLBACK_VERSION = 1
 
+private class SizeLimitedResponseInputStream(
+        private val delegate: InputStream,
+        private val maxSize: Long) : InputStream() {
+    private var count = 0L
+
+    override fun read(): Int {
+        val result = delegate.read()
+        if (result != -1) increment(1)
+        return result
+    }
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        val result = delegate.read(b, off, len)
+        if (result != -1) increment(result)
+        return result
+    }
+
+    override fun close() = delegate.close()
+
+    private fun increment(bytesRead: Int) {
+        count += bytesRead
+        if (count > maxSize) throw SizeLimitExceededException(maxSize)
+    }
+}
+
 class PostchainClientImpl(
         override val config: PostchainClientConfig,
-        private val httpClient: HttpHandler = defaultHttpHandler(config),
+        httpClient: HttpHandler? = null,
 ) : PostchainClient {
+
+    private val httpHandler: HttpHandler = httpClient ?: defaultHttpHandler(config)
+    private val ownsHttpClient = httpClient == null
 
     companion object : KLogging() {
         private val GSON_REFLECTION_TYPE_STRING_ARRAY: Type = object : TypeToken<ArrayList<String>>() {}.type
@@ -107,7 +137,7 @@ class PostchainClientImpl(
     private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
     private val cryptoSystem = config.cryptoSystem
     private val gson = Gson()
-    private val requestStrategy = config.requestStrategy.create(config, httpClient)
+    private val requestStrategy = config.requestStrategy.create(config, httpHandler)
 
     override val merkleHashCalculator by lazy {
         val merkleHashVersion = if (config.merkleHashVersion == MERKLE_HASH_AUTO_DETECT_VERSION) {
@@ -465,7 +495,7 @@ class PostchainClientImpl(
     private fun handleConfirmationProofData(response: Response, endpoint: Endpoint): ByteArray {
         val contentType = response.header(Header.ContentType) ?: ""
         return when {
-            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use<BoundedInputStream, ByteArray> { it.readAllBytes() }
+            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readBytes() }
 
             contentType.startsWith(ContentType.APPLICATION_JSON.value) ->
                 parseJson("confirmationProof", response, endpoint, ConfirmationProofWrapper::class.java).proof.hexStringToByteArray()
@@ -481,7 +511,7 @@ class PostchainClientImpl(
     }, { response, endpoint ->
         val contentType = response.header(Header.ContentType) ?: ""
         when {
-            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readAllBytes() }
+            contentType == ContentType.OCTET_STREAM.value -> responseStream(response).use { it.readBytes() }
 
             contentType.startsWith(ContentType.APPLICATION_JSON.value) ->
                 parseJson("getTransaction", response, endpoint, TransactionWrapper::class.java).tx.hexStringToByteArray()
@@ -694,13 +724,13 @@ class PostchainClientImpl(
                 } ?: response.status.description
 
             else -> {
-                val responseBody = responseStream(response).use { it.readAllBytes() }
+                val responseBody = responseStream.use { it.readBytes() }
                 if (responseBody.isNotEmpty()) String(responseBody) else response.status.description
             }
         }
     }
 
-    private fun <T> parseJson(responseStream: BoundedInputStream, cls: Class<T>): T? = try {
+    private fun <T> parseJson(responseStream: InputStream, cls: Class<T>): T? = try {
         val body = responseStream.bufferedReader()
         gson.fromJson(body, cls)
     } catch (e: JsonParseException) {
@@ -709,7 +739,7 @@ class PostchainClientImpl(
         else null
     }
 
-    private fun decodeGtv(responseStream: BoundedInputStream): Gtv? = try {
+    private fun decodeGtv(responseStream: InputStream): Gtv? = try {
         GtvDecoder.decodeGtv(responseStream)
     } catch (e: EOFException) {
         throw e
@@ -719,19 +749,19 @@ class PostchainClientImpl(
         else null
     }
 
-    private fun responseStream(response: Response): BoundedInputStream {
+    private fun responseStream(response: Response): InputStream {
         // The body is already decoded by httpclient5's transparent decompression; do not decode
         // again (httpclient5 5.5+ leaves the Content-Encoding header in place after decoding).
-        return BoundedInputStream.builder()
-                .setInputStream(response.body.stream)
-                .setMaxCount(maxResponseSize.toLong())
-                .setPropagateClose(true)
-                .get()
+        return SizeLimitedResponseInputStream(response.body.stream, maxResponseSize.toLong())
     }
 
     @Throws(IOException::class)
     override fun close() {
-        requestStrategy.close()
+        try {
+            requestStrategy.close()
+        } finally {
+            if (ownsHttpClient && httpHandler is Closeable) httpHandler.close()
+        }
     }
 
     /**
@@ -740,7 +770,7 @@ class PostchainClientImpl(
      * Using this instead `PostchainClientImpl(config)` to keep the same `HttpHandler` and enable connection reuse.
      */
     fun reconfigure(config: PostchainClientConfig): PostchainClientImpl =
-            PostchainClientImpl(config, httpClient)
+            PostchainClientImpl(config, httpHandler)
 
     /* JSON structures */
     data class TxStatus(val status: String?, val rejectReason: String?)

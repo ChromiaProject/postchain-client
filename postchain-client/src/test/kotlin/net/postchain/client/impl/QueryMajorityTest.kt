@@ -5,6 +5,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import net.postchain.client.DeterministicEndpointPool
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.core.BlockDetail
@@ -46,6 +47,21 @@ internal class QueryMajorityTest {
         })
         assertThat(queryResponse.asString()).isEqualTo("query_response")
         assertThat(requestCounter).isEqualTo(4)
+    }
+
+    @Test
+    fun `query responses are closed`() {
+        val responseBodies = mutableListOf<CloseTrackingInputStream>()
+        val queryResponse: Gtv = makeQuery(object : AsyncHttpHandler {
+            override fun invoke(request: Request, fn: (Response) -> Unit) {
+                requestCounter++
+                val responseBody = CloseTrackingInputStream(encodeGtv(gtv("query_response")))
+                responseBodies += responseBody
+                fn(Response(Status.OK).body(responseBody))
+            }
+        })
+        assertThat(queryResponse.asString()).isEqualTo("query_response")
+        assertThat(responseBodies.all { it.closed }).isTrue()
     }
 
     @Test

@@ -53,22 +53,24 @@ class QueryMajorityRequestStrategy(
             val request = createRequest(endpoint)
             try {
                 asyncHttpClient(request) { response ->
-                    outcomes.add(if (isSuccess(response.status)) {
-                        try {
-                            Success(success(response, endpoint) ?: nullValue)
-                        } catch (e: Exception) {
-                            Error(e)
-                        }
-                    } else {
-                        if (isServerFailure(response.status)) {
-                            endpoint.setUnreachable(unreachableDuration(response.status))
-                        }
-                        try {
-                            Failure(failure(response, endpoint) ?: nullValue)
-                        } catch (e: Exception) {
-                            Error(e)
-                        }
-                    })
+                    response.use { response ->
+                        outcomes.add(if (isSuccess(response.status)) {
+                            try {
+                                Success(success(response, endpoint) ?: nullValue)
+                            } catch (e: Exception) {
+                                Error(e)
+                            }
+                        } else {
+                            if (isServerFailure(response.status)) {
+                                endpoint.setUnreachable(unreachableDuration(response.status))
+                            }
+                            try {
+                                Failure(failure(response, endpoint) ?: nullValue)
+                            } catch (e: Exception) {
+                                Error(e)
+                            }
+                        })
+                    }
                 }
             } catch (e: SSLException) {
                 outcomes.add(Error(e))

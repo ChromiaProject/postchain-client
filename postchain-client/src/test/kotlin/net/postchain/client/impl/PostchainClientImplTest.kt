@@ -4,6 +4,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
@@ -57,12 +58,14 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.util.SizeLimitExceededException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.io.Closeable
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.StandardProtocolFamily
@@ -207,7 +210,47 @@ internal class PostchainClientImplTest {
             } catch (e: CompletionException) {
                 throw e.cause ?: e
             }
-        }.isInstanceOf(IOException::class)
+        }.isInstanceOf(SizeLimitExceededException::class).messageContains("1024")
+    }
+
+    @Test
+    fun `too big octet-stream response is rejected instead of truncated`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), maxResponseSize = 1024, merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) = Response(Status.OK)
+                        .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .body(ByteArray(2048) { 1 }.inputStream())
+            }).getTransaction(TxRid(""))
+        }.isInstanceOf(SizeLimitExceededException::class).messageContains("1024")
+    }
+
+    @Test
+    fun `async query response is closed without reading body`() {
+        val responseBody = CloseTrackingInputStream(ByteArray(16) { 1 })
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) = Response(Status.OK)
+                    .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                    .body(responseBody)
+        })
+
+        client.asyncQuery("test_query", gtv(mapOf()))
+
+        assertThat(responseBody.closed).isTrue()
+    }
+
+    @Test
+    fun `client close does not close provided http handler`() {
+        var handlerClosed = false
+        val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler, Closeable {
+            override fun invoke(request: Request) = Response(Status.OK)
+            override fun close() {
+                handlerClosed = true
+            }
+        })
+
+        client.close()
+
+        assertThat(handlerClosed).isFalse()
     }
 
     @Test

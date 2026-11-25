@@ -21,25 +21,29 @@ class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: H
         var endpoint: Endpoint? = null
         val iterator = config.endpointPool.iterator()
         while (iterator.hasNext()) {
+            response?.close()
+            response = null
             endpoint = iterator.next()
             val request = createRequest(endpoint)
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
-                response = makeRequest(request)
+                response?.close()
+                val currentResponse = makeRequest(request)
+                response = currentResponse
                 when {
-                    isSuccess(response.status) -> try {
-                        return success(response, endpoint)
+                    isSuccess(currentResponse.status) -> try {
+                        return currentResponse.use { success(it, endpoint) }
                     } catch (e: Exception) {
                         logger.debug { "Got exception processing response from ${endpoint.url}, trying next: ${e.message}" }
                         break@endpoint
                     }
 
-                    isClientFailure(response.status) -> {
-                        logger.debug { "Got ${response.status} response from ${endpoint.url}, trying next" }
+                    isClientFailure(currentResponse.status) -> {
+                        logger.debug { "Got ${currentResponse.status} response from ${endpoint.url}, trying next" }
                         break@endpoint
                     }
 
-                    isServerFailure(response.status) -> {
-                        endpoint.setUnreachable(unreachableDuration(response.status))
+                    isServerFailure(currentResponse.status) -> {
+                        endpoint.setUnreachable(unreachableDuration(currentResponse.status))
                         break@endpoint
                     }
 
@@ -48,7 +52,7 @@ class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: H
                 Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
             }
         }
-        return failure(response!!, endpoint!!)
+        return response!!.use { failure(it, endpoint!!) }
     }
 
     override fun close() {}

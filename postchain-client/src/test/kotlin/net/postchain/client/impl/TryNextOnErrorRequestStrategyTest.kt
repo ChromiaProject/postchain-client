@@ -4,6 +4,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isTrue
 import net.postchain.client.DeterministicEndpointPool
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.exception.ClientError
@@ -39,15 +40,19 @@ internal class TryNextOnErrorRequestStrategyTest {
 
     @Test
     fun `first node returns invalid GTV, second node succeeds`() {
+        val firstResponseBody = CloseTrackingInputStream("not valid gtv".toByteArray())
+        val secondResponseBody = CloseTrackingInputStream(encodeGtv(gtv("query_response")))
         val result: Gtv = makeQuery { request ->
             requestCounter++
             if (request.uri.port == 1)
-                Response(Status.OK).body("not valid gtv".toByteArray().inputStream())
+                Response(Status.OK).body(firstResponseBody)
             else
-                Response(Status.OK).body(encodeGtv(gtv("query_response")).inputStream())
+                Response(Status.OK).body(secondResponseBody)
         }
         assertThat(result.asString()).isEqualTo("query_response")
         assertThat(requestCounter).isEqualTo(2)
+        assertThat(firstResponseBody.closed).isTrue()
+        assertThat(secondResponseBody.closed).isTrue()
     }
 
     @Test
