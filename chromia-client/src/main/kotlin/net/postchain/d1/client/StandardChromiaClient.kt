@@ -73,8 +73,8 @@ class StandardChromiaClient(
             throw e
         }
 
-        val dcClient = dcDiscoveryClient!!
-        val finalDirectoryChainClient = directoryChainClientLocal!!
+        val dcClient = dcDiscoveryClient
+        val finalDirectoryChainClient = directoryChainClientLocal
         try {
             try {
                 dcClient.close()
