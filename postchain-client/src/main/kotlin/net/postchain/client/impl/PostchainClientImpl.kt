@@ -29,7 +29,8 @@ import net.postchain.client.core.TransactionResult
 import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
-import net.postchain.client.defaultHttpHandler
+import net.postchain.client.DefaultHttpHandler
+import net.postchain.client.SizeLimitedResponseInputStream
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
 import net.postchain.client.exception.NotFoundError
@@ -73,8 +74,6 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.http4k.util.SizeLimitExceededException
-import java.io.Closeable
 import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
@@ -95,38 +94,24 @@ const val QUERY_TYPE = "type"
 const val QUERY_ARGS = "~args"
 const val MERKLE_HASH_FALLBACK_VERSION = 1
 
-private class SizeLimitedResponseInputStream(
-        private val delegate: InputStream,
-        private val maxSize: Long) : InputStream() {
-    private var count = 0L
-
-    override fun read(): Int {
-        val result = delegate.read()
-        if (result != -1) increment(1)
-        return result
-    }
-
-    override fun read(b: ByteArray, off: Int, len: Int): Int {
-        val result = delegate.read(b, off, len)
-        if (result != -1) increment(result)
-        return result
-    }
-
-    override fun close() = delegate.close()
-
-    private fun increment(bytesRead: Int) {
-        count += bytesRead
-        if (count > maxSize) throw SizeLimitExceededException(maxSize)
-    }
-}
-
 class PostchainClientImpl(
         override val config: PostchainClientConfig,
         httpClient: HttpHandler? = null,
 ) : PostchainClient {
 
-    private val httpHandler: HttpHandler = httpClient ?: defaultHttpHandler(config)
-    private val ownsHttpClient = httpClient == null
+    private val httpHandler: HttpHandler
+    private var sharedHttpClient: DefaultHttpHandler?
+
+    init {
+        if (httpClient == null) {
+            val created = DefaultHttpHandler(config)
+            sharedHttpClient = created
+            httpHandler = created
+        } else {
+            sharedHttpClient = null
+            httpHandler = httpClient
+        }
+    }
 
     companion object : KLogging() {
         private val GSON_REFLECTION_TYPE_STRING_ARRAY: Type = object : TypeToken<ArrayList<String>>() {}.type
@@ -740,7 +725,7 @@ class PostchainClientImpl(
     }
 
     private fun decodeGtv(responseStream: InputStream): Gtv? = try {
-        GtvDecoder.decodeGtv(responseStream)
+        GtvDecoder.decodeGtv(responseStream.use { it.readBytes() })
     } catch (e: EOFException) {
         throw e
     } catch (e: IOException) {
@@ -752,7 +737,8 @@ class PostchainClientImpl(
     private fun responseStream(response: Response): InputStream {
         // The body is already decoded by httpclient5's transparent decompression; do not decode
         // again (httpclient5 5.5+ leaves the Content-Encoding header in place after decoding).
-        return SizeLimitedResponseInputStream(response.body.stream, maxResponseSize.toLong())
+        val stream = response.body.stream
+        return if (maxResponseSize > 0) SizeLimitedResponseInputStream(stream, maxResponseSize.toLong()) else stream
     }
 
     @Throws(IOException::class)
@@ -760,7 +746,7 @@ class PostchainClientImpl(
         try {
             requestStrategy.close()
         } finally {
-            if (ownsHttpClient && httpHandler is Closeable) httpHandler.close()
+            sharedHttpClient?.release()
         }
     }
 
@@ -769,8 +755,17 @@ class PostchainClientImpl(
      *
      * Using this instead `PostchainClientImpl(config)` to keep the same `HttpHandler` and enable connection reuse.
      */
-    fun reconfigure(config: PostchainClientConfig): PostchainClientImpl =
-            PostchainClientImpl(config, httpHandler)
+    fun reconfigure(config: PostchainClientConfig): PostchainClientImpl {
+        sharedHttpClient?.acquire()
+        try {
+            val client = PostchainClientImpl(config, httpHandler)
+            client.sharedHttpClient = sharedHttpClient
+            return client
+        } catch (e: Throwable) {
+            sharedHttpClient?.release()
+            throw e
+        }
+    }
 
     /* JSON structures */
     data class TxStatus(val status: String?, val rejectReason: String?)

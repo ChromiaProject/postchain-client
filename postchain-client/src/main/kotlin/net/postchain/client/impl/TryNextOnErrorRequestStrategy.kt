@@ -17,42 +17,50 @@ class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: H
                              success: (Response, Endpoint) -> R,
                              failure: (Response, Endpoint) -> R,
                              queryMultiple: Boolean): R {
-        var response: Response? = null
+        var lastResponse: Response? = null
         var endpoint: Endpoint? = null
+        var lastProcessingFailure: Exception? = null
         val iterator = config.endpointPool.iterator()
         while (iterator.hasNext()) {
-            response?.close()
-            response = null
+            lastResponse?.close()
+            lastResponse = null
             endpoint = iterator.next()
             val request = createRequest(endpoint)
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
-                response?.close()
                 val currentResponse = makeRequest(request)
-                response = currentResponse
                 when {
                     isSuccess(currentResponse.status) -> try {
                         return currentResponse.use { success(it, endpoint) }
                     } catch (e: Exception) {
+                        lastProcessingFailure = e
                         logger.debug { "Got exception processing response from ${endpoint.url}, trying next: ${e.message}" }
                         break@endpoint
                     }
 
                     isClientFailure(currentResponse.status) -> {
                         logger.debug { "Got ${currentResponse.status} response from ${endpoint.url}, trying next" }
+                        lastResponse = currentResponse
                         break@endpoint
                     }
 
                     isServerFailure(currentResponse.status) -> {
                         endpoint.setUnreachable(unreachableDuration(currentResponse.status))
+                        lastResponse = currentResponse
                         break@endpoint
                     }
 
-                    // else retry same endpoint
+                    i == config.failOverConfig.attemptsPerEndpoint -> lastResponse = currentResponse
+
+                    else -> {
+                        currentResponse.close()
+                        Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
+                    }
                 }
-                Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
             }
         }
-        return response!!.use { failure(it, endpoint!!) }
+        lastResponse?.let { return it.use { response -> failure(response, endpoint!!) } }
+        lastProcessingFailure?.let { throw it }
+        throw IllegalStateException("No endpoint available")
     }
 
     override fun close() {}

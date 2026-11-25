@@ -16,6 +16,7 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.junit.jupiter.api.BeforeEach
+import java.io.IOException
 import org.junit.jupiter.api.Test
 
 internal class TryNextOnErrorRequestStrategyTest {
@@ -56,13 +57,13 @@ internal class TryNextOnErrorRequestStrategyTest {
     }
 
     @Test
-    fun `all nodes return invalid GTV, throws ClientError`() {
+    fun `all nodes return invalid GTV, throws IOException`() {
         assertFailure {
             makeQuery { _ ->
                 requestCounter++
                 Response(Status.OK).body("not valid gtv".toByteArray().inputStream())
             }
-        }.isInstanceOf(ClientError::class)
+        }.isInstanceOf(IOException::class)
         assertThat(requestCounter).isEqualTo(3)
     }
 

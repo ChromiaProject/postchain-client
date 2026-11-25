@@ -68,10 +68,13 @@ import org.junit.jupiter.api.assertThrows
 import java.io.Closeable
 import java.io.IOException
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.net.StandardProtocolFamily
 import java.nio.channels.ServerSocketChannel
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
 
 internal class PostchainClientImplTest {
@@ -236,6 +239,59 @@ internal class PostchainClientImplTest {
         client.asyncQuery("test_query", gtv(mapOf()))
 
         assertThat(responseBody.closed).isTrue()
+    }
+
+    @Test
+    fun `default http handler rejects oversized response while reading`() {
+        ServerSocket(0).use { server ->
+            val contentLength = 1024 * 1024
+            val responseWritten = CompletableFuture<Pair<Int, Boolean>>()
+            Thread {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                        }
+                        val output = socket.getOutputStream()
+                        output.write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: $contentLength\r\nConnection: close\r\n\r\n".toByteArray())
+                        output.flush()
+                        var written = 0
+                        var failed = false
+                        try {
+                            output.write(ByteArray(8192) { 1 })
+                            output.flush()
+                            written += 8192
+                            Thread.sleep(150)
+                            while (written < contentLength) {
+                                val chunkSize = minOf(65536, contentLength - written)
+                                output.write(ByteArray(chunkSize) { 1 })
+                                output.flush()
+                                written += chunkSize
+                            }
+                        } catch (e: IOException) {
+                            failed = true
+                        }
+                        responseWritten.complete(written to failed)
+                    }
+                } catch (e: Exception) {
+                    responseWritten.completeExceptionally(e)
+                }
+            }.start()
+
+            val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), maxResponseSize = 16, merkleHashVersion = 2))
+            try {
+                assertThrows<SizeLimitExceededException> {
+                    client.getTransaction(TxRid(""))
+                }
+            } finally {
+                client.close()
+            }
+
+            responseWritten.get(5, TimeUnit.SECONDS)
+        }
     }
 
     @Test
@@ -618,7 +674,7 @@ internal class PostchainClientImplTest {
                 override fun invoke(request: Request) =
                         Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(ByteArray(2 * 1024))).inputStream())
             }).query("test_query", gtv(mapOf()))
-        }.isInstanceOf(GtvException::class)
+        }.isInstanceOf(SizeLimitExceededException::class).messageContains("1024")
     }
 
     @Test

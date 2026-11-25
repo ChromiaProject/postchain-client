@@ -14,18 +14,16 @@ class AbortOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: Htt
                              success: (Response, Endpoint) -> R,
                              failure: (Response, Endpoint) -> R,
                              queryMultiple: Boolean): R {
-        var response: Response? = null
+        var lastResponse: Response? = null
         var endpoint: Endpoint? = null
         val iterator = config.endpointPool.iterator()
         while (iterator.hasNext()) {
-            response?.close()
-            response = null
+            lastResponse?.close()
+            lastResponse = null
             endpoint = iterator.next()
             val request = createRequest(endpoint)
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
-                response?.close()
                 val currentResponse = makeRequest(request)
-                response = currentResponse
                 when {
                     isSuccess(currentResponse.status) -> return currentResponse.use { success(it, endpoint) }
 
@@ -33,15 +31,20 @@ class AbortOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: Htt
 
                     isServerFailure(currentResponse.status) -> {
                         endpoint.setUnreachable(unreachableDuration(currentResponse.status))
+                        lastResponse = currentResponse
                         break@endpoint
                     }
 
-                    // else retry same endpoint
+                    i == config.failOverConfig.attemptsPerEndpoint -> lastResponse = currentResponse
+
+                    else -> {
+                        currentResponse.close()
+                        Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
+                    }
                 }
-                Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
             }
         }
-        return response!!.use { failure(it, endpoint!!) }
+        return lastResponse!!.use { failure(it, endpoint!!) }
     }
 
     override fun close() {}

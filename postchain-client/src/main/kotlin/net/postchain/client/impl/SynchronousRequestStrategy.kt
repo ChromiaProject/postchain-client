@@ -15,11 +15,9 @@ abstract class SynchronousRequestStrategy(
         protected val httpClient: HttpHandler) : RequestStrategy {
 
     override fun <R> request(endpoint: Endpoint, request: Request, success: (Response, Endpoint) -> R, failure: (Response, Endpoint) -> R): R {
-        var response: Response? = null
-        (1..config.failOverConfig.attemptsPerEndpoint).forEach {
-            response?.close()
+        var lastResponse: Response? = null
+        for (attempt in 1..config.failOverConfig.attemptsPerEndpoint) {
             val currentResponse = makeRequest(request)
-            response = currentResponse
             when {
                 isSuccess(currentResponse.status) -> return currentResponse.use { success(it, endpoint) }
 
@@ -30,11 +28,15 @@ abstract class SynchronousRequestStrategy(
                     return currentResponse.use { failure(it, endpoint) }
                 }
 
-                // else retry the same endpoint
+                attempt == config.failOverConfig.attemptsPerEndpoint -> lastResponse = currentResponse
+
+                else -> {
+                    currentResponse.close()
+                    Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
+                }
             }
-            Thread.sleep(config.failOverConfig.attemptInterval.toMillis())
         }
-        return response!!.use { failure(it, endpoint) }
+        return lastResponse!!.use { failure(it, endpoint) }
     }
 
     protected fun makeRequest(request: Request) = try {
