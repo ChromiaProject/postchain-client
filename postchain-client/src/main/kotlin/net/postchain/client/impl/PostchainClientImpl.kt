@@ -30,7 +30,6 @@ import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
 import net.postchain.client.DefaultHttpHandler
-import net.postchain.client.MAX_RESPONSE_SIZE_HEADER
 import net.postchain.client.SizeLimitedResponseInputStream
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
@@ -126,7 +125,7 @@ class PostchainClientImpl(
     private val cryptoSystem = config.cryptoSystem
     private val gson = Gson()
     private val requestHttpHandler: HttpHandler = if (httpHandler is DefaultHttpHandler) {
-        { request -> httpHandler.invoke(request.header(MAX_RESPONSE_SIZE_HEADER, maxResponseSize.toString())) }
+        { request -> httpHandler.invokeLimited(request, maxResponseSize.toLong()) }
     } else {
         httpHandler
     }

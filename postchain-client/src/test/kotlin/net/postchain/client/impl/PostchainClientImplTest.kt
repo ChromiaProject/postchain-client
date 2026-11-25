@@ -15,6 +15,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.client.DefaultHttpHandler
+import net.postchain.client.DeterministicEndpointPool
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
@@ -302,6 +303,57 @@ internal class PostchainClientImplTest {
     }
 
     @Test
+    fun `try next request strategy fails over after response size limit`() {
+        ServerSocket(0).use { limitedServer ->
+            ServerSocket(0).use { validServer ->
+                val limitedServed = CompletableFuture<Unit>()
+                val validServed = CompletableFuture<Unit>()
+                val limitedBody = ByteArray(129) { 1 }
+                val validBody = encodeGtv(gtv("merkle_hash_version" to gtv(2)))
+
+                fun serve(server: ServerSocket, body: ByteArray, completed: CompletableFuture<Unit>) {
+                    Thread {
+                        try {
+                            server.accept().use { socket ->
+                                socket.soTimeout = 5000
+                                val reader = socket.getInputStream().bufferedReader()
+                                while (true) {
+                                    val line = reader.readLine() ?: break
+                                    if (line.isEmpty()) break
+                                }
+                                socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                                socket.getOutputStream().write(body)
+                                socket.getOutputStream().flush()
+                            }
+                            completed.complete(Unit)
+                        } catch (e: Exception) {
+                            completed.completeExceptionally(e)
+                        }
+                    }.start()
+                }
+
+                serve(limitedServer, limitedBody, limitedServed)
+                serve(validServer, validBody, validServed)
+
+                val config = PostchainClientConfig(
+                        BlockchainRid.buildFromHex(BLOCKCHAIN_RID),
+                        DeterministicEndpointPool(listOf("http://localhost:${limitedServer.localPort}", "http://localhost:${validServer.localPort}")),
+                        requestStrategy = TryNextOnErrorRequestStrategyFactory(),
+                        maxResponseSize = 128,
+                        merkleHashVersion = 2)
+                val client = PostchainClientImpl(config)
+                try {
+                    assertThat(client.getFeatures().size).isEqualTo(1)
+                } finally {
+                    client.close()
+                }
+                limitedServed.get(5, TimeUnit.SECONDS)
+                validServed.get(5, TimeUnit.SECONDS)
+            }
+        }
+    }
+
+    @Test
     fun `client close does not close provided http handler`() {
         var handlerClosed = false
         val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), merkleHashVersion = 2), httpClient = object : HttpHandler, Closeable {
@@ -488,7 +540,7 @@ internal class PostchainClientImplTest {
                     responseFuture.complete(response)
                 }
                 val response = responseFuture.get(5, TimeUnit.SECONDS)
-                assertThat(response.status).isEqualTo(Status.SERVICE_UNAVAILABLE)
+                assertThat(response.status).isEqualTo(Status.REQUEST_ENTITY_TOO_LARGE)
                 assertThrows<SizeLimitExceededException> {
                     response.body.stream.readAllBytes()
                 }

@@ -15,6 +15,7 @@ import net.postchain.gtv.GtvFactory.gtv
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.util.SizeLimitExceededException
 import org.junit.jupiter.api.BeforeEach
 import java.io.IOException
 import org.junit.jupiter.api.Test
@@ -54,6 +55,19 @@ internal class TryNextOnErrorRequestStrategyTest {
         assertThat(requestCounter).isEqualTo(2)
         assertThat(firstResponseBody.closed).isTrue()
         assertThat(secondResponseBody.closed).isTrue()
+    }
+
+    @Test
+    fun `first node exceeds response size limit, second node succeeds`() {
+        val result: Gtv = makeQuery { request ->
+            requestCounter++
+            if (request.uri.port == 1)
+                throw SizeLimitExceededException(128L)
+            else
+                Response(Status.OK).body(encodeGtv(gtv("query_response")).inputStream())
+        }
+        assertThat(result.asString()).isEqualTo("query_response")
+        assertThat(requestCounter).isEqualTo(2)
     }
 
     @Test

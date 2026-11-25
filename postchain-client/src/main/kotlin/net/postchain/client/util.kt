@@ -54,7 +54,6 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal const val MAX_RESPONSE_SIZE_HEADER = "x-postchain-client-max-response-size"
 
 fun bftMajority(n: Int) = n - (n - 1) / 3
 
@@ -100,10 +99,10 @@ internal class DefaultHttpHandler(private val config: PostchainClientConfig) : H
                     .build())
             .build()
 
-    private val handler: HttpHandler = if (config.compressRequestBodies) {
-        RequestFilters.GZip(GzipCompressionMode.Streaming()).then { request -> invokeClassic(request) }
+    private val gzipRequestFilter = if (config.compressRequestBodies) {
+        RequestFilters.GZip(GzipCompressionMode.Streaming())
     } else {
-        { request -> invokeClassic(request) }
+        null
     }
 
     private val lock = Any()
@@ -128,10 +127,16 @@ internal class DefaultHttpHandler(private val config: PostchainClientConfig) : H
         if (shouldClose) closeableHttpClient.close()
     }
 
-    override fun invoke(request: Request): Response = handler(request)
+    override fun invoke(request: Request): Response = invoke(request, config.maxResponseSize.toLong())
 
-    private fun invokeClassic(request: Request): Response {
-        val maxResponseSize = effectiveMaxResponseSize(request)
+    internal fun invokeLimited(request: Request, maxResponseSize: Long): Response = invoke(request, maxResponseSize)
+
+    private fun invoke(request: Request, maxResponseSize: Long): Response {
+        val handler: HttpHandler = { req -> invokeClassic(req, maxResponseSize) }
+        return gzipRequestFilter?.then(handler)?.invoke(request) ?: handler(request)
+    }
+
+    private fun invokeClassic(request: Request, maxResponseSize: Long): Response {
         val apacheRequest = toClassicRequest(request)
         return try {
             closeableHttpClient.execute(apacheRequest) { response ->
@@ -164,13 +169,6 @@ internal class DefaultHttpHandler(private val config: PostchainClientConfig) : H
         }
     }
 
-    private fun effectiveMaxResponseSize(request: Request): Long =
-            request.headers
-                    .firstOrNull { it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
-                    ?.second
-                    ?.toLongOrNull()
-                    ?: config.maxResponseSize.toLong()
-
     override fun close() = release()
 }
 
@@ -181,7 +179,6 @@ private fun toClassicRequest(request: Request): BasicClassicHttpRequest {
     val apacheRequest = BasicClassicHttpRequest(request.method.name, java.net.URI.create(request.uri.toString()))
     request.headers
             .filter { !it.first.equals("content-length", ignoreCase = true) }
-            .filter { !it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
             .forEach { (name, value) -> apacheRequest.addHeader(name, value) }
     if (bodyBytes.isNotEmpty() || request.method.name in setOf("POST", "PUT", "PATCH")) {
         apacheRequest.setEntity(ByteArrayEntity(bodyBytes, null))
@@ -280,7 +277,7 @@ private class LimitedAsyncResponseState(private val maxSize: Long) {
     fun failureResponse(exception: Exception): Response {
         if (limitExceeded) {
             val bytes = bytes()
-            return Response(Status.SERVICE_UNAVAILABLE)
+            return Response(Status.REQUEST_ENTITY_TOO_LARGE)
                     .body(SizeLimitedResponseInputStream(ByteArrayInputStream(bytes), maxSize), bytes.size.toLong())
         }
         return Response(failureStatus(exception))
@@ -328,7 +325,6 @@ private fun toAsyncRequestProducer(request: Request): AsyncRequestProducer {
     val basicRequest = BasicHttpRequest(request.method.name, request.uri.toString())
     request.headers
             .filter { !it.first.equals("content-length", ignoreCase = true) }
-            .filter { !it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
             .forEach { (name, value) -> basicRequest.addHeader(name, value) }
     val entityProducer = if (bodyBytes.isNotEmpty() || request.method.name in setOf("POST", "PUT", "PATCH")) {
         BasicAsyncEntityProducer(bodyBytes)
@@ -355,11 +351,7 @@ fun defaultAsyncHttpHandler(config: PostchainClientConfig): AsyncHttpHandler {
 
     return object : AsyncHttpHandler {
         override fun invoke(request: Request, fn: (Response) -> Unit) {
-            val maxResponseSize = request.headers
-                    .firstOrNull { it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
-                    ?.second
-                    ?.toLongOrNull()
-                    ?: config.maxResponseSize.toLong()
+            val maxResponseSize = config.maxResponseSize.toLong()
             val state = LimitedAsyncResponseState(maxResponseSize)
             val delivered = AtomicBoolean(false)
             fun deliver(response: Response) {

@@ -8,6 +8,7 @@ import net.postchain.client.request.RequestStrategyFactory
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.util.SizeLimitExceededException
 
 class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: HttpHandler)
     : SynchronousRequestStrategy(config, httpClient) {
@@ -27,7 +28,13 @@ class TryNextOnErrorRequestStrategy(config: PostchainClientConfig, httpClient: H
             endpoint = iterator.next()
             val request = createRequest(endpoint)
             endpoint@ for (i in 1..config.failOverConfig.attemptsPerEndpoint) {
-                val currentResponse = makeRequest(request)
+                val currentResponse = try {
+                    makeRequest(request)
+                } catch (e: SizeLimitExceededException) {
+                    lastProcessingFailure = e
+                    logger.debug { "Got response size limit exception from ${endpoint.url}, trying next: ${e.message}" }
+                    break@endpoint
+                }
                 when {
                     isSuccess(currentResponse.status) -> try {
                         return currentResponse.use { success(it, endpoint) }

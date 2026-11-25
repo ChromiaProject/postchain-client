@@ -52,20 +52,40 @@ class StandardChromiaClient(
 
     init {
         val discoveryClient = PostchainClientImpl(config.copy(requestStrategy = TryNextOnErrorRequestStrategyFactory()))
+        var dcDiscoveryClient: PostchainClientImpl? = null
+        var directoryChainClientLocal: PostchainClientImpl? = null
+        try {
+            dcDiscoveryClient = if (discoveryClient.config.blockchainRid != BlockchainRid.ZERO_RID) {
+                directoryChainRid = discoveryClient.config.blockchainRid
+                discoveryClient
+            } else {
+                directoryChainRid = discoveryClient.getBlockchainRID(0)
+                discoveryClient.reconfigure(discoveryClient.config.copy(blockchainRid = directoryChainRid))
+            }
 
-        val dcDiscoveryClient = if (discoveryClient.config.blockchainRid != BlockchainRid.ZERO_RID) {
-            directoryChainRid = discoveryClient.config.blockchainRid
-            discoveryClient
-        } else {
-            directoryChainRid = discoveryClient.getBlockchainRID(0)
-            discoveryClient.reconfigure(discoveryClient.config.copy(blockchainRid = directoryChainRid))
+            cmApiVersion = dcDiscoveryClient.cmApiVersion()
+            val apiUrls = getBlockchainApiUrls(dcDiscoveryClient, directoryChainRid)
+            directoryChainClientLocal = dcDiscoveryClient.reconfigure(dcDiscoveryClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
+        } catch (e: Throwable) {
+            directoryChainClientLocal?.close()
+            dcDiscoveryClient?.close()
+            if (discoveryClient !== dcDiscoveryClient) discoveryClient.close()
+            throw e
         }
 
-        cmApiVersion = dcDiscoveryClient.cmApiVersion()
-        val apiUrls = getBlockchainApiUrls(dcDiscoveryClient, directoryChainRid)
-        directoryChainClient = dcDiscoveryClient.reconfigure(dcDiscoveryClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
-        dcDiscoveryClient.close()
-        if (discoveryClient !== dcDiscoveryClient) discoveryClient.close()
+        val dcClient = dcDiscoveryClient!!
+        val finalDirectoryChainClient = directoryChainClientLocal!!
+        try {
+            try {
+                dcClient.close()
+            } finally {
+                if (discoveryClient !== dcClient) discoveryClient.close()
+            }
+        } catch (e: Throwable) {
+            finalDirectoryChainClient.close()
+            throw e
+        }
+        directoryChainClient = finalDirectoryChainClient
     }
 
     override fun awaitClusterAnchoredTx(
