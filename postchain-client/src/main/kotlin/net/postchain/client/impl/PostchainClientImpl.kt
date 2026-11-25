@@ -30,6 +30,7 @@ import net.postchain.client.core.TxEventListener
 import net.postchain.client.core.TxRid
 import net.postchain.client.core.Version
 import net.postchain.client.DefaultHttpHandler
+import net.postchain.client.MAX_RESPONSE_SIZE_HEADER
 import net.postchain.client.SizeLimitedResponseInputStream
 import net.postchain.client.exception.ClientError
 import net.postchain.client.exception.NodesDisagree
@@ -101,6 +102,8 @@ class PostchainClientImpl(
 
     private val httpHandler: HttpHandler
     private var sharedHttpClient: DefaultHttpHandler?
+    private val closeLock = Any()
+    private var closed = false
 
     init {
         if (httpClient == null) {
@@ -122,7 +125,12 @@ class PostchainClientImpl(
     private val blockchainRIDOrID = config.queryByChainId?.let { "iid_$it" } ?: blockchainRIDHex
     private val cryptoSystem = config.cryptoSystem
     private val gson = Gson()
-    private val requestStrategy = config.requestStrategy.create(config, httpHandler)
+    private val requestHttpHandler: HttpHandler = if (httpHandler is DefaultHttpHandler) {
+        { request -> httpHandler.invoke(request.header(MAX_RESPONSE_SIZE_HEADER, maxResponseSize.toString())) }
+    } else {
+        httpHandler
+    }
+    private val requestStrategy = config.requestStrategy.create(config, requestHttpHandler)
 
     override val merkleHashCalculator by lazy {
         val merkleHashVersion = if (config.merkleHashVersion == MERKLE_HASH_AUTO_DETECT_VERSION) {
@@ -738,11 +746,18 @@ class PostchainClientImpl(
         // The body is already decoded by httpclient5's transparent decompression; do not decode
         // again (httpclient5 5.5+ leaves the Content-Encoding header in place after decoding).
         val stream = response.body.stream
-        return if (maxResponseSize > 0) SizeLimitedResponseInputStream(stream, maxResponseSize.toLong()) else stream
+        return if (maxResponseSize >= 0) SizeLimitedResponseInputStream(stream, maxResponseSize.toLong()) else stream
     }
 
     @Throws(IOException::class)
     override fun close() {
+        val shouldClose = synchronized(closeLock) {
+            if (closed) false else {
+                closed = true
+                true
+            }
+        }
+        if (!shouldClose) return
         try {
             requestStrategy.close()
         } finally {

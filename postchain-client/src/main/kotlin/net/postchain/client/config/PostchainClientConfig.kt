@@ -36,7 +36,7 @@ data class PostchainClientConfig @JvmOverloads constructor(
         val failOverConfig: FailOverConfig = FailOverConfig(),
         val cryptoSystem: CryptoSystem = Secp256K1CryptoSystem(),
         val queryByChainId: Long? = null,
-        /** Maximum decoded response body size in bytes; values <= 0 disable the limit. */
+        /** Maximum decoded response body size in bytes; values < 0 disable the limit and 0 allows only empty bodies. */
         val maxResponseSize: Int = MAX_RESPONSE_SIZE,
         /** Will not be used if `httpClient` parameter is specified when creating `ConcretePostchainClient`. */
         val connectTimeout: Duration = CONNECT_TIMEOUT,

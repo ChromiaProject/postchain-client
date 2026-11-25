@@ -1,6 +1,8 @@
 package net.postchain.client
 
 import net.postchain.client.config.PostchainClientConfig
+import org.apache.hc.client5.http.ConnectTimeoutException
+import org.apache.hc.client5.http.HttpHostConnectException
 import org.apache.hc.client5.http.config.ConnectionConfig
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.cookie.StandardCookieSpec
@@ -15,6 +17,8 @@ import org.apache.hc.core5.concurrent.FutureCallback
 import org.apache.hc.core5.http.EntityDetails
 import org.apache.hc.core5.http.Header
 import org.apache.hc.core5.http.HttpResponse
+import org.apache.hc.core5.http.MalformedChunkCodingException
+import org.apache.hc.core5.http.NoHttpResponseException
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest
 import org.apache.hc.core5.http.message.BasicHeader
@@ -25,6 +29,8 @@ import org.apache.hc.core5.http.nio.CapacityChannel
 import org.apache.hc.core5.http.nio.entity.BasicAsyncEntityProducer
 import org.apache.hc.core5.http.nio.support.BasicRequestProducer
 import org.apache.hc.core5.http.protocol.HttpContext
+import org.apache.hc.core5.io.CloseMode
+import org.apache.hc.core5.io.ModalCloseable
 import org.apache.hc.core5.util.TimeValue
 import org.apache.hc.core5.util.Timeout
 import org.http4k.client.AsyncHttpHandler
@@ -41,15 +47,21 @@ import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.nio.ByteBuffer
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
+
+internal const val MAX_RESPONSE_SIZE_HEADER = "x-postchain-client-max-response-size"
 
 fun bftMajority(n: Int) = n - (n - 1) / 3
 
 internal class SizeLimitedResponseInputStream(
         private val delegate: InputStream,
         private val maxSize: Long) : InputStream() {
+    private val limited = maxSize >= 0
     private var count = 0L
 
     override fun read(): Int {
@@ -68,7 +80,7 @@ internal class SizeLimitedResponseInputStream(
 
     private fun increment(bytesRead: Int) {
         count += bytesRead
-        if (count > maxSize) throw SizeLimitExceededException(maxSize)
+        if (limited && count > maxSize) throw SizeLimitExceededException(maxSize)
     }
 }
 
@@ -119,31 +131,57 @@ internal class DefaultHttpHandler(private val config: PostchainClientConfig) : H
     override fun invoke(request: Request): Response = handler(request)
 
     private fun invokeClassic(request: Request): Response {
+        val maxResponseSize = effectiveMaxResponseSize(request)
         val apacheRequest = toClassicRequest(request)
         return try {
             closeableHttpClient.execute(apacheRequest) { response ->
                 val status = Status(response.code, response.reasonPhrase)
                 val headers = response.getHeaders().map { it.name to it.value }
                 val entity = response.entity
-                val body = if (entity == null) ByteArray(0) else readLimitedBytes(entity.content, config.maxResponseSize.toLong())
+                val body = if (entity == null) ByteArray(0) else try {
+                    readLimitedBytes(entity.content, maxResponseSize)
+                } catch (e: SizeLimitExceededException) {
+                    if (response is ModalCloseable) response.close(CloseMode.IMMEDIATE)
+                    response.setEntity(null)
+                    throw e
+                }
                 Response(status).headers(headers).body(ByteArrayInputStream(body), body.size.toLong())
             }
-        } catch (e: SizeLimitExceededException) {
-            throw e
-        } catch (e: Exception) {
-            Response(failureStatus(e))
+        } catch (e: ConnectTimeoutException) {
+            Response(Status.CLIENT_TIMEOUT)
+        } catch (e: SocketTimeoutException) {
+            Response(Status.CLIENT_TIMEOUT)
+        } catch (e: HttpHostConnectException) {
+            Response(Status.CONNECTION_REFUSED)
+        } catch (e: UnknownHostException) {
+            Response(Status.UNKNOWN_HOST)
+        } catch (e: SocketException) {
+            Response(Status.SERVICE_UNAVAILABLE)
+        } catch (e: NoHttpResponseException) {
+            Response(Status.SERVICE_UNAVAILABLE)
+        } catch (e: MalformedChunkCodingException) {
+            Response(Status.SERVICE_UNAVAILABLE)
         }
     }
+
+    private fun effectiveMaxResponseSize(request: Request): Long =
+            request.headers
+                    .firstOrNull { it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
+                    ?.second
+                    ?.toLongOrNull()
+                    ?: config.maxResponseSize.toLong()
 
     override fun close() = release()
 }
 
 private fun toClassicRequest(request: Request): BasicClassicHttpRequest {
-    val bodyBytes = ByteArray(request.body.payload.remaining())
-    request.body.payload.get(bodyBytes)
+    val payload = request.body.payload.duplicate()
+    val bodyBytes = ByteArray(payload.remaining())
+    payload.get(bodyBytes)
     val apacheRequest = BasicClassicHttpRequest(request.method.name, java.net.URI.create(request.uri.toString()))
     request.headers
             .filter { !it.first.equals("content-length", ignoreCase = true) }
+            .filter { !it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
             .forEach { (name, value) -> apacheRequest.addHeader(name, value) }
     if (bodyBytes.isNotEmpty() || request.method.name in setOf("POST", "PUT", "PATCH")) {
         apacheRequest.setEntity(ByteArrayEntity(bodyBytes, null))
@@ -153,30 +191,31 @@ private fun toClassicRequest(request: Request): BasicClassicHttpRequest {
 
 private fun readLimitedBytes(stream: InputStream, maxSize: Long): ByteArray {
     val output = ByteArrayOutputStream()
-    val bufferSize = if (maxSize > 0) minOf(8192L, maxSize + 1).toInt() else 8192
+    val limited = maxSize >= 0
+    val bufferSize = if (limited) minOf(8192L, maxSize + 1).toInt() else 8192
     val buffer = ByteArray(bufferSize)
-    stream.use { input ->
-        var count = 0L
+    var count = 0L
+    try {
         while (true) {
-            val read = input.read(buffer)
+            val read = stream.read(buffer)
             if (read == -1) break
-            if (maxSize > 0 && count + read > maxSize) throw SizeLimitExceededException(maxSize)
+            if (limited && count + read > maxSize) throw SizeLimitExceededException(maxSize)
             output.write(buffer, 0, read)
             count += read
         }
+        stream.close()
+    } catch (e: SizeLimitExceededException) {
+        throw e
+    } catch (e: Exception) {
+        stream.close()
+        throw e
     }
     return output.toByteArray()
 }
 
-private fun failureStatus(exception: Throwable): Status {
-    var current: Throwable? = exception
-    while (current != null) {
-        when (current) {
-            is org.apache.hc.client5.http.ConnectTimeoutException, is java.net.SocketTimeoutException -> return Status.CLIENT_TIMEOUT
-        }
-        current = current.cause
-    }
-    return Status.SERVICE_UNAVAILABLE
+private fun failureStatus(exception: Exception): Status = when {
+    exception is ConnectTimeoutException || exception is SocketTimeoutException -> Status.CLIENT_TIMEOUT
+    else -> Status.SERVICE_UNAVAILABLE
 }
 
 fun defaultHttpHandler(config: PostchainClientConfig): HttpHandler = DefaultHttpHandler(config)
@@ -191,8 +230,7 @@ private class LimitedAsyncResponseData(
 }
 
 private class LimitedAsyncResponseState(private val maxSize: Long) {
-    private val limited = maxSize > 0
-    private val storeLimit = if (limited) maxSize + 1 else Long.MAX_VALUE
+    private val limited = maxSize >= 0
     private val body = ByteArrayOutputStream()
     private var count = 0L
 
@@ -211,7 +249,7 @@ private class LimitedAsyncResponseState(private val maxSize: Long) {
     @Throws(IOException::class)
     fun consume(buffer: ByteBuffer) {
         val remaining = buffer.remaining()
-        if (!limited || count + remaining <= storeLimit) {
+        if (!limited || count + remaining <= maxSize) {
             val bytes = ByteArray(remaining)
             buffer.get(bytes)
             body.write(bytes)
@@ -219,7 +257,7 @@ private class LimitedAsyncResponseState(private val maxSize: Long) {
             return
         }
 
-        val allowed = (storeLimit - count).toInt().coerceAtLeast(0)
+        val allowed = (maxSize + 1 - count).toInt().coerceAtLeast(0)
         if (allowed > 0) {
             val bytes = ByteArray(allowed)
             buffer.get(bytes, 0, allowed)
@@ -240,23 +278,24 @@ private class LimitedAsyncResponseState(private val maxSize: Long) {
     }
 
     fun failureResponse(exception: Exception): Response {
-        if (limitExceeded) return response()
-        val failureStatus = when (exception) {
-            is org.apache.hc.client5.http.ConnectTimeoutException -> Status.CLIENT_TIMEOUT
-            is java.net.SocketTimeoutException -> Status.CLIENT_TIMEOUT
-            else -> Status.SERVICE_UNAVAILABLE
+        if (limitExceeded) {
+            val bytes = bytes()
+            return Response(Status.SERVICE_UNAVAILABLE)
+                    .body(SizeLimitedResponseInputStream(ByteArrayInputStream(bytes), maxSize), bytes.size.toLong())
         }
-        return Response(failureStatus)
+        return Response(failureStatus(exception))
     }
 }
 
 private class LimitedAsyncResponseConsumer(
         private val state: LimitedAsyncResponseState) : AsyncResponseConsumer<LimitedAsyncResponseData> {
     private var resultCallback: FutureCallback<LimitedAsyncResponseData>? = null
+    private val streamEnded = AtomicBoolean(false)
 
     override fun consumeResponse(response: HttpResponse, entityDetails: EntityDetails?, context: HttpContext, resultCallback: FutureCallback<LimitedAsyncResponseData>) {
         state.consumeResponse(response)
         this.resultCallback = resultCallback
+        if (entityDetails == null) streamEnd(null)
     }
 
     override fun informationResponse(response: HttpResponse, context: HttpContext) {}
@@ -270,7 +309,9 @@ private class LimitedAsyncResponseConsumer(
     }
 
     override fun streamEnd(trailers: List<Header>?) {
-        resultCallback?.completed(LimitedAsyncResponseData(state.status ?: Status.SERVICE_UNAVAILABLE, state.headers, state.bytes()))
+        if (streamEnded.compareAndSet(false, true)) {
+            resultCallback?.completed(LimitedAsyncResponseData(state.status ?: Status.SERVICE_UNAVAILABLE, state.headers, state.bytes()))
+        }
     }
 
     override fun failed(exception: Exception) {
@@ -281,11 +322,13 @@ private class LimitedAsyncResponseConsumer(
 }
 
 private fun toAsyncRequestProducer(request: Request): AsyncRequestProducer {
-    val bodyBytes = ByteArray(request.body.payload.remaining())
-    request.body.payload.get(bodyBytes)
+    val payload = request.body.payload.duplicate()
+    val bodyBytes = ByteArray(payload.remaining())
+    payload.get(bodyBytes)
     val basicRequest = BasicHttpRequest(request.method.name, request.uri.toString())
     request.headers
             .filter { !it.first.equals("content-length", ignoreCase = true) }
+            .filter { !it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
             .forEach { (name, value) -> basicRequest.addHeader(name, value) }
     val entityProducer = if (bodyBytes.isNotEmpty() || request.method.name in setOf("POST", "PUT", "PATCH")) {
         BasicAsyncEntityProducer(bodyBytes)
@@ -312,7 +355,12 @@ fun defaultAsyncHttpHandler(config: PostchainClientConfig): AsyncHttpHandler {
 
     return object : AsyncHttpHandler {
         override fun invoke(request: Request, fn: (Response) -> Unit) {
-            val state = LimitedAsyncResponseState(config.maxResponseSize.toLong())
+            val maxResponseSize = request.headers
+                    .firstOrNull { it.first.equals(MAX_RESPONSE_SIZE_HEADER, ignoreCase = true) }
+                    ?.second
+                    ?.toLongOrNull()
+                    ?: config.maxResponseSize.toLong()
+            val state = LimitedAsyncResponseState(maxResponseSize)
             val delivered = AtomicBoolean(false)
             fun deliver(response: Response) {
                 if (delivered.compareAndSet(false, true)) fn(response)

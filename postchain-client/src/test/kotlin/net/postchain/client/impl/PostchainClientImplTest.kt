@@ -6,6 +6,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isLessThan
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.messageContains
@@ -13,9 +14,11 @@ import assertk.isContentEqualTo
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import mu.KLogging
+import net.postchain.client.DefaultHttpHandler
 import net.postchain.client.config.FailOverConfig
 import net.postchain.client.config.PostchainClientConfig
 import net.postchain.client.config.STATUS_POLL_COUNT
+import net.postchain.client.defaultAsyncHttpHandler
 import net.postchain.client.core.AsyncQueryResponse
 import net.postchain.client.core.AsyncQueryResponseStatus
 import net.postchain.client.core.BlockDetail
@@ -264,7 +267,7 @@ internal class PostchainClientImplTest {
                             output.write(ByteArray(8192) { 1 })
                             output.flush()
                             written += 8192
-                            Thread.sleep(150)
+                            Thread.sleep(1000)
                             while (written < contentLength) {
                                 val chunkSize = minOf(65536, contentLength - written)
                                 output.write(ByteArray(chunkSize) { 1 })
@@ -282,15 +285,19 @@ internal class PostchainClientImplTest {
             }.start()
 
             val client = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), maxResponseSize = 16, merkleHashVersion = 2))
+            val started = System.nanoTime()
+            var elapsedMs = -1L
             try {
                 assertThrows<SizeLimitExceededException> {
                     client.getTransaction(TxRid(""))
                 }
             } finally {
+                elapsedMs = (System.nanoTime() - started) / 1_000_000
                 client.close()
             }
 
             responseWritten.get(5, TimeUnit.SECONDS)
+            assertThat(elapsedMs).isLessThan(900L)
         }
     }
 
@@ -307,6 +314,226 @@ internal class PostchainClientImplTest {
         client.close()
 
         assertThat(handlerClosed).isFalse()
+    }
+
+    @Test
+    fun `default http handler replays request body across attempts`() {
+        ServerSocket(0).use { server ->
+            val bodies = mutableListOf<String>()
+            val requestsReceived = CompletableFuture<Unit>()
+            Thread {
+                try {
+                    repeat(2) {
+                        server.accept().use { socket ->
+                            socket.soTimeout = 5000
+                            val reader = socket.getInputStream().bufferedReader()
+                            var contentLength = 0
+                            while (true) {
+                                val line = reader.readLine() ?: break
+                                if (line.isEmpty()) break
+                                if (line.startsWith("Content-Length:", ignoreCase = true)) {
+                                    contentLength = line.substringAfter(':').trim().toInt()
+                                }
+                            }
+                            val bodyChars = CharArray(contentLength)
+                            var offset = 0
+                            while (offset < contentLength) {
+                                val read = reader.read(bodyChars, offset, contentLength - offset)
+                                if (read == -1) break
+                                offset += read
+                            }
+                            bodies += String(bodyChars, 0, offset)
+                            socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
+                            socket.getOutputStream().flush()
+                        }
+                    }
+                    requestsReceived.complete(Unit)
+                } catch (e: Exception) {
+                    requestsReceived.completeExceptionally(e)
+                }
+            }.start()
+
+            val config = PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), merkleHashVersion = 2)
+            val handler = DefaultHttpHandler(config)
+            val request = Request(Method.POST, "http://localhost:${server.localPort}/tx").body("abc")
+            try {
+                handler.invoke(request)
+                handler.invoke(request)
+            } finally {
+                handler.close()
+            }
+
+            requestsReceived.get(5, TimeUnit.SECONDS)
+            assertThat(bodies).isEqualTo(listOf("abc", "abc"))
+            assertThat(request.body.payload.remaining()).isEqualTo(3)
+        }
+    }
+
+    @Test
+    fun `default async http handler completes no content response`() {
+        ServerSocket(0).use { server ->
+            val requestWritten = CompletableFuture<Unit>()
+            Thread {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                        }
+                        socket.getOutputStream().write("HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n".toByteArray())
+                        socket.getOutputStream().flush()
+                    }
+                    requestWritten.complete(Unit)
+                } catch (e: Exception) {
+                    requestWritten.completeExceptionally(e)
+                }
+            }.start()
+
+            val config = PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), merkleHashVersion = 2)
+            val handler = defaultAsyncHttpHandler(config)
+            val responseFuture = CompletableFuture<Response>()
+            try {
+                handler.invoke(Request(Method.GET, "http://localhost:${server.localPort}/query")) { response ->
+                    responseFuture.complete(response)
+                }
+                val response = responseFuture.get(5, TimeUnit.SECONDS)
+                assertThat(response.status).isEqualTo(Status.NO_CONTENT)
+                assertThat(response.body.stream.readAllBytes().size).isEqualTo(0)
+            } finally {
+                (handler as Closeable).close()
+            }
+            requestWritten.get(5, TimeUnit.SECONDS)
+        }
+    }
+
+    @Test
+    fun `closing owner twice does not invalidate reconfigured client`() {
+        ServerSocket(0).use { server ->
+            val requestWritten = CompletableFuture<Unit>()
+            Thread {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                        }
+                        val body = encodeGtv(gtv("merkle_hash_version" to gtv(2L)))
+                        socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        socket.getOutputStream().write(body)
+                        socket.getOutputStream().flush()
+                    }
+                    requestWritten.complete(Unit)
+                } catch (e: Exception) {
+                    requestWritten.completeExceptionally(e)
+                }
+            }.start()
+
+            val config = PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), merkleHashVersion = 2)
+            val owner = PostchainClientImpl(config)
+            val borrower = owner.reconfigure(config)
+            owner.close()
+            owner.close()
+            try {
+                borrower.getFeatures()
+            } finally {
+                borrower.close()
+            }
+            requestWritten.get(5, TimeUnit.SECONDS)
+        }
+    }
+
+    @Test
+    fun `zero response size limit rejects non-empty body`() {
+        assertFailure {
+            PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), maxResponseSize = 0, merkleHashVersion = 2), httpClient = object : HttpHandler {
+                override fun invoke(request: Request) = Response(Status.OK)
+                        .header(Header.ContentType, ContentType.OCTET_STREAM.value)
+                        .body(ByteArray(1) { 1 }.inputStream())
+            }).getTransaction(TxRid(""))
+        }.isInstanceOf(SizeLimitExceededException::class).messageContains("0")
+    }
+
+    @Test
+    fun `default async http handler rejects oversized response`() {
+        ServerSocket(0).use { server ->
+            val requestWritten = CompletableFuture<Unit>()
+            Thread {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                        }
+                        socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: 129\r\nConnection: close\r\n\r\n".toByteArray())
+                        socket.getOutputStream().write(ByteArray(129) { 1 })
+                        socket.getOutputStream().flush()
+                    }
+                    requestWritten.complete(Unit)
+                } catch (e: Exception) {
+                    requestWritten.completeExceptionally(e)
+                }
+            }.start()
+
+            val config = PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), maxResponseSize = 128, merkleHashVersion = 2)
+            val handler = defaultAsyncHttpHandler(config)
+            val responseFuture = CompletableFuture<Response>()
+            try {
+                handler.invoke(Request(Method.GET, "http://localhost:${server.localPort}/query")) { response ->
+                    responseFuture.complete(response)
+                }
+                val response = responseFuture.get(5, TimeUnit.SECONDS)
+                assertThat(response.status).isEqualTo(Status.SERVICE_UNAVAILABLE)
+                assertThrows<SizeLimitExceededException> {
+                    response.body.stream.readAllBytes()
+                }
+            } finally {
+                (handler as Closeable).close()
+            }
+            requestWritten.get(5, TimeUnit.SECONDS)
+        }
+    }
+
+    @Test
+    fun `reconfigured client uses its own response size limit`() {
+        val body = (0..512).map { encodeGtv(gtv("pad" to gtv("x".repeat(it)))) }.first { it.size == 129 }
+        ServerSocket(0).use { server ->
+            val requestWritten = CompletableFuture<Unit>()
+            Thread {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                        }
+                        socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        socket.getOutputStream().write(body)
+                        socket.getOutputStream().flush()
+                    }
+                    requestWritten.complete(Unit)
+                } catch (e: Exception) {
+                    requestWritten.completeExceptionally(e)
+                }
+            }.start()
+
+            val config = PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl("http://localhost:${server.localPort}"), maxResponseSize = 128, merkleHashVersion = 2)
+            val owner = PostchainClientImpl(config)
+            val borrower = owner.reconfigure(config.copy(maxResponseSize = 129))
+            try {
+                assertThat(borrower.getFeatures().size).isEqualTo(1)
+            } finally {
+                borrower.close()
+                owner.close()
+            }
+            requestWritten.get(5, TimeUnit.SECONDS)
+        }
     }
 
     @Test
@@ -675,6 +902,15 @@ internal class PostchainClientImplTest {
                         Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(ByteArray(2 * 1024))).inputStream())
             }).query("test_query", gtv(mapOf()))
         }.isInstanceOf(SizeLimitExceededException::class).messageContains("1024")
+    }
+
+    @Test
+    fun `negative response size limit disables limit`() {
+        val result = PostchainClientImpl(PostchainClientConfig(BlockchainRid.buildFromHex(BLOCKCHAIN_RID), EndpointPool.singleUrl(url), maxResponseSize = -1, merkleHashVersion = 2), httpClient = object : HttpHandler {
+            override fun invoke(request: Request) =
+                    Response(Status.OK).header(Header.ContentType, ContentType.OCTET_STREAM.value).body(encodeGtv(gtv(ByteArray(2 * 1024))).inputStream())
+        }).query("test_query", gtv(mapOf()))
+        assertThat(result.asByteArray(true).size).isEqualTo(2 * 1024)
     }
 
     @Test

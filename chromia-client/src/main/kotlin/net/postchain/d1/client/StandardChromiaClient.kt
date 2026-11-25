@@ -64,6 +64,8 @@ class StandardChromiaClient(
         cmApiVersion = dcDiscoveryClient.cmApiVersion()
         val apiUrls = getBlockchainApiUrls(dcDiscoveryClient, directoryChainRid)
         directoryChainClient = dcDiscoveryClient.reconfigure(dcDiscoveryClient.config.copy(endpointPool = EndpointPool.default(apiUrls)))
+        dcDiscoveryClient.close()
+        if (discoveryClient !== dcDiscoveryClient) discoveryClient.close()
     }
 
     override fun awaitClusterAnchoredTx(
